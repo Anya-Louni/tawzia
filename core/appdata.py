@@ -390,8 +390,12 @@ def sidebar_controls() -> None:
     inject_theme()
 
     with st.sidebar:
+        from . import industry
         st.markdown("### WorkForce.dz")
-        st.caption("The AI HR platform for Algerian operations")
+        if industry.is_tailored():
+            st.caption(f":material/storefront: {industry.label()} edition")
+        else:
+            st.caption("The AI HR platform for Algerian operations")
 
         profile_labels = {k: p.label for k, p in demand_mod.PROFILES.items()}
         st.selectbox(

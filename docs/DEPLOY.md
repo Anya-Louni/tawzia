@@ -1,0 +1,57 @@
+# Ship it: public link in ~3 minutes
+
+The fastest way to get a shareable link you can paste into outreach emails is
+**Streamlit Community Cloud** (free, no card).
+
+## Deploy
+
+1. Go to **https://share.streamlit.io** and sign in with the GitHub account that
+   owns the repo (Anya-Louni).
+2. Click **New app** -> **Deploy a public app from GitHub**.
+3. Fill in:
+   - Repository: `Anya-Louni/AI-Forge`
+   - Branch: `main`
+   - Main file path: `dashboard.py`
+4. Click **Deploy**. The first load runs the walk-forward backtest and fetches
+   real weather (about 1 to 2 minutes); after that everything is cached and
+   instant.
+
+You now have a public URL like `https://ai-forge-xxxx.streamlit.app`.
+
+## Turn on the AI copilots (optional)
+
+The rule engine, forecasting, roster, inspection, Journal Officiel watch and
+retention all work with no key. To enable the AI-written text (copilot, CV
+screening, the inspector's report, the retention script), add a key in the app's
+**Settings -> Secrets**:
+
+```
+GROQ_API_KEY = "gsk_..."        # free, no card - console.groq.com
+# or, for the best quality in the jury demo:
+PROVIDER_API_KEY = "sk-ant-..."
+```
+
+Everything else keeps working without them.
+
+## Tailored demo links (industry mode)
+
+The same app tailors itself per prospect from a query parameter. Send each
+company the link that speaks their language - it sets their vertical, tailors the
+copy, and hides the modules that do not apply:
+
+| Prospect | Link |
+|---|---|
+| E-commerce / delivery | `https://<your-url>/?industry=delivery` |
+| Hotel | `https://<your-url>/?industry=hotel` |
+| Transport / fleet | `https://<your-url>/?industry=transport` |
+| Retail / distribution | `https://<your-url>/?industry=retail` |
+| Airport / ground ops | `https://<your-url>/?industry=airport` |
+| Full platform (all) | `https://<your-url>/` |
+
+Replace `<your-url>` with the Streamlit URL from the deploy step.
+
+## Offline / unreliable-wifi demos
+
+Open the app once with a connection so the caches fill, then in the sidebar under
+**Data source** turn off **Allow live API calls**. The whole app then runs from
+`data/cache/`, which is handy for a pitch on venue wifi.

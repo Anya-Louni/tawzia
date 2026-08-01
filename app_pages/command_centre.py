@@ -3,7 +3,7 @@
 import pandas as pd
 import streamlit as st
 
-from core import appdata, calendar_dz, demand as demand_mod
+from core import appdata, calendar_dz, demand as demand_mod, industry
 
 appdata.sidebar_controls()
 
@@ -16,6 +16,7 @@ st.caption(
     f"{profile.label} · {wilaya} · next {horizon} days · "
     f"demand measured in {profile.demand_unit}"
 )
+industry.banner()
 
 plan = appdata.load_forward_plan(
     st.session_state["profile_key"],
