@@ -6,8 +6,9 @@ The fastest way to get a shareable link you can paste into outreach emails is
 ## Deploy
 
 1. Go to **https://share.streamlit.io** and sign in with the GitHub account that
-   owns the repo (Anya-Louni).
-2. Click **New app** -> **Deploy a public app from GitHub**.
+   owns the repo (Anya-Louni). When asked, grant access to **private** repos -
+   the repo can stay private, Streamlit still builds it.
+2. Click **New app** -> **Deploy from GitHub**.
 3. Fill in:
    - Repository: `Anya-Louni/AI-Forge`
    - Branch: `main`
@@ -16,7 +17,18 @@ The fastest way to get a shareable link you can paste into outreach emails is
    real weather (about 1 to 2 minutes); after that everything is cached and
    instant.
 
-You now have a public URL like `https://ai-forge-xxxx.streamlit.app`.
+You now have a URL like `https://ai-forge-xxxx.streamlit.app`.
+
+### Repo private, app shareable
+
+Repo visibility and app visibility are two different settings:
+
+- **Repo** (your code): keep it **private**. Deployment still works.
+- **App** (who can open the link): after deploy, in **Settings -> Sharing** choose
+  either **public by link** (anyone with the URL, best for pasting into cold
+  emails, nothing is indexed) or **restricted to specific emails** (only invited
+  prospects, but they must sign in). For outreach, public-by-link is the low-
+  friction choice.
 
 ## Turn on the AI copilots (optional)
 
