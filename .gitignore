@@ -1,0 +1,33 @@
+# Environment / secrets
+.env
+.streamlit/secrets.toml
+
+# Virtual environment
+venv/
+.venv/
+
+# Python
+__pycache__/
+*.pyc
+
+# Generated at runtime -- not source data
+warehouse_orders.csv
+forecast_output.csv
+optimized_schedule.csv
+
+# API responses cached at runtime (Open-Meteo, World Bank, Aladhan)
+data/cache/
+
+# OS / editor cruft
+.DS_Store
+.vscode/
+
+# AI-assistant tooling / local agent state (not part of the product)
+.agent/
+.kilocode/
+.impeccable/
+skills-lock.json
+*.exe
+
+# Ad-hoc data dumps
+supply_chain_dataset1*.csv

@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="WorkForce.dz: AI HR platform built for Algerian labour law">
+<title>WorkForce.dz: AI HR platform built for Algerian labour law</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='88'>%F0%9F%A4%9D</text></svg>">
+</head>
+<body>
+<!-- WorkForce.dz landing page -->
+<style>
+  :root {
+    --bg:        #FFFFFF;
+    --surface:   #FFFFFF;
+    --surface-2: #F5F8FF;
+    --ink:       #16172A;
+    --ink-2:     #4C4E68;
+    --ink-3:     #8A8CA6;
+    --line:      #E6E6EE;
+    --line-2:    #D3D3E0;
+    --ink-line:  #16172A;
+
+    --primary:   #2563EB;
+    --primary-2: #1D4ED8;
+    --blue:      #3B82F6;
+    --violet:    #0EA5E9;
+    --primary-soft:#E6EEFE;
+    --blue-soft: #E8F1FE;
+    --violet-soft:#E1F4FD;
+
+    --good:  #158A4A; --good-soft:#E1F2E8;
+    --amber: #DB2777; --amber-soft:#FCE7F1;
+
+    --shadow-sm: 0 1px 2px rgba(20,20,50,.06), 0 2px 6px rgba(20,20,50,.05);
+    --shadow-md: 0 6px 14px rgba(28,40,90,.10), 0 16px 34px -12px rgba(28,55,130,.22);
+    --shadow-lg: 0 14px 30px rgba(28,40,90,.13), 0 34px 74px -20px rgba(28,55,130,.34);
+
+    --maxw: 1160px;
+    --font: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  :root[data-theme="light"]{ --bg:#FFFFFF; --surface:#FFFFFF; --surface-2:#F5F8FF; --ink:#16172A; --ink-2:#4C4E68; --ink-3:#8A8CA6; --line:#E6E6EE; --line-2:#D3D3E0; --ink-line:#16172A; --primary:#2563EB; --primary-2:#1D4ED8; --blue:#3B82F6; --violet:#0EA5E9; --primary-soft:#E6EEFE; --blue-soft:#E8F1FE; --violet-soft:#E1F4FD; --good:#158A4A; --good-soft:#E1F2E8; --amber:#DB2777; --amber-soft:#FCE7F1; --shadow-sm:0 1px 2px rgba(20,20,50,.06),0 2px 6px rgba(20,20,50,.05); --shadow-md:0 6px 14px rgba(28,40,90,.10),0 16px 34px -12px rgba(28,55,130,.22); --shadow-lg:0 14px 30px rgba(28,40,90,.13),0 34px 74px -20px rgba(28,55,130,.34); }
+
+  * { box-sizing: border-box; }
+  /* Everything square. */
+  .wf, .wf * { border-radius: 0 !important; }
+  .wf { background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 17px; line-height: 1.6; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+  .wf p { margin: 0; }
+  .wf a { color: inherit; text-decoration: none; }
+  .wrap { width: 100%; max-width: var(--maxw); margin: 0 auto; padding: 0 22px; }
+  .band { padding: 92px 0; }
+  h1,h2,h3 { margin: 0; font-weight: 800; letter-spacing: -0.028em; line-height: 1.05; text-wrap: balance; }
+  .mark { color: var(--primary); }
+
+  .eyebrow { display:inline-flex; align-items:center; gap:.5rem; font-size:.75rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+             color: var(--primary-2); background: var(--primary-soft); padding:.36rem .7rem; }
+  .eyebrow .dot { width:6px; height:6px; background: var(--violet); }
+
+  .nav { position: sticky; top:0; z-index:50; transition: background .25s, box-shadow .25s, border-color .25s; border-bottom: 1px solid transparent; }
+  .nav.scrolled { background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom-color: var(--line); }
+  .nav-in { display:flex; align-items:center; justify-content:space-between; height:66px; gap:16px; }
+  .brand { display:flex; align-items:center; gap:.55rem; font-weight:800; font-size:1.12rem; letter-spacing:-.02em; }
+  .brand .mk { width:28px; height:28px; background: var(--primary); display:inline-grid; place-items:center; color:#fff; font-size:.95rem; }
+  .brand .tld { color: var(--primary); }
+  .nav-links { display:flex; align-items:center; gap:1.5rem; }
+  .nav-links a.lk { font-size:.93rem; font-weight:600; color:var(--ink-2); }
+  .nav-links a.lk:hover { color: var(--ink); }
+  .lang { font-size:.8rem; font-weight:700; color:var(--ink-2); border:1px solid var(--line-2); padding:.3rem .6rem; }
+  .lang:hover { color:var(--primary); border-color: var(--primary); }
+  @media (max-width: 880px){ .nav-links a.lk { display:none; } }
+
+  /* buttons , flat, sharp */
+  .btn { display:inline-flex; align-items:center; gap:.5rem; font-family:var(--font); font-size:.95rem; font-weight:700;
+         padding:.8rem 1.35rem; border:none; cursor:pointer; white-space:nowrap;
+         transition: transform .13s ease, background .16s ease, box-shadow .16s ease, color .16s ease; }
+  .btn .arw { transition: transform .16s ease; }
+  .btn:hover .arw { transform: translateX(3px); }
+  .btn-primary { color:#fff; background: var(--primary); box-shadow: var(--shadow-sm); }
+  .btn-primary:hover { background: var(--primary-2); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-ghost { color: var(--primary); background: var(--surface); box-shadow: inset 0 0 0 1.5px var(--line-2); }
+  .btn-ghost:hover { transform: translateY(-1px); box-shadow: inset 0 0 0 1.5px var(--primary); }
+  .btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+  .btn-sm { padding:.55rem 1rem; font-size:.85rem; }
+
+  /* hero */
+  .hero { padding: 56px 0 52px; }
+  .hero-grid { display:grid; grid-template-columns: 1.02fr .98fr; gap: 46px; align-items:center; }
+  @media (max-width: 960px){ .hero-grid { grid-template-columns:1fr; gap:30px; } }
+  .hero h1 { font-size: clamp(2.5rem, 6vw, 4.2rem); margin-top: 1rem; }
+  .hero .sub { margin-top: 1.3rem; font-size: 1.17rem; color: var(--ink-2); max-width: 44ch; }
+  .hero-cta { display:flex; gap:.7rem; margin-top:1.7rem; flex-wrap:wrap; align-items:center; }
+  .hero-cta .micro { font-size:.84rem; color: var(--ink-3); }
+
+  /* 3D isometric illustration */
+  .scene { position:relative; height: 460px; display:grid; place-items:center; perspective: 1300px; }
+  @media (max-width:960px){ .scene { height: 380px; } }
+  .iso { position:relative; width: 260px; height: 260px; transform-style: preserve-3d;
+         transform: rotateX(56deg) rotateZ(46deg); animation: bob 7s ease-in-out infinite; }
+  @keyframes bob { 0%,100%{ transform: rotateX(56deg) rotateZ(46deg) translateZ(0); } 50%{ transform: rotateX(56deg) rotateZ(46deg) translateZ(20px); } }
+  .layer { position:absolute; left:0; top:0; width:260px; height:260px; background: var(--surface);
+           border:1.5px solid var(--ink-line); box-shadow: 0 40px 40px -20px rgba(20,20,50,.28); }
+  .layer.l1 { transform: translateZ(0); }
+  .layer.l2 { transform: translateZ(46px); }
+  .layer.l3 { transform: translateZ(92px); width:190px; height:190px; left:35px; top:35px; }
+  .layer .lh { height:30px; border-bottom:1.5px solid var(--ink-line); display:flex; align-items:center; padding:0 12px; gap:6px; }
+  .layer .lh i { width:9px; height:9px; background: var(--primary); display:block; }
+  .layer .lh i:nth-child(2){ background: var(--blue); } .layer .lh i:nth-child(3){ background: var(--violet); }
+  /* calendar dots on l1 */
+  .cal { display:grid; grid-template-columns: repeat(7,1fr); gap:6px; padding:14px; }
+  .cal span { aspect-ratio:1; background: var(--surface-2); border:1px solid var(--line); }
+  .cal span.on { background: var(--primary); border-color: var(--primary); }
+  .cal span.hi { background: var(--violet); border-color: var(--violet); }
+  /* roster rows on l2 */
+  .rows { padding:14px; display:grid; gap:10px; }
+  .rows .rw { display:flex; align-items:center; gap:8px; }
+  .rows .rw .a { width:22px; height:22px; background: var(--primary); }
+  .rows .rw:nth-child(2) .a{ background: var(--blue);} .rows .rw:nth-child(3) .a{ background: var(--violet);} .rows .rw:nth-child(4) .a{ background: var(--primary-2);}
+  .rows .rw .b { flex:1; height:9px; background: var(--line); }
+  .rows .rw .t { width:26px; height:9px; background: var(--good); }
+  .rows .rw:nth-child(3) .t{ background: var(--amber);}
+  /* chart on l3 */
+  .chart { padding:14px; display:flex; align-items:flex-end; gap:10px; height:calc(100% - 30px); }
+  .chart b { flex:1; background: var(--primary); display:block; }
+  .chart b:nth-child(2){ background: var(--blue); } .chart b:nth-child(3){ background: var(--violet); } .chart b:nth-child(4){ background: var(--primary-2); }
+  /* floating token cube */
+  .token { position:absolute; width:44px; height:44px; transform-style: preserve-3d; top:-40px; left:150px; animation: bob2 5s ease-in-out infinite; }
+  .token .f { position:absolute; width:44px; height:44px; background: var(--violet); border:1.5px solid var(--ink-line); }
+  .token .top { transform: rotateX(90deg) translateZ(22px); background: var(--primary); }
+  .token .side { transform: rotateY(90deg) translateZ(22px); background: var(--primary-2); }
+  @keyframes bob2 { 0%,100%{ transform: translateZ(50px); } 50%{ transform: translateZ(78px); } }
+
+  /* at a glance (roster + checks) */
+  .glance-grid { display:grid; grid-template-columns: .9fr 1.1fr; gap: 40px; align-items:center; }
+  @media (max-width:900px){ .glance-grid { grid-template-columns:1fr; gap:28px; } }
+  .checks { list-style:none; padding:0; margin:22px 0 0; display:grid; gap:12px; }
+  .checks li { display:flex; align-items:center; gap:.6rem; font-weight:600; color: var(--ink); }
+  .checks li svg { width:20px; height:20px; color: var(--good); flex-shrink:0; }
+  .rcard { background: var(--surface); border:1px solid var(--line); box-shadow: var(--shadow-lg); overflow:hidden; }
+  .r-head { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid var(--line); }
+  .r-head .t { font-weight:800; font-size:.95rem; }
+  .r-live { font-size:.72rem; font-weight:700; color:var(--good); display:inline-flex; align-items:center; gap:.4rem; }
+  .r-live .d { width:7px; height:7px; background:var(--good); animation: blip 1.8s infinite; }
+  @keyframes blip { 0%,100%{opacity:1} 50%{opacity:.3} }
+  .rrow { display:grid; grid-template-columns: 1fr auto; align-items:center; gap:10px; padding:12px 18px; border-bottom:1px solid var(--line); opacity:0; transform: translateX(10px); }
+  .rrow.in { opacity:1; transform:none; transition: opacity .5s, transform .5s; }
+  .rrow .who { display:flex; align-items:center; gap:.6rem; }
+  .rrow .av { width:30px; height:30px; display:inline-grid; place-items:center; font-weight:800; font-size:.76rem; color:#fff; }
+  .rrow .nm { font-weight:600; font-size:.9rem; } .rrow .ro { font-size:.75rem; color:var(--ink-3); }
+  .pill { font-size:.72rem; font-weight:700; padding:.2rem .55rem; white-space:nowrap; }
+  .pill.ok { color:var(--good); background: var(--good-soft); }
+  .pill.tr { color:var(--primary); background: var(--primary-soft); }
+  .pill.wr { color:var(--amber); background: var(--amber-soft); }
+  .r-foot { display:flex; align-items:center; justify-content:space-between; padding:15px 18px; }
+  .r-foot .v { font-weight:800; font-size:1.5rem; color: var(--primary); }
+  .r-foot .k { font-size:.74rem; color:var(--ink-3); }
+
+  .strip { border-top:1px solid var(--line); border-bottom:1px solid var(--line); background: var(--surface-2); }
+  .strip .in { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:26px 0; flex-wrap:wrap; }
+  .strip .lab { font-size:.8rem; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-3); }
+  .stat-row { display:flex; gap:34px; flex-wrap:wrap; }
+  .stat-row .s .v { font-weight:800; font-size:1.7rem; color: var(--primary); } .stat-row .s .v.g { color: var(--good); }
+  .stat-row .s .k { font-size:.82rem; color:var(--ink-3); }
+
+  .sec-head { max-width: 660px; margin: 0 auto 44px; text-align:center; }
+  .sec-head h2 { font-size: clamp(1.9rem, 3.8vw, 2.8rem); margin-top:.8rem; }
+  .sec-head p { color: var(--ink-2); margin-top:.8rem; font-size:1.06rem; }
+
+  .prob-grid { display:grid; grid-template-columns: repeat(3,1fr); gap:18px; }
+  @media (max-width:860px){ .prob-grid { grid-template-columns:1fr;} }
+  .prob { background: var(--surface); border:1px solid var(--line); padding: 24px; box-shadow: var(--shadow-sm); border-left: 3px solid var(--amber); }
+  .prob .amt { font-weight:800; font-size:1.55rem; color: var(--amber); }
+  .prob h3 { font-size:1.06rem; margin:.4rem 0; } .prob p { color:var(--ink-2); font-size:.92rem; }
+
+  .feat-grid { display:grid; grid-template-columns: repeat(3,1fr); gap:18px; }
+  @media (max-width:900px){ .feat-grid { grid-template-columns: repeat(2,1fr);} }
+  @media (max-width:600px){ .feat-grid { grid-template-columns:1fr;} }
+  .feat { background: var(--surface); border:1px solid var(--line); padding:24px; box-shadow: var(--shadow-sm);
+          transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease; }
+  .feat:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--line-2); }
+  .feat .ic { width:44px; height:44px; display:inline-grid; place-items:center; margin-bottom:14px; background: var(--primary-soft); color: var(--primary); }
+  .feat:nth-child(3n+2) .ic { background: var(--violet-soft); color: var(--violet); }
+  .feat:nth-child(3n) .ic { background: var(--blue-soft); color: var(--blue); }
+  .feat .ic svg { width:23px; height:23px; }
+  .feat h3 { font-size:1.14rem; } .feat p { color:var(--ink-2); font-size:.93rem; margin-top:.4rem; }
+
+  .steps { display:grid; grid-template-columns: repeat(3,1fr); gap:22px; }
+  @media (max-width:820px){ .steps { grid-template-columns:1fr;} }
+  .step .n { display:inline-grid; place-items:center; width:36px; height:36px; background: var(--primary); color:#fff; font-weight:800; }
+  .step h3 { font-size:1.18rem; margin:.6rem 0 .35rem; } .step p { color:var(--ink-2); font-size:.95rem; }
+
+  .alg { background: var(--primary); color:#fff; }
+  .alg .in { padding: 52px 40px; }
+  @media (max-width:600px){ .alg .in { padding:36px 24px; } }
+  .alg h2 { color:#fff; font-size: clamp(1.8rem,3.6vw,2.4rem); }
+  .alg .lead { color: rgba(255,255,255,.86); margin-top:.7rem; max-width:56ch; }
+  .alg-grid { display:grid; grid-template-columns: repeat(4,1fr); gap:16px; margin-top:30px; }
+  @media (max-width:820px){ .alg-grid { grid-template-columns: repeat(2,1fr);} }
+  .alg-grid .it { background: rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.16); padding:16px; }
+  .alg-grid .it h4 { font-weight:800; font-size:.96rem; margin:0 0 .3rem; } .alg-grid .it p { font-size:.84rem; color: rgba(255,255,255,.82); }
+
+  .proof-grid { display:grid; grid-template-columns: repeat(4,1fr); gap:18px; text-align:center; }
+  @media (max-width:760px){ .proof-grid { grid-template-columns: repeat(2,1fr);} }
+  .metric .v { font-weight:800; font-size: clamp(2rem,4vw,2.7rem); color: var(--primary); }
+  .metric .v.b { color: var(--blue); } .metric .v.v { color: var(--violet); }
+  .metric .k { color:var(--ink-2); font-size:.9rem; margin-top:.2rem; }
+  .honesty { max-width:760px; margin:38px auto 0; text-align:center; background: var(--surface-2); border:1px solid var(--line); padding:22px 26px; color:var(--ink-2); font-size:.96rem; }
+
+  .price-grid { display:grid; grid-template-columns: repeat(3,1fr); gap:20px; align-items:stretch; }
+  @media (max-width:900px){ .price-grid { grid-template-columns:1fr; max-width:440px; margin:0 auto;} }
+  .plan { display:flex; flex-direction:column; background: var(--surface); border:1px solid var(--line); padding:28px; box-shadow: var(--shadow-sm); position:relative; transition: transform .16s ease, box-shadow .16s ease; }
+  .plan:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+  .plan.best { border: 2px solid var(--primary); }
+  .plan .tag { position:absolute; top:-11px; left:50%; transform:translateX(-50%); background: var(--primary); color:#fff; font-size:.66rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; padding:.3rem .8rem; }
+  .plan .nm { font-weight:700; color:var(--ink-2); }
+  .plan .price { display:flex; align-items:baseline; gap:.35rem; margin:.6rem 0; }
+  .plan .amt { font-weight:800; font-size:2.4rem; letter-spacing:-.03em; } .plan .amt.v { color: var(--primary); } .plan .per { color:var(--ink-3); font-size:.85rem; }
+  .plan .ld { color:var(--ink-2); font-size:.9rem; min-height:38px; }
+  .plan ul { list-style:none; padding:0; margin:18px 0; display:grid; gap:10px; flex:1; }
+  .plan li { display:flex; gap:.55rem; font-size:.9rem; color:var(--ink); align-items:flex-start; }
+  .plan li svg { width:16px; height:16px; color: var(--primary); flex-shrink:0; margin-top:3px; }
+  .plan li.mut { color:var(--ink-3); } .plan li.mut svg { color: var(--ink-3); }
+  .plan .btn { width:100%; justify-content:center; }
+  .price-note { text-align:center; margin-top:18px; font-size:.85rem; color:var(--ink-3); }
+
+  .faq { max-width:760px; margin:0 auto; display:grid; gap:12px; }
+  .qa { background: var(--surface); border:1px solid var(--line); overflow:hidden; }
+  .qa summary { cursor:pointer; list-style:none; padding:17px 20px; font-weight:700; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .qa summary::-webkit-details-marker { display:none; }
+  .qa summary .pl { color: var(--primary); transition: transform .2s; font-size:1.3rem; line-height:1; }
+  .qa[open] summary .pl { transform: rotate(45deg); }
+  .qa .a { padding: 0 20px 17px; color: var(--ink-2); font-size:.95rem; }
+
+  .cta .box { background: var(--primary); color:#fff; text-align:center; padding:56px 30px; }
+  .cta h2 { color:#fff; font-size: clamp(2rem,4.2vw,2.9rem); }
+  .cta p { color: rgba(255,255,255,.9); max-width:52ch; margin:1rem auto 0; }
+  .cta-btns { display:flex; gap:.7rem; justify-content:center; margin-top:1.7rem; flex-wrap:wrap; }
+  .cta .btn-light { background:#fff; color:var(--primary); }
+  .cta .btn-light:hover { background: #EFEFF8; transform: translateY(-1px); }
+  .cta .btn-outline { background: transparent; color:#fff; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.7); }
+  .cta .btn-outline:hover { box-shadow: inset 0 0 0 1.5px #fff; transform: translateY(-1px); }
+
+  .foot { border-top:1px solid var(--line); padding:32px 0; }
+  .foot-in { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+  .foot-links { display:flex; gap:1.2rem; flex-wrap:wrap; }
+  .foot-links a { font-size:.9rem; color:var(--ink-2); } .foot-links a:hover { color: var(--primary); }
+  .foot-made { font-size:.85rem; color:var(--ink-3); } .foot-made b { color: var(--primary); }
+  .note { font-size:.8rem; color:var(--ink-3); }
+
+  .reveal { opacity:0; transform: translateY(20px); transition: opacity .7s cubic-bezier(.2,.8,.2,1), transform .7s cubic-bezier(.2,.8,.2,1); }
+  .reveal.in { opacity:1; transform:none; }
+
+  @media (prefers-reduced-motion: reduce){
+    .reveal { opacity:1 !important; transform:none !important; transition:none !important; }
+    .rrow { opacity:1 !important; transform:none !important; }
+    .iso, .token { animation:none !important; }
+    .r-live .d { animation:none; }
+  }
+
+  /* ---- depth + motion refresh ---- */
+  @keyframes fadeUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform:none; } }
+  .hero .eyebrow { animation: fadeUp .6s both; }
+  .hero h1 { animation: fadeUp .7s .08s both; }
+  .hero .sub { animation: fadeUp .7s .18s both; }
+  .hero .hero-cta { animation: fadeUp .7s .28s both; }
+  .feat, .plan, .prob, .rcard, .qa { box-shadow: 0 2px 4px rgba(28,40,90,.06), 0 12px 26px -10px rgba(28,55,130,.15); }
+  .feat:hover, .plan:hover, .prob:hover { box-shadow: 0 10px 22px rgba(28,40,90,.11), 0 28px 54px -14px rgba(28,55,130,.26); transform: translateY(-5px); }
+  .nav-links a.lk { position: relative; }
+  .nav-links a.lk::after { content:""; position:absolute; left:0; bottom:-5px; height:2px; width:0; background: var(--primary); transition: width .22s ease; }
+  .nav-links a.lk:hover::after { width:100%; }
+  .btn-primary:hover { box-shadow: 0 8px 18px -4px rgba(37,99,235,.45); }
+  @media (prefers-reduced-motion: reduce){ .hero .eyebrow,.hero h1,.hero .sub,.hero .hero-cta { animation:none !important; } }
+  .wf a.btn-primary { color:#fff; }
+  .wf a.btn-ghost { color: var(--primary); }
+
+  /* ============ v3: purple aura + apple glass + rotating word + stacking cards ============ */
+  .wf { background: transparent; }
+  .aura { position: fixed; inset: 0; z-index: -1; pointer-events: none; background:
+      radial-gradient(42rem 34rem at 6% -4%,  rgba(139,92,246,.18), transparent 60%),
+      radial-gradient(46rem 34rem at 98% -2%, rgba(59,130,246,.15), transparent 60%),
+      radial-gradient(40rem 32rem at 82% 40%, rgba(124,58,237,.10), transparent 62%),
+      radial-gradient(44rem 36rem at 2% 66%,  rgba(37,99,235,.09), transparent 62%),
+      #FFFFFF; }
+
+  /* floating glass header */
+  .nav { position: sticky; top: 0; z-index: 60; padding: 14px 20px 0; background: transparent !important;
+         border-bottom: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+  .nav-bar { max-width: var(--maxw); margin: 0 auto; height: 62px; display: flex; align-items: center;
+             justify-content: space-between; gap: 16px; padding: 0 12px 0 20px;
+             background: rgba(255,255,255,.68); -webkit-backdrop-filter: blur(18px) saturate(1.5); backdrop-filter: blur(18px) saturate(1.5);
+             border: 1px solid rgba(255,255,255,.75);
+             box-shadow: 0 10px 34px -12px rgba(30,45,120,.22), 0 2px 6px rgba(30,45,120,.06);
+             transition: box-shadow .25s ease, background .25s ease; }
+  .nav.scrolled .nav-bar { background: rgba(255,255,255,.84); box-shadow: 0 14px 40px -12px rgba(30,45,120,.30), 0 2px 8px rgba(30,45,120,.08); }
+  .nav-cta { display: inline-flex; align-items: center; gap: .6rem; }
+  @media (max-width: 560px){ .nav-cta .btn-ghost { display: none; } }
+
+  /* apple frosted glass on cards + panels */
+  .feat, .plan, .prob, .qa, .rcard, .honesty {
+      background: rgba(255,255,255,.6);
+      -webkit-backdrop-filter: blur(14px) saturate(1.35); backdrop-filter: blur(14px) saturate(1.35);
+      border: 1px solid rgba(255,255,255,.7);
+      box-shadow: 0 2px 6px rgba(28,40,90,.06), 0 20px 44px -18px rgba(45,55,140,.24); }
+  .feat:hover, .plan:hover, .prob:hover { box-shadow: 0 12px 26px rgba(28,40,90,.10), 0 34px 62px -20px rgba(45,55,140,.32); transform: translateY(-6px); }
+  .plan.best { border: 2px solid var(--primary); background: rgba(255,255,255,.74); }
+  .qa { background: rgba(255,255,255,.55); }
+  .strip { background: rgba(246,248,255,.6); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+  .rcard { border-color: rgba(255,255,255,.8); }
+
+  /* rotating hero word (vanilla port) */
+  .rot { display: inline-block; color: var(--primary); transition: opacity .18s ease, transform .18s ease; }
+  .rot.out { opacity: 0; transform: translateY(-.35em); }
+  .rot .rc { display: inline-block; white-space: pre; animation: rcIn .55s cubic-bezier(.2,.9,.25,1.25) both; }
+  @keyframes rcIn { from { opacity: 0; transform: translateY(.72em); } to { opacity: 1; transform: none; } }
+
+  /* 3D panels animate up into a stack on load */
+  @keyframes stack1 { from { opacity: 0; transform: translateZ(-34px); } to { opacity: 1; transform: translateZ(0); } }
+  @keyframes stack2 { from { opacity: 0; transform: translateZ(-14px); } to { opacity: 1; transform: translateZ(46px); } }
+  @keyframes stack3 { from { opacity: 0; transform: translateZ(10px); }  to { opacity: 1; transform: translateZ(92px); } }
+  .layer.l1 { animation: stack1 .8s .20s cubic-bezier(.2,.8,.2,1) both; }
+  .layer.l2 { animation: stack2 .8s .38s cubic-bezier(.2,.8,.2,1) both; }
+  .layer.l3 { animation: stack3 .8s .56s cubic-bezier(.2,.8,.2,1) both; }
+  .layer { box-shadow: 0 44px 48px -22px rgba(20,20,60,.36); }
+
+  @media (prefers-reduced-motion: reduce){
+    .rot .rc { animation: none !important; }
+    .layer.l1, .layer.l2, .layer.l3 { animation: none !important; opacity: 1 !important; }
+    .layer.l1 { transform: translateZ(0); } .layer.l2 { transform: translateZ(46px); } .layer.l3 { transform: translateZ(92px); }
+  }
+
+  /* ============ v4: liquid glass + 3D buttons + deck motion + centered stats ============ */
+  .feat, .plan, .prob, .qa, .rcard, .honesty {
+      position: relative; isolation: isolate;
+      background: rgba(255,255,255,.4); border: 1px solid rgba(255,255,255,.65);
+      -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+  .feat::after,.plan::after,.prob::after,.qa::after,.rcard::after,.honesty::after {
+      content:""; position:absolute; inset:0; z-index:-1;
+      -webkit-backdrop-filter: blur(9px) saturate(1.6); backdrop-filter: blur(9px) saturate(1.6);
+      filter: url(#glass-distortion); -webkit-filter: url(#glass-distortion); }
+  .feat::before,.plan::before,.prob::before,.qa::before,.rcard::before,.honesty::before {
+      content:""; position:absolute; inset:0; z-index:-1; pointer-events:none;
+      box-shadow: inset 0 1px 1px rgba(255,255,255,.95), inset 0 0 22px -8px rgba(255,255,255,.9); }
+  .plan.best { background: rgba(255,255,255,.5); }
+
+  /* 3D + liquid glass buttons */
+  .btn-primary { background: var(--primary); color:#fff; border:1px solid rgba(255,255,255,.28);
+      box-shadow: 0 5px 0 0 var(--primary-2), 0 14px 24px -6px rgba(37,99,235,.5), inset 0 2px 0 rgba(255,255,255,.38), inset 0 -3px 7px rgba(0,0,20,.14); }
+  .btn-primary:hover { background: var(--primary); transform: translateY(2px);
+      box-shadow: 0 3px 0 0 var(--primary-2), 0 10px 18px -6px rgba(37,99,235,.5), inset 0 2px 0 rgba(255,255,255,.38), inset 0 -3px 7px rgba(0,0,20,.14); }
+  .btn-primary:active { transform: translateY(5px);
+      box-shadow: 0 0 0 0 var(--primary-2), 0 4px 10px -4px rgba(37,99,235,.4), inset 0 2px 0 rgba(255,255,255,.3); }
+  .btn-ghost { color: var(--primary); background: rgba(255,255,255,.5); border:1px solid rgba(255,255,255,.7);
+      -webkit-backdrop-filter: blur(10px) saturate(1.4); backdrop-filter: blur(10px) saturate(1.4);
+      box-shadow: 0 4px 0 0 rgba(206,212,235,.9), 0 12px 20px -8px rgba(30,45,120,.3), inset 0 1px 0 rgba(255,255,255,.95); }
+  .btn-ghost:hover { transform: translateY(2px);
+      box-shadow: 0 2px 0 0 rgba(206,212,235,.9), 0 9px 16px -8px rgba(30,45,120,.3), inset 0 1px 0 rgba(255,255,255,.95); }
+  .cta .btn-light { box-shadow: 0 5px 0 0 rgba(0,18,70,.28), 0 14px 24px -8px rgba(0,0,40,.35), inset 0 2px 0 rgba(255,255,255,.9); }
+  .cta .btn-light:hover { background:#fff; transform: translateY(2px); box-shadow: 0 3px 0 0 rgba(0,18,70,.28), 0 10px 18px -8px rgba(0,0,40,.35), inset 0 2px 0 rgba(255,255,255,.9); }
+  .cta .btn-outline { -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+      box-shadow: 0 4px 0 0 rgba(255,255,255,.28), 0 10px 18px -8px rgba(0,0,40,.3), inset 0 1px 0 rgba(255,255,255,.5); }
+  .cta .btn-outline:hover { transform: translateY(2px); }
+
+  /* centered stats strip */
+  .strip .in { flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 16px; padding: 34px 0; }
+  .stat-row { justify-content: center; gap: 46px; }
+  .stat-row .s { text-align: center; }
+
+  /* 3D panels keep moving like a deck of cards */
+  .layer.l1 { animation: deck1 5s ease-in-out infinite; }
+  .layer.l2 { animation: deck2 5s ease-in-out infinite .55s; }
+  .layer.l3 { animation: deck3 5s ease-in-out infinite 1.1s; }
+  @keyframes deck1 { 0%,100% { transform: translateZ(0); }   45% { transform: translateZ(34px) translateY(-6px); } }
+  @keyframes deck2 { 0%,100% { transform: translateZ(46px); } 45% { transform: translateZ(96px) translateY(-11px); } }
+  @keyframes deck3 { 0%,100% { transform: translateZ(92px); } 45% { transform: translateZ(158px) translateY(-17px); } }
+
+  @media (prefers-reduced-motion: reduce){
+    .layer.l1,.layer.l2,.layer.l3 { animation: none !important; }
+    .layer.l1 { transform: translateZ(0); } .layer.l2 { transform: translateZ(46px); } .layer.l3 { transform: translateZ(92px); }
+    .feat::after,.plan::after,.prob::after,.qa::after,.rcard::after,.honesty::after { filter: none; -webkit-filter: none; }
+  }
+</style>
+
+<div class="wf" id="top">
+
+  <div class="aura" aria-hidden="true"></div>
+  <svg width="0" height="0" aria-hidden="true" style="position:absolute"><defs><filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.02 0.02" numOctaves="2" seed="92" result="noise"/><feGaussianBlur in="noise" stdDeviation="2" result="blurred"/><feDisplacementMap in="SourceGraphic" in2="blurred" scale="55" xChannelSelector="R" yChannelSelector="G"/></filter></defs></svg>
+
+  <!-- NAV -->
+    <nav class="nav" id="nav">
+    <div class="nav-bar">
+      <a class="brand" href="#top"><span class="mk">W</span>WorkForce<span class="tld">.dz</span></a>
+      <div class="nav-links">
+        <a class="lk" href="#platform">Platform</a>
+        <a class="lk" href="#how">How it works</a>
+        <a class="lk" href="#pricing">Pricing</a>
+        <a class="lk" href="#faq">FAQ</a>
+      </div>
+      <div class="nav-cta">
+        <a class="lang" href="index.fr.html">FR</a>
+        <a class="btn btn-ghost btn-sm" href="mailto:hello@workforce.dz?subject=WorkForce.dz">Contact us</a>
+        <a class="btn btn-primary btn-sm" href="#demo"><span>Get a demo</span> <span class="arw">&rarr;</span></a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="eyebrow"><span class="dot"></span>Built for Algerian labour law</span>
+        <h1>One platform for your team's <span class="rot" data-rot="payroll,scheduling,leave,hiring,compliance">payroll</span>.</h1>
+        <p class="sub">Hire, schedule, pay and keep your staff in one place that understands Algeria: the Friday to Saturday week, the Hijri calendar, SNMG, CNAS and IRG. AI does the heavy lifting.</p>
+        <div class="hero-cta">
+          <a class="btn btn-primary" href="#demo"><span>See the live demo</span> <span class="arw">&rarr;</span></a>
+          <a class="btn btn-ghost" href="#pilot">Book a free pilot</a>
+          <span class="micro">Free to start. No card needed.</span>
+        </div>
+      </div>
+
+      <!-- 3D isometric illustration of the app -->
+      <div class="scene reveal" aria-label="A 3D illustration of the platform: a calendar layer, a team roster layer, and a metrics layer">
+        <div class="iso">
+          <div class="token"><span class="f"></span><span class="f top"></span><span class="f side"></span></div>
+          <div class="layer l1">
+            <div class="lh"><i></i><i></i><i></i></div>
+            <div class="cal">
+              <span></span><span></span><span class="on"></span><span></span><span></span><span class="hi"></span><span></span>
+              <span></span><span class="on"></span><span></span><span></span><span class="on"></span><span></span><span></span>
+              <span></span><span></span><span></span><span class="hi"></span><span></span><span></span><span class="on"></span>
+              <span class="on"></span><span></span><span></span><span></span><span></span><span></span><span></span>
+            </div>
+          </div>
+          <div class="layer l2">
+            <div class="lh"><i></i><i></i><i></i></div>
+            <div class="rows">
+              <div class="rw"><span class="a"></span><span class="b"></span><span class="t"></span></div>
+              <div class="rw"><span class="a"></span><span class="b"></span><span class="t"></span></div>
+              <div class="rw"><span class="a"></span><span class="b"></span><span class="t"></span></div>
+              <div class="rw"><span class="a"></span><span class="b"></span><span class="t"></span></div>
+            </div>
+          </div>
+          <div class="layer l3">
+            <div class="lh"><i></i><i></i><i></i></div>
+            <div class="chart"><b style="height:40%"></b><b style="height:66%"></b><b style="height:52%"></b><b style="height:84%"></b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- AT A GLANCE -->
+  <section class="band" style="padding-top:24px;">
+    <div class="wrap">
+      <div class="glance-grid">
+        <div>
+          <span class="eyebrow"><span class="dot"></span>One screen, the whole day</span>
+          <h2 style="font-size:clamp(1.7rem,3.4vw,2.4rem);margin-top:.7rem;">Your managers open one screen each morning</h2>
+          <p style="color:var(--ink-2);margin-top:.7rem;">Who is working, who is on leave, who is running late, and whether the roster is legal. No spreadsheets, no guessing.</p>
+          <ul class="checks">
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg> Real SNMG, CNAS and IRG</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg> Hijri calendar</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg> French and English</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg> Works offline</li>
+          </ul>
+        </div>
+        <div class="rcard" id="roster">
+          <div class="r-head"><span class="t">Today's roster</span><span class="r-live"><span class="d"></span>LIVE</span></div>
+          <div class="rrow" data-row><div class="who"><span class="av" style="background:#2563EB">AB</span><div><div class="nm">Amine B.</div><div class="ro">Sorter, morning</div></div></div><span class="pill ok">On time</span></div>
+          <div class="rrow" data-row><div class="who"><span class="av" style="background:#3B82F6">SC</span><div><div class="nm">Sara C.</div><div class="ro">Front desk, day</div></div></div><span class="pill tr">Leave OK</span></div>
+          <div class="rrow" data-row><div class="who"><span class="av" style="background:#0EA5E9">KM</span><div><div class="nm">Karim M.</div><div class="ro">Driver, afternoon</div></div></div><span class="pill wr">Sortie 2h</span></div>
+          <div class="rrow" data-row><div class="who"><span class="av" style="background:#1D4ED8">IH</span><div><div class="nm">Imene H.</div><div class="ro">Supervisor, night</div></div></div><span class="pill ok">On time</span></div>
+          <div class="r-foot"><div><div class="v"><span data-count="100">0</span>%</div><div class="k">Roster legal, overtime within cap</div></div><a class="btn btn-ghost btn-sm" href="#demo">Open</a></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section class="strip">
+    <div class="wrap in">
+      <span class="lab">Trusted where it matters: Algerian law</span>
+      <div class="stat-row">
+        <div class="s"><div class="v"><span data-count="6">0</span> to <span data-count="8">0</span>%</div><div class="k">labour cost saved</div></div>
+        <div class="s"><div class="v"><span data-count="50">0</span>%</div><div class="k">less forecast error</div></div>
+        <div class="s"><div class="v g">138.46</div><div class="k">DZD/hour, exact legal rate</div></div>
+        <div class="s"><div class="v"><span data-count="7">0</span></div><div class="k">HR jobs in one platform</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROBLEM -->
+  <section class="band">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="eyebrow"><span class="dot"></span>The cost of doing HR by hand</span>
+        <h2>Every month, guesswork quietly drains your budget</h2>
+        <p>Spreadsheets and gut feeling are expensive. Here is where the money goes.</p>
+      </div>
+      <div class="prob-grid">
+        <div class="prob reveal"><div class="amt">+26%</div><h3>Hidden payroll cost</h3><p>Most managers plan on gross wage and forget the CNAS employer charge, so the real cost is a quarter higher than they think.</p></div>
+        <div class="prob reveal"><div class="amt">2x</div><h3>A missed delivery</h3><p>Understaff a shift and a cash-on-delivery order is refused. You pay for the trip out and the trip back.</p></div>
+        <div class="prob reveal"><div class="amt">Fines</div><h3>Labour-law risk</h3><p>Overtime over the cap, a CDD run too long, pay below the SNMG. An inspection turns these into real penalties.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLATFORM -->
+  <section class="band" id="platform" style="padding-top:0;">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="eyebrow"><span class="dot"></span>One platform, the whole job</span>
+        <h2>Everything HR does, <span class="mark">without the busywork</span></h2>
+        <p>Hire the right people, staff every shift legally, pay them correctly, and keep them. All in one place.</p>
+      </div>
+      <div class="feat-grid">
+        <div class="feat reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M17 8h5M19.5 5.5v5"/></svg></div><h3>Recruiting</h3><p>Screen Algerian CVs in seconds: formation LMD, service national, langues, permis. Ranked by AI.</p></div>
+        <div class="feat reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="17"/><path d="M3 9h18M8 2v4M16 2v4M8 14h3M8 17.5h6"/></svg></div><h3>Scheduling</h3><p>Forecast demand and build the cheapest legal roster, with the overtime cap and weekly rest handled for you.</p></div>
+        <div class="feat reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></div><h3>Leave &amp; attendance</h3><p>Algerian leave rules, demande de sortie and lateness, decided by the law and by demand.</p></div>
+        <div class="feat reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg></div><h3>Payroll &amp; CNAS/IRG</h3><p>Payslips and the monthly declarations to file. The hourly rate matches the official figure to the centime.</p></div>
+        <div class="feat reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2l8 3v6c0 5-3.4 8.5-8 11-4.6-2.5-8-6-8-11V5z"/><path d="M9 12l2 2 4-4"/></svg></div><h3>Compliance</h3><p>Flags labour-law risk before an inspector does, with the rule and the fix spelled out.</p></div>
+        <div class="feat reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 17l5-5 4 3 6-7"/><path d="M17 5h4v4"/></svg></div><h3>Retention</h3><p>See who is likely to quit, why, and what replacing them costs, so you keep them first.</p></div>
+      </div>
+      <div style="text-align:center;margin-top:24px;" class="reveal note">And an AI copilot that answers any question about staff, pay, leave or the law, in plain words.</div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section class="band" id="how" style="padding-top:0;">
+    <div class="wrap">
+      <div class="sec-head reveal"><span class="eyebrow"><span class="dot"></span>Live in a day</span><h2>Three steps to a legal, cheaper roster</h2></div>
+      <div class="steps">
+        <div class="step reveal"><span class="n">1</span><h3>Connect your team</h3><p>Import your staff, or start from a template. The calendar and wage rules are built in from minute one.</p></div>
+        <div class="step reveal"><span class="n">2</span><h3>Let AI plan the week</h3><p>Forecast demand, build the roster, screen candidates and draft payroll. You review and approve.</p></div>
+        <div class="step reveal"><span class="n">3</span><h3>See the saving</h3><p>Watch cost, service level and compliance on one screen, proven against how you actually ran.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ALGERIA -->
+  <section class="band" style="padding-top:0;">
+    <div class="wrap">
+      <div class="alg reveal"><div class="in">
+        <span class="eyebrow" style="background:rgba(255,255,255,.16);color:#fff;"><span class="dot" style="background:#fff;"></span>Why it wins here</span>
+        <h2 style="margin-top:.8rem;">It actually knows Algeria</h2>
+        <p class="lead">Global HR tools assume a Saturday to Sunday week, a Gregorian year and foreign wage rules. WorkForce.dz is built on the real thing, which is why it gets Algeria right and they do not.</p>
+        <div class="alg-grid">
+          <div class="it"><h4>Friday to Saturday</h4><p>The weekend imported tools get wrong every single week.</p></div>
+          <div class="it"><h4>Hijri calendar</h4><p>Ramadan and the two A&iuml;ds, computed and verified, driving demand and leave.</p></div>
+          <div class="it"><h4>SNMG, CNAS, IRG</h4><p>Real wage floor, social charges and income tax, so payroll is correct.</p></div>
+          <div class="it"><h4>Labour code</h4><p>Overtime caps, weekly rest, leave and contracts, enforced by design.</p></div>
+        </div>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- PROOF -->
+  <section class="band" style="padding-top:0;">
+    <div class="wrap">
+      <div class="sec-head reveal"><span class="eyebrow"><span class="dot"></span>Measured, not promised</span><h2>Numbers we can defend</h2></div>
+      <div class="proof-grid">
+        <div class="metric reveal"><div class="v b">~50%</div><div class="k">lower forecast error than a generic tool</div></div>
+        <div class="metric reveal"><div class="v v">6 to 8%</div><div class="k">labour cost saved, out of sample</div></div>
+        <div class="metric reveal"><div class="v b">138.46</div><div class="k">DZD/hour, matching the official figure</div></div>
+        <div class="metric reveal"><div class="v v">2</div><div class="k">languages, French and English</div></div>
+      </div>
+      <div class="honesty reveal">We are honest on purpose. The operational volumes in the demo are simulated, because no Algerian operator's ledger is public. The calendar, weather, wage law and tax rules driving them are real, and the method transfers unchanged to a pilot. We prove the numbers on your data first.</div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section class="band" id="pricing" style="padding-top:0;">
+    <div class="wrap">
+      <div class="sec-head reveal"><span class="eyebrow"><span class="dot"></span>Pricing</span><h2>Start free. Pay when it pays you back.</h2><p>Priced as a fraction of the value we measure, so it returns more than it costs.</p></div>
+      <div class="price-grid">
+        <div class="plan reveal">
+          <div class="nm">D&eacute;couverte</div><div class="price"><span class="amt">Free</span></div>
+          <div class="ld">Run one site and feel the value, at no cost.</div>
+          <ul>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg> 1 site, up to 25 employees</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg> Scheduling and leave</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg> Algerian calendar and law</li>
+            <li class="mut"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg> Community support</li>
+          </ul>
+          <a class="btn btn-ghost" href="#demo">Start free</a>
+        </div>
+        <div class="plan best reveal">
+          <span class="tag">Most popular</span>
+          <div class="nm">Pro</div><div class="price"><span class="amt v">39,000</span><span class="per">DZD / site / mo</span></div>
+          <div class="ld">The full HR platform for a growing company.</div>
+          <ul>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg> Everything in D&eacute;couverte</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg> Payroll and CNAS/IRG declarations</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg> Recruiting and CV screening</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg> Retention and compliance</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg> AI HR copilot</li>
+          </ul>
+          <a class="btn btn-primary" href="#demo"><span>Start Pro trial</span> <span class="arw">&rarr;</span></a>
+        </div>
+        <div class="plan reveal">
+          <div class="nm">Enterprise</div><div class="price"><span class="amt">Custom</span></div>
+          <div class="ld">For multi-site groups and national networks.</div>
+          <ul>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg> Everything in Pro</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg> Multi-site and org management</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg> API and integrations</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg> Onboarding and model tuning</li>
+            <li class="mut"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg> SLA and dedicated support</li>
+          </ul>
+          <a class="btn btn-ghost" href="#pilot">Talk to us</a>
+        </div>
+      </div>
+      <p class="price-note">Every plan starts with a free pilot on your own numbers. Cancel any time.</p>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="band" id="faq" style="padding-top:0;">
+    <div class="wrap">
+      <div class="sec-head reveal"><span class="eyebrow"><span class="dot"></span>Questions</span><h2>Answers before you ask</h2></div>
+      <div class="faq">
+        <details class="qa reveal"><summary>Do I need years of clean data to start? <span class="pl">+</span></summary><div class="a">No. You can start from a template and add your staff. The Algerian calendar, wage law and tax rules work from day one. The more you use it, the more it learns your site.</div></details>
+        <details class="qa reveal"><summary>Is the roster really legal? <span class="pl">+</span></summary><div class="a">Yes. The overtime cap, weekly rest, SNMG floor and CNAS charges are built into the optimiser, and a compliance check flags anything at risk before you publish.</div></details>
+        <details class="qa reveal"><summary>You said the demo numbers are simulated. Why should I trust it? <span class="pl">+</span></summary><div class="a">Because we are open about it. The demo volumes are synthetic, but the calendar, weather and law behind them are real, and the same method runs on your data in a free pilot, where the numbers are yours.</div></details>
+        <details class="qa reveal"><summary>Does it work in French? <span class="pl">+</span></summary><div class="a">Fully. The whole platform and this site are available in French and English. Switch language any time.</div></details>
+        <details class="qa reveal"><summary>What does it cost to try? <span class="pl">+</span></summary><div class="a">Nothing. The free plan covers one site, and every paid plan begins with a free pilot on your own numbers. No card to start.</div></details>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="band cta" id="demo">
+    <div class="wrap"><div class="box reveal">
+      <h2>Give your team the HR it deserves</h2>
+      <p id="pilot">See hiring, scheduling, payroll and compliance in one place. Or book a free pilot and we set it up on your own numbers.</p>
+      <div class="cta-btns">
+        <a class="btn btn-light" href="#" onclick="return false;"><span>See the live demo</span> <span class="arw">&rarr;</span></a>
+        <a class="btn btn-outline" href="mailto:hello@workforce.dz?subject=WorkForce.dz%20pilot">Book a free pilot</a>
+      </div>
+      <p class="note" style="color:rgba(255,255,255,.8);margin-top:13px;">Free to start. No card needed.</p>
+    </div></div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="foot">
+    <div class="wrap foot-in">
+      <a class="brand" href="#top"><span class="mk">W</span>WorkForce<span class="tld">.dz</span></a>
+      <div class="foot-links"><a href="#platform">Platform</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a><a href="index.fr.html">Fran&ccedil;ais</a><a href="mailto:hello@workforce.dz">Contact</a></div>
+      <div class="foot-made">Made in Algeria <b>&bull;</b> for Algerian companies</div>
+    </div>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var nav = document.getElementById('nav');
+  addEventListener('scroll', function(){ nav && nav.classList.toggle('scrolled', scrollY>8); }, {passive:true});
+  var reveals = [].slice.call(document.querySelectorAll('.reveal'));
+  if (reduce || !('IntersectionObserver' in window)) { reveals.forEach(function(e){ e.classList.add('in'); }); }
+  else { var io=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }); },{threshold:.12,rootMargin:'0px 0px -8% 0px'}); reveals.forEach(function(e){ io.observe(e); }); }
+  function count(el){ var t=+el.getAttribute('data-count'); if(reduce){ el.textContent=t; return; } var s=null; function f(ts){ s=s||ts; var p=Math.min((ts-s)/900,1); el.textContent=Math.round(p*t); if(p<1) requestAnimationFrame(f);} requestAnimationFrame(f); }
+  function fillRoster(){ var rows=[].slice.call(document.querySelectorAll('#roster [data-row]'));
+    if(reduce){ rows.forEach(function(r){ r.classList.add('in'); }); } else { rows.forEach(function(r,i){ setTimeout(function(){ r.classList.add('in'); }, 200+i*230); }); }
+    setTimeout(function(){ document.querySelectorAll('#roster [data-count]').forEach(count); }, reduce?0:200+rows.length*230);
+  }
+  if ('IntersectionObserver' in window && !reduce) {
+    var seen=false, r=document.getElementById('roster');
+    var o=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting && !seen){ seen=true; fillRoster(); o.disconnect(); } }); },{threshold:.3});
+    r?o.observe(r):fillRoster();
+    var strip=document.querySelector('.strip');
+    if(strip){ var o2=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ strip.querySelectorAll('[data-count]').forEach(count); o2.disconnect(); } }); },{threshold:.4}); o2.observe(strip); }
+  } else { fillRoster(); document.querySelectorAll('[data-count]').forEach(count); }
+
+  var rot = document.querySelector('.rot');
+  if (rot) {
+    var words = (rot.getAttribute('data-rot')||'').split(',').map(function(s){return s.trim();}).filter(Boolean);
+    function paintWord(w){ rot.classList.remove('out'); rot.textContent='';
+      for (var k=0;k<w.length;k++){ var sp=document.createElement('span'); sp.className='rc';
+        sp.style.animationDelay=(k*0.03)+'s'; sp.textContent=(w[k]===' '?' ':w[k]); rot.appendChild(sp); } }
+    if (words.length){ paintWord(words[0]);
+      if (!reduce && words.length>1){ var ri=0;
+        setInterval(function(){ rot.classList.add('out');
+          setTimeout(function(){ ri=(ri+1)%words.length; paintWord(words[ri]); }, 200); }, 2400); } }
+  }
+
+})();
+</script>
+</body>
+</html>

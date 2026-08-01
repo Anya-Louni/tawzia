@@ -1,0 +1,10 @@
+pandas>=2.0
+numpy>=1.24
+scikit-learn>=1.3
+scipy>=1.11
+streamlit>=1.57
+altair>=5.0
+requests>=2.31
+groq
+provider        # optional: best AI copilot for the jury demo (set PROVIDER_API_KEY)
+python-dotenv
