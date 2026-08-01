@@ -48,11 +48,25 @@ def _has_module(name: str) -> bool:
     return importlib.util.find_spec(name) is not None
 
 
+def _secret(name: str):
+    """Read a key from the environment or from Streamlit secrets (Cloud)."""
+    v = os.environ.get(name)
+    if v:
+        return v
+    try:
+        import streamlit as st
+        if name in st.secrets:
+            return str(st.secrets[name])
+    except Exception:
+        pass
+    return None
+
+
 def providers_available() -> dict:
     """Which brains can actually answer right now."""
     return {
-        "provider": bool(os.environ.get("PROVIDER_API_KEY")) and _has_module("provider"),
-        "groq": bool(os.environ.get("GROQ_API_KEY")) and _has_module("groq"),
+        "provider": bool(_secret("PROVIDER_API_KEY")) and _has_module("provider"),
+        "groq": bool(_secret("GROQ_API_KEY")) and _has_module("groq"),
     }
 
 
@@ -82,9 +96,9 @@ def status_line() -> str:
 def _call_provider(system: str, user: str, max_tokens: int, temperature: float) -> AIResult:
     import provider  # lazy: only needed if this provider is chosen
 
-    client = provider.Provider(api_key=os.environ["PROVIDER_API_KEY"])
+    client = provider.Provider(api_key=_secret("PROVIDER_API_KEY"))
     resp = client.messages.create(
-        model=PROVIDER_MODEL,
+        model=_secret("PROVIDER_MODEL") or PROVIDER_MODEL,
         max_tokens=max_tokens,
         temperature=temperature,
         system=system,
@@ -98,7 +112,7 @@ def _call_provider(system: str, user: str, max_tokens: int, temperature: float) 
 def _call_groq(system: str, user: str, max_tokens: int, temperature: float) -> AIResult:
     from groq import Groq  # lazy
 
-    client = Groq(api_key=os.environ["GROQ_API_KEY"])
+    client = Groq(api_key=_secret("GROQ_API_KEY"))
     resp = client.chat.completions.create(
         model=GROQ_MODEL,
         max_tokens=max_tokens,
