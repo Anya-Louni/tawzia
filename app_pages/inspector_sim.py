@@ -10,20 +10,31 @@ st.title("Inspection simulator")
 st.caption("Run the labour inspection on yourself first. Every finding is a real "
            "rule check, with the article, an indicative fine band and the fix.")
 
+# Contract / wage / leave checks run on the workforce and are instant.
 people = appdata.hr_people()
-plan = appdata.load_forward_plan(
-    st.session_state["profile_key"], st.session_state["wilaya"],
-    st.session_state["horizon"], st.session_state["regular_pool"],
-    st.session_state["temp_ceiling"], st.session_state["service_level"],
-    st.session_state["allow_network"],
+
+# Roster overtime + coverage checks need the forecast (heavier), so they are
+# optional - this keeps the page instant instead of waiting on the backtest.
+deep = st.toggle(
+    "Also check roster overtime & coverage (runs the forecast, about a minute)",
+    value=False,
+    help="Adds the weekly overtime-cap and understaffing checks, which need the "
+         "demand forecast and roster.",
 )
-roster = plan["roster"]
-cons = appdata.current_constraints()
+roster, cons = None, None
+if deep:
+    with st.spinner("Building the roster from the forecast..."):
+        plan = appdata.load_forward_plan(
+            st.session_state["profile_key"], st.session_state["wilaya"],
+            st.session_state["horizon"], st.session_state["regular_pool"],
+            st.session_state["temp_ceiling"], st.session_state["service_level"],
+            st.session_state["allow_network"],
+        )
+    roster = plan["roster"]
+    cons = appdata.current_constraints()
 
 res = inspector.audit(roster=roster, people=people, constraints=cons)
 
-_STATUS_ICON = {"critical": ":material/gpp_bad:", "warning": ":material/warning:",
-                "ok": ":material/verified_user:"}
 with st.container(horizontal=True):
     st.metric("Inspection risk", f"{res['score']}/100", border=True)
     st.metric("Findings", f"{len(res['findings'])}", border=True,
@@ -33,11 +44,11 @@ with st.container(horizontal=True):
               help="Indicative bands for prioritisation, not legal advice.")
 
 if res["status"] == "ok":
-    st.success(f"{_STATUS_ICON['ok']} {res['label']}", icon=":material/verified_user:")
+    st.success(res["label"], icon=":material/verified_user:")
 elif res["status"] == "warning":
-    st.warning(f"{res['label']}", icon=":material/warning:")
+    st.warning(res["label"], icon=":material/warning:")
 else:
-    st.error(f"{res['label']}", icon=":material/gpp_bad:")
+    st.error(res["label"], icon=":material/gpp_bad:")
 
 with st.container(border=True):
     st.subheader("What an inspector would write up")
