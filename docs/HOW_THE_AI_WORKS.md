@@ -183,3 +183,36 @@ python -m core.pipeline        # end-to-end saving, out of sample
 
 Each core module self-checks when run this way, so you can show a skeptic the
 numbers being produced live.
+
+---
+
+## New AI features (v2)
+
+Three additions that lean harder on AI, each grounded on the deterministic engine
+so nothing is hallucinated.
+
+**Inspection simulator (`core/inspector.py`).** A dry run of the labour
+inspection. It runs the rule-based compliance checks (real facts: overtime cap,
+CDD over 24 months, pay below SNMG, coverage, leave), attaches to each an
+article, an indicative fine band and a catch-likelihood, then an LLM writes the
+inspector's report and the cheapest fix order. The findings are code; only the
+narrative is AI. Fine bands are labelled indicative, not legal advice.
+
+**Journal Officiel watch (`core/regwatch.py`).** Keeps a register of the labour
+and payroll rules we enforce, checks whether the live configuration still matches
+the current legal value, and lets you simulate a rule change (for example a new
+SNMG) to see exactly who is affected and what it costs across the real workforce,
+with an AI-drafted compliance notice. In the demo the register is a curated
+summary; in production it is fed by automatic ingestion of the Journal Officiel.
+
+**Retention negotiator (`core/retention.py`).** For a flight-risk employee it
+takes each retention lever (raise, CDD to CDI, overdue leave, attendance
+conversation, onboarding), runs a counterfactual through the same attrition model
+(change the driver the lever targets, re-score the risk), and turns the drop in
+risk into money saved. The best net-value lever wins, and an LLM writes the
+manager's one-to-one script. The model-based counterfactual is the real method;
+the money figures are directional until the model is re-fit on a pilot.
+
+**Odoo (`core/odoo_bridge.py`).** Reads employees and contracts from a live Odoo
+over its XML-RPC API and maps them into our model, so all of the above runs on a
+customer's existing Odoo data. See [ODOO.md](ODOO.md).
