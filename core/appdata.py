@@ -358,26 +358,27 @@ def data_badge() -> None:
 
 
 def inject_theme() -> None:
-    """A light CSS polish so the app matches the blue-to-violet marketing site."""
+    """Flat, sharp, trust-blue polish so the app matches the marketing site."""
     st.markdown(
         """
         <style>
-        :root { --wf-grad: linear-gradient(120deg,#3E63DD 0%,#6D46E4 55%,#8B3AEF 100%); }
-        .stApp h1 {
-            background: var(--wf-grad); -webkit-background-clip: text; background-clip: text;
-            color: transparent; font-weight: 800; letter-spacing: -0.02em;
-        }
+        .stApp h1 { color:#16172A; font-weight:800; letter-spacing:-0.02em; }
+        .stApp h2, .stApp h3 { color:#16172A; letter-spacing:-0.01em; }
         .stButton > button[kind="primary"], .stDownloadButton > button {
-            background: var(--wf-grad); border: none; color: #fff;
-            box-shadow: 0 8px 20px -8px rgba(108,70,228,.55);
+            background:#2563EB; border:1px solid #2563EB; color:#fff; border-radius:0;
+            font-weight:700;
+            box-shadow:0 2px 0 0 #1D4ED8, 0 8px 18px -8px rgba(37,99,235,.45);
         }
-        .stButton > button[kind="primary"]:hover, .stDownloadButton > button:hover { filter: brightness(1.06); }
+        .stButton > button[kind="primary"]:hover, .stDownloadButton > button:hover {
+            background:#1D4ED8; border-color:#1D4ED8;
+        }
         [data-testid="stMetric"] {
-            border-radius: 16px;
-            box-shadow: 0 1px 2px rgba(30,30,70,.05), 0 6px 16px -8px rgba(60,40,120,.12);
+            background:#fff; border:1px solid #E6E6EE; border-radius:0; padding:14px 16px;
+            box-shadow:0 1px 2px rgba(28,40,90,.05), 0 10px 22px -14px rgba(28,55,130,.20);
         }
-        [data-testid="stSidebar"] > div:first-child { border-top: 3px solid transparent; border-image: var(--wf-grad) 1; }
-        .stTabs [aria-selected="true"] { color: #6D46E4 !important; }
+        [data-testid="stSidebar"] > div:first-child { border-top:3px solid #2563EB; }
+        .stTabs [aria-selected="true"] { color:#2563EB !important; }
+        a, .stMarkdown a { color:#2563EB; }
         </style>
         """,
         unsafe_allow_html=True,

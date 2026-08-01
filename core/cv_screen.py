@@ -314,6 +314,141 @@ def rank(cvs: dict, job: Job, use_ai: bool = True) -> list:
 
 
 # ---------------------------------------------------------------------------
+# Free-form AI evaluation: any job (in your own words), any CV, real judgement
+# ---------------------------------------------------------------------------
+
+JOB_TEMPLATES_TEXT = {
+    "sorter": "Agent de tri / magasinier pour un hub e-commerce. Missions : tri "
+              "des colis, scan, gestion de stock, manutention. Profil : Bac "
+              "minimum, 1 an d'experience en logistique, arabe et francais, "
+              "service national degage, disponible en shifts.",
+    "courier": "Chauffeur-livreur (livraison COD). Permis B obligatoire, 1 an "
+               "d'experience, bonne connaissance de la wilaya, relation client, "
+               "encaissement. Arabe et francais, ponctuel et mobile.",
+    "checkin_agent": "Agent d'escale / check-in aeroport. Licence, anglais "
+                     "courant, accueil passagers, billetterie, gestion des flux. "
+                     "Service national degage, disponible en horaires decales.",
+    "front_desk": "Receptionniste d'hotel. Licence, arabe / francais / anglais, "
+                  "accueil, reservation, sens du service, disponibilite en shifts "
+                  "y compris nuit et week-end.",
+    "housekeeper": "Femme / valet de chambre en hotellerie. Experience en "
+                   "nettoyage et entretien, rigueur, discretion, disponibilite en "
+                   "shifts, arabe et francais.",
+    "driver": "Chauffeur de transport de personnes. Permis adapte, experience de "
+              "conduite, connaissance du reseau, ponctualite, relation client, "
+              "arabe et francais.",
+}
+
+_AI_EVAL_SYSTEM = (
+    "You are an experienced Algerian recruiter. You get a job description (in the "
+    "employer's own words) and a candidate CV in French, Algerian format, plus a "
+    "structured profile already extracted from it. Judge the fit for THIS role in "
+    "Algerian context: formation (LMD, ingeniorat, BTS...), service national, "
+    "langues, wilaya and mobilite, permis, and real experience. Be fair, specific "
+    "and concrete; ground every point in the CV, never invent facts. "
+    "Return ONLY a JSON object with keys: score (integer 0-100), verdict (one of "
+    "strong, possible, weak), summary (2 to 3 sentences), strengths (list of short "
+    "strings), gaps (list of short strings), red_flags (list, can be empty), "
+    "interview_questions (list of 3 to 5 sharp French questions tailored to this "
+    "candidate and role), recommendation (one short sentence)."
+)
+
+
+def _cand_profile(c: Candidate) -> dict:
+    return {
+        "name": c.name, "wilaya": c.wilaya, "education": c.education,
+        "experience_years": c.experience_years, "positions": c.positions,
+        "skills": c.skills, "languages": c.languages,
+        "driving_licence": c.driving_licence,
+        "service_national": c.service_national, "mobility": c.mobility,
+    }
+
+
+def _clean_list(v, limit: int) -> list:
+    if not isinstance(v, list):
+        return []
+    return [str(x).strip() for x in v if str(x).strip()][:limit]
+
+
+def _sanitize_eval(data: dict, cand: Candidate, method: str) -> dict:
+    try:
+        sc = int(round(float(data.get("score", 0))))
+    except Exception:
+        sc = 0
+    sc = max(0, min(100, sc))
+    verdict = str(data.get("verdict", "")).lower().strip()
+    if verdict not in ("strong", "possible", "weak"):
+        verdict = "strong" if sc >= 70 else ("possible" if sc >= 45 else "weak")
+    return {
+        "score": sc,
+        "verdict": verdict,
+        "summary": str(data.get("summary", "")).strip(),
+        "strengths": _clean_list(data.get("strengths"), 6),
+        "gaps": _clean_list(data.get("gaps"), 6),
+        "red_flags": _clean_list(data.get("red_flags"), 5),
+        "interview_questions": _clean_list(data.get("interview_questions"), 6),
+        "recommendation": str(data.get("recommendation", "")).strip(),
+        "candidate": cand,
+        "method": method,
+    }
+
+
+def _fallback_eval(cand: Candidate, job_text: str) -> dict:
+    """No-AI heuristic evaluation, so the feature still works without a key."""
+    edu = EDUCATION_RANK.get(cand.education, 0)
+    parts = []
+    parts.append(min(edu / 4.0, 1.0))                      # education vs a licence
+    parts.append(min(cand.experience_years / 3.0, 1.0))    # experience
+    parts.append(min(len(cand.languages) / 3.0, 1.0))      # languages
+    sc = int(round(sum(parts) / len(parts) * 100))
+    verdict = "strong" if sc >= 70 else ("possible" if sc >= 45 else "weak")
+    strengths, gaps = [], []
+    if cand.experience_years >= 1:
+        strengths.append(f"{cand.experience_years:.0f} ans d'experience")
+    else:
+        gaps.append("Peu ou pas d'experience indiquee")
+    if cand.languages:
+        strengths.append("Langues : " + ", ".join(cand.languages))
+    if cand.driving_licence:
+        strengths.append("Permis de conduire")
+    if cand.service_national not in ("degage", "exempte", "n/a"):
+        gaps.append(f"Service national : {cand.service_national}")
+    jt = _normalise(job_text)
+    if "permis" in jt and not cand.driving_licence:
+        gaps.append("Permis requis par le poste, non indique sur le CV")
+    questions = [
+        "Parlez-moi de votre experience la plus proche de ce poste.",
+        "Quelle est votre disponibilite (shifts, week-end, debut tot) ?",
+        "Comment gerez-vous une journee de forte charge ?",
+    ]
+    return {
+        "score": sc, "verdict": verdict,
+        "summary": f"Profil {verdict} sur la base des elements extraits du CV "
+                   f"(formation {cand.education}, {cand.experience_years:.0f} ans, "
+                   f"{len(cand.languages)} langue(s)).",
+        "strengths": strengths, "gaps": gaps, "red_flags": [],
+        "interview_questions": questions,
+        "recommendation": "Ajoutez une cle AI pour une evaluation plus fine et "
+                          "des questions sur mesure.",
+        "candidate": cand, "method": "rules",
+    }
+
+
+def evaluate_freeform(cv_text: str, job_text: str, use_ai: bool = True) -> dict:
+    """Evaluate any CV against any free-text job description, with AI reasoning."""
+    cand, _ = extract(cv_text, use_ai=use_ai)
+    if use_ai and any(ai.providers_available().values()):
+        user = (f"JOB DESCRIPTION:\n{job_text}\n\nCANDIDATE CV:\n{cv_text}\n\n"
+                f"EXTRACTED PROFILE (JSON):\n{json.dumps(_cand_profile(cand), ensure_ascii=False)}")
+        res = ai.chat(_AI_EVAL_SYSTEM, user, max_tokens=1000, temperature=0.3)
+        if res.ok:
+            data = _parse_json(res.text)
+            if data:
+                return _sanitize_eval(data, cand, "ai")
+    return _fallback_eval(cand, job_text)
+
+
+# ---------------------------------------------------------------------------
 # Sample Algerian CVs (synthetic, French)
 # ---------------------------------------------------------------------------
 
