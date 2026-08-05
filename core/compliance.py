@@ -67,11 +67,11 @@ def _weekly_overtime_alerts(roster: pd.DataFrame, cap: float) -> list:
         if ratio > cap + 1e-9:
             alerts.append(Alert(
                 "critical", "Overtime",
-                f"Week {week}: overtime is {ratio:.0%} of regular hours, over the "
-                f"{cap:.0%} statutory cap.",
-                "Loi 90-11 - overtime capped at 20% of legal working time.",
-                "Add regular or temp headcount that week, or move demand-heavy "
-                "tasks; do not schedule the excess overtime.",
+                f"Semaine {week} : les heures supplémentaires atteignent {ratio:.0%} "
+                f"des heures normales, au-dessus du plafond légal de {cap:.0%}.",
+                "Loi 90-11 , heures supplémentaires plafonnées à 20% du temps de travail légal.",
+                "Ajouter de l'effectif permanent ou intérimaire cette semaine, ou "
+                "déplacer les tâches à forte charge ; ne pas planifier l'excédent d'heures sup.",
             ))
     return alerts
 
@@ -85,12 +85,12 @@ def _coverage_alerts(roster: pd.DataFrame) -> list:
         worst = short.assign(gap=short["required_workers"] - short["total_staff"]).nlargest(1, "gap").iloc[0]
         alerts.append(Alert(
             "warning", "Coverage",
-            f"{len(short)} shift(s) rostered below forecast need - worst is "
-            f"{worst['shift']} on {pd.to_datetime(worst['date']):%d %b} "
+            f"{len(short)} shift(s) planifié(s) sous le besoin prévu , le pire est "
+            f"{worst['shift']} le {pd.to_datetime(worst['date']):%d %b} "
             f"({int(worst['total_staff'])} vs {int(worst['required_workers'])}).",
-            "Service-level policy - understaffing risks missed service (in COD "
-            "e-commerce, a delivery paid for twice).",
-            "Raise the temp ceiling or the service level for those shifts.",
+            "Politique de niveau de service , le sous-effectif risque une rupture "
+            "de service (en e-commerce COD, une livraison payée deux fois).",
+            "Augmenter le plafond d'intérimaires ou le niveau de service pour ces shifts.",
         ))
     return alerts
 
@@ -105,11 +105,11 @@ def _workforce_alerts(people: list, as_of: _dt.date) -> list:
     if long_cdd:
         alerts.append(Alert(
             "critical", "Contracts",
-            f"{len(long_cdd)} fixed-term (CDD) contract(s) over {CDD_MAX_MONTHS} "
-            f"months (e.g. {long_cdd[0]}).",
-            "Algerian labour practice - a long-running CDD risks reclassification "
-            "as a permanent (CDI) contract.",
-            "Review for conversion to CDI or a documented, lawful renewal.",
+            f"{len(long_cdd)} contrat(s) à durée déterminée (CDD) de plus de "
+            f"{CDD_MAX_MONTHS} mois (ex. {long_cdd[0]}).",
+            "Pratique du droit du travail algérien , un CDD trop long risque une "
+            "requalification en contrat permanent (CDI).",
+            "Étudier une conversion en CDI ou un renouvellement documenté et légal.",
         ))
 
     # Negative / over-drawn leave balances
@@ -117,9 +117,9 @@ def _workforce_alerts(people: list, as_of: _dt.date) -> list:
     if overdrawn:
         alerts.append(Alert(
             "warning", "Leave",
-            f"{len(overdrawn)} employee(s) show a negative leave balance.",
-            "Annual leave accrues at 2.5 days/month and cannot be over-drawn.",
-            "Correct the ledger or record the excess as unpaid leave.",
+            f"{len(overdrawn)} employé(s) avec un solde de congés négatif.",
+            "Les congés annuels s'acquièrent à 2,5 jours/mois et ne peuvent être dépassés.",
+            "Corriger le registre ou enregistrer l'excédent en congé sans solde.",
         ))
 
     # Pay below SNMG
@@ -127,10 +127,10 @@ def _workforce_alerts(people: list, as_of: _dt.date) -> list:
     if below:
         alerts.append(Alert(
             "critical", "Minimum wage",
-            f"{len(below)} employee(s) below the SNMG of "
+            f"{len(below)} employé(s) sous le SNMG de "
             f"{labour_dz.SNMG_MONTHLY:,.0f} DZD.",
-            "SNMG is a legal floor for full-time monthly pay.",
-            "Raise base pay to at least the SNMG immediately.",
+            "Le SNMG est un plancher légal pour un salaire mensuel à temps plein.",
+            "Relever le salaire de base au moins au SNMG immédiatement.",
         ))
     return alerts
 

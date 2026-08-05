@@ -1,4 +1,4 @@
-"""Inspection simulator - a dry run of the labour inspection before it happens."""
+"""Simulateur d'inspection , un test de l'inspection du travail avant l'inspecteur."""
 
 import streamlit as st
 
@@ -6,24 +6,25 @@ from core import appdata, inspector, ai
 
 appdata.sidebar_controls()
 
-st.title("Inspection simulator")
-st.caption("Run the labour inspection on yourself first. Every finding is a real "
-           "rule check, with the article, an indicative fine band and the fix.")
+st.title("Simulateur d'inspection")
+st.caption("Passez l'inspection du travail sur vous-même d'abord. Chaque constat "
+           "est une vraie vérification de règle, avec l'article, une fourchette "
+           "d'amende indicative et la correction.")
 
-# Contract / wage / leave checks run on the workforce and are instant.
+# Les contrôles contrat / salaire / congés se font sur l'effectif : instantanés.
 people = appdata.hr_people()
 
-# Roster overtime + coverage checks need the forecast (heavier), so they are
-# optional - this keeps the page instant instead of waiting on the backtest.
+# Les contrôles heures sup / couverture ont besoin de la prévision (plus lourd),
+# donc ils sont optionnels , la page reste instantanée par défaut.
 deep = st.toggle(
-    "Also check roster overtime & coverage (runs the forecast, about a minute)",
+    "Vérifier aussi les heures sup et la couverture (lance la prévision, ~1 min)",
     value=False,
-    help="Adds the weekly overtime-cap and understaffing checks, which need the "
-         "demand forecast and roster.",
+    help="Ajoute les contrôles du plafond d'heures supplémentaires et du "
+         "sous-effectif, qui nécessitent la prévision et le planning.",
 )
 roster, cons = None, None
 if deep:
-    with st.spinner("Building the roster from the forecast..."):
+    with st.spinner("Construction du planning à partir de la prévision..."):
         plan = appdata.load_forward_plan(
             st.session_state["profile_key"], st.session_state["wilaya"],
             st.session_state["horizon"], st.session_state["regular_pool"],
@@ -36,42 +37,52 @@ if deep:
 res = inspector.audit(roster=roster, people=people, constraints=cons)
 
 with st.container(horizontal=True):
-    st.metric("Inspection risk", f"{res['score']}/100", border=True)
-    st.metric("Findings", f"{len(res['findings'])}", border=True,
-              help=f"{res['scorecard']['critical']} critical, {res['scorecard']['warning']} warning")
-    st.metric("Est. fine exposure",
+    st.metric("Risque d'inspection", f"{res['score']}/100", border=True)
+    st.metric("Constats", f"{len(res['findings'])}", border=True,
+              help=f"{res['scorecard']['critical']} critiques, {res['scorecard']['warning']} avertissements")
+    st.metric("Exposition estimée",
               f"{res['exposure_low']:,} - {res['exposure_high']:,} DZD", border=True,
-              help="Indicative bands for prioritisation, not legal advice.")
+              help="Fourchettes indicatives pour prioriser, ce n'est pas un avis juridique.")
 
+_labels = {
+    "ok": "Passerait probablement une inspection aujourd'hui",
+    "warning": "Exposition modérée , à corriger",
+    "critical": "Exposition élevée , à corriger avant toute inspection",
+}
+_msg = _labels.get(res["status"], res["label"])
 if res["status"] == "ok":
-    st.success(res["label"], icon=":material/verified_user:")
+    st.success(_msg, icon=":material/verified_user:")
 elif res["status"] == "warning":
-    st.warning(res["label"], icon=":material/warning:")
+    st.warning(_msg, icon=":material/warning:")
 else:
-    st.error(res["label"], icon=":material/gpp_bad:")
+    st.error(_msg, icon=":material/gpp_bad:")
 
 with st.container(border=True):
-    st.subheader("What an inspector would write up")
+    st.subheader("Ce qu'un inspecteur relèverait")
+    df = inspector.to_frame(res["findings"])
+    df = df.rename(columns={
+        "Severity": "Gravité", "Violation": "Infraction", "Legal basis": "Base légale",
+        "Est. fine exposure": "Amende estimée", "Catch likelihood": "Probabilité de détection",
+        "Fix": "Correction",
+    })
     st.dataframe(
-        inspector.to_frame(res["findings"]), hide_index=True, width="stretch",
+        df, hide_index=True, width="stretch",
         column_config={
-            "Violation": st.column_config.TextColumn(width="large"),
-            "Fix": st.column_config.TextColumn(width="large"),
+            "Infraction": st.column_config.TextColumn(width="large"),
+            "Correction": st.column_config.TextColumn(width="large"),
         },
     )
 
 with st.container(border=True):
-    st.subheader("The inspector's report")
+    st.subheader("Le rapport de l'inspecteur")
     st.caption(ai.status_line())
-    c1, c2 = st.columns([1, 3])
-    lang = c1.radio("Language", ["en", "fr"], format_func=lambda x: "English" if x == "en" else "Francais",
-                    horizontal=True, key="insp_lang")
-    if c1.button("Write the report", type="primary", icon=":material/gavel:"):
-        with st.spinner("Simulating the inspection..."):
-            st.session_state["insp_report"] = inspector.report(res, lang=lang)
-    st.markdown(st.session_state.get("insp_report") or inspector._template_report(res, lang))
+    if st.button("Rédiger le rapport", type="primary", icon=":material/gavel:"):
+        with st.spinner("Simulation de l'inspection..."):
+            st.session_state["insp_report"] = inspector.report(res, lang="fr")
+    st.markdown(st.session_state.get("insp_report") or inspector._template_report(res, "fr"))
 
-st.caption(":material/balance: Fine bands are indicative, for prioritising fixes. "
-           "Actual penalties follow the Algerian labour code and the inspector's "
-           "discretion. Confirm with counsel before acting.")
+st.caption(":material/balance: Les fourchettes d'amende sont indicatives, pour "
+           "prioriser les corrections. Les pénalités réelles suivent le code du "
+           "travail algérien et l'appréciation de l'inspecteur. Vérifiez avec un "
+           "conseil avant d'agir.")
 appdata.data_badge()

@@ -34,7 +34,8 @@ FINE_BANDS = {
     "Leave":        (10_000, 30_000),
     "Coverage":     (0, 0),
 }
-_LIKELIHOOD = {"critical": "Likely", "warning": "Possible", "info": "Low"}
+_LIKELIHOOD = {"critical": "Probable", "warning": "Possible", "info": "Faible"}
+_SEVERITY_FR = {"critical": "CRITIQUE", "warning": "AVERTISSEMENT", "info": "INFO"}
 
 
 @dataclass
@@ -51,7 +52,7 @@ class Finding:
     def as_row(self) -> dict:
         band = "-" if self.fine_high == 0 else f"{self.fine_low:,} - {self.fine_high:,} DZD"
         return {
-            "Severity": self.severity.upper(),
+            "Severity": _SEVERITY_FR.get(self.severity, self.severity.upper()),
             "Violation": self.message,
             "Legal basis": self.article,
             "Est. fine exposure": band,
@@ -87,13 +88,13 @@ def audit(roster=None, people=None, constraints=None, as_of: Optional[_dt.date] 
     # A 0..100 "inspection risk" score: critical findings dominate.
     score = min(100, card["critical"] * 28 + card["warning"] * 10)
     if score >= 55:
-        verdict = ("critical", "High exposure - fix before any inspection")
+        verdict = ("critical", "Exposition élevée , à corriger avant toute inspection")
     elif score >= 20:
-        verdict = ("warning", "Moderate exposure - schedule fixes")
+        verdict = ("warning", "Exposition modérée , planifier des corrections")
     elif findings:
-        verdict = ("warning", "Minor issues to tidy up")
+        verdict = ("warning", "Points mineurs à régulariser")
     else:
-        verdict = ("ok", "Would likely pass an inspection today")
+        verdict = ("ok", "Passerait probablement une inspection aujourd'hui")
 
     return {
         "findings": findings,
@@ -148,13 +149,21 @@ def report(result: dict, lang: str = "en") -> str:
     return _template_report(result, lang)
 
 
-def _template_report(result: dict, lang: str) -> str:
-    lines = [f"Inspection risk {result['score']}/100 - {result['label']}.",
-             f"Estimated exposure {result['exposure_low']:,} to {result['exposure_high']:,} DZD.", ""]
+def _template_report(result: dict, lang: str = "fr") -> str:
+    if lang == "en":
+        lines = [f"Inspection risk {result['score']}/100 - {result['label']}.",
+                 f"Estimated exposure {result['exposure_low']:,} to {result['exposure_high']:,} DZD.", ""]
+        for i, f in enumerate(result["findings"], 1):
+            lines.append(f"{i}. [{f.severity.upper()}] {f.message}")
+            lines.append(f"   Basis: {f.article}")
+            lines.append(f"   Fix: {f.fix}")
+        return "\n".join(lines)
+    lines = [f"Risque d'inspection {result['score']}/100 , {result['label']}.",
+             f"Exposition estimée : {result['exposure_low']:,} à {result['exposure_high']:,} DZD.", ""]
     for i, f in enumerate(result["findings"], 1):
-        lines.append(f"{i}. [{f.severity.upper()}] {f.message}")
-        lines.append(f"   Basis: {f.article}")
-        lines.append(f"   Fix: {f.fix}")
+        lines.append(f"{i}. [{_SEVERITY_FR.get(f.severity, f.severity.upper())}] {f.message}")
+        lines.append(f"   Base : {f.article}")
+        lines.append(f"   Correction : {f.fix}")
     return "\n".join(lines)
 
 

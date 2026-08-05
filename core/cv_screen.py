@@ -349,8 +349,10 @@ _AI_EVAL_SYSTEM = (
     "Return ONLY a JSON object with keys: score (integer 0-100), verdict (one of "
     "strong, possible, weak), summary (2 to 3 sentences), strengths (list of short "
     "strings), gaps (list of short strings), red_flags (list, can be empty), "
-    "interview_questions (list of 3 to 5 sharp French questions tailored to this "
-    "candidate and role), recommendation (one short sentence)."
+    "interview_questions (list of 3 to 5 sharp questions tailored to this "
+    "candidate and role), recommendation (one short sentence). "
+    "Write ALL text fields (summary, strengths, gaps, red_flags, "
+    "interview_questions, recommendation) in FRENCH."
 )
 
 
