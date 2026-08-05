@@ -100,7 +100,7 @@ PROFILES = {
     "ecom_hub": OperationProfile(
         key="ecom_hub",
         label="Hub e-commerce",
-        demand_unit="parcels",
+        demand_unit="colis",
         primary_role="sorter",
         base_daily_volume=9_500,
         shift_split={"morning": 0.42, "afternoon": 0.40, "night": 0.18},
@@ -126,7 +126,7 @@ PROFILES = {
     "airport_ground": OperationProfile(
         key="airport_ground",
         label="Assistance aéroportuaire",
-        demand_unit="passengers",
+        demand_unit="passagers",
         primary_role="checkin_agent",
         base_daily_volume=14_000,
         shift_split={"morning": 0.40, "afternoon": 0.38, "night": 0.22},
@@ -152,7 +152,7 @@ PROFILES = {
     "retail_dc": OperationProfile(
         key="retail_dc",
         label="Centre de distribution retail",
-        demand_unit="cases",
+        demand_unit="cartons",
         primary_role="warehouse_op",
         base_daily_volume=6_800,
         shift_split={"morning": 0.45, "afternoon": 0.37, "night": 0.18},
@@ -177,7 +177,7 @@ PROFILES = {
     "hotel": OperationProfile(
         key="hotel",
         label="Hôtellerie",
-        demand_unit="occupied rooms",
+        demand_unit="chambres occupées",
         primary_role="housekeeper",
         base_daily_volume=520,
         shift_split={"morning": 0.46, "afternoon": 0.34, "night": 0.20},
@@ -202,7 +202,7 @@ PROFILES = {
     "transport": OperationProfile(
         key="transport",
         label="Transport de personnes & flotte",
-        demand_unit="passenger-trips",
+        demand_unit="trajets passagers",
         primary_role="driver",
         base_daily_volume=4_200,
         shift_split={"morning": 0.42, "afternoon": 0.36, "night": 0.22},

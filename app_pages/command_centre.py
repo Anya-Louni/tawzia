@@ -1,4 +1,4 @@
-"""Command centre — the operational view a shift manager opens each morning."""
+"""Tableau de bord , l'écran qu'un responsable ouvre chaque matin."""
 
 import pandas as pd
 import streamlit as st
@@ -11,10 +11,10 @@ profile = demand_mod.PROFILES[st.session_state["profile_key"]]
 wilaya = st.session_state["wilaya"]
 horizon = st.session_state["horizon"]
 
-st.title("Command centre")
+st.title("Tableau de bord")
 st.caption(
-    f"{profile.label} · {wilaya} · next {horizon} days · "
-    f"demand measured in {profile.demand_unit}"
+    f"{profile.label} · {wilaya} · {horizon} prochains jours · "
+    f"demande mesurée en {profile.demand_unit}"
 )
 industry.banner()
 
@@ -33,12 +33,12 @@ roster = plan["roster"]
 
 if plan["infeasible"]:
     st.error(
-        "**This site cannot legally cover the forecast.** The permanent pool "
-        "plus the temp ceiling is not enough, within the statutory overtime "
-        "cap and weekly rest requirement, to serve forecast demand. That is a "
-        "real finding, not an error — the site needs more headcount. Raise the "
-        "permanent workforce or the temp ceiling in the sidebar to see what "
-        "it would take.",
+        "**Ce site ne peut pas couvrir légalement la prévision.** L'effectif "
+        "permanent plus le plafond d'intérimaires ne suffit pas, dans les limites "
+        "du plafond d'heures supplémentaires et du repos hebdomadaire, à servir la "
+        "demande prévue. C'est un vrai constat, pas une erreur : le site a besoin "
+        "de plus d'effectif. Augmentez l'effectif permanent ou le plafond "
+        "d'intérimaires dans la barre latérale pour voir ce qu'il faudrait.",
         icon=":material/warning:",
     )
 
@@ -59,39 +59,39 @@ temp_share = (
 
 with st.container(horizontal=True):
     st.metric(
-        f"Forecast {profile.demand_unit}",
+        f"Prévision , {profile.demand_unit}",
         f"{daily['forecast'].sum():,.0f}",
         border=True,
         chart_data=daily["forecast"].tolist(),
         chart_type="line",
-        help=f"Total over the next {horizon} days.",
+        help=f"Total sur les {horizon} prochains jours.",
     )
     st.metric(
-        "Peak day",
+        "Jour de pic",
         pd.to_datetime(peak_row["date"]).strftime("%d %b"),
         f"{peak_row['forecast']:,.0f}",
         border=True,
     )
     st.metric(
-        "Peak crew",
+        "Effectif de pic",
         f"{peak_staff}",
         border=True,
         chart_data=daily_staff["staff"].tolist(),
         chart_type="bar",
-        help="Busiest day, all shifts combined.",
+        help="Jour le plus chargé, tous shifts confondus.",
     )
     st.metric(
-        "Planned labour cost",
+        "Coût de main-d'œuvre planifié",
         appdata.dzd(total_cost, compact=True),
         border=True,
-        help="Loaded cost including CNAS employer charges and statutory premiums.",
+        help="Coût chargé incluant les charges patronales CNAS et les primes légales.",
     )
     st.metric(
-        "Temp reliance",
+        "Recours à l'intérim",
         f"{temp_share:.0f}%",
         border=True,
-        help="Share of rostered worker-shifts filled by agency temps, which "
-             "carry a 35% markup.",
+        help="Part des shifts couverts par des intérimaires, qui portent une "
+             "majoration de 35%.",
     )
 
 st.divider()
@@ -100,33 +100,33 @@ left, right = st.columns([3, 2])
 
 with left:
     with st.container(border=True):
-        st.subheader("Forecast demand")
+        st.subheader("Demande prévue")
         st.caption(
-            "Shaded band is the p10–p90 interval, derived from realised "
-            "backtest error at each horizon — not an assumed distribution."
+            "La zone ombrée est l'intervalle p10-p90, dérivé de l'erreur réelle "
+            "du backtest à chaque horizon , ce n'est pas une distribution supposée."
         )
         chart_df = daily.set_index("date")[["p10", "forecast", "p90"]]
-        chart_df.columns = ["Low (p10)", "Forecast", "High (p90)"]
+        chart_df.columns = ["Bas (p10)", "Prévision", "Haut (p90)"]
         st.line_chart(chart_df, height=280, color=["#C9CFD9", "#C8102E", "#C9CFD9"])
 
 with right:
     with st.container(border=True):
-        st.subheader("What's driving the next few weeks")
+        st.subheader("Ce qui influence les prochaines semaines")
         events = appdata.load_calendar_events(days=max(horizon + 60, 120))
         if events.empty:
-            st.caption("No major Algerian calendar events in this window.")
+            st.caption("Aucun grand événement du calendrier algérien dans cette fenêtre.")
         else:
             for _, e in events.head(5).iterrows():
-                st.markdown(f"**{e['Date']:%d %b}** — {e['Event']}")
+                st.markdown(f"**{e['Date']:%d %b}** , {e['Event']}")
                 st.caption(e["Impact"])
 
 st.divider()
 
 with st.container(border=True):
-    st.subheader("Recommended roster")
+    st.subheader("Planning recommandé")
     st.caption(
-        f"Built to the p{st.session_state['service_level'] * 100:.0f} demand "
-        f"quantile, within the statutory overtime cap and weekly rest rules."
+        f"Construit au quantile de demande p{st.session_state['service_level'] * 100:.0f}, "
+        f"dans les limites du plafond d'heures supplémentaires et du repos hebdomadaire."
     )
     show = roster[[
         "date", "shift", "forecast_for_roster", "required_workers",
@@ -141,17 +141,17 @@ with st.container(border=True):
             "date": "Date",
             "shift": "Shift",
             "forecast_for_roster": st.column_config.NumberColumn(
-                f"Forecast {profile.demand_unit}", format="%d"
+                f"Prévision , {profile.demand_unit}", format="%d"
             ),
-            "required_workers": st.column_config.NumberColumn("Needed", format="%d"),
-            "regular": st.column_config.NumberColumn("Regular", format="%d"),
-            "overtime": st.column_config.NumberColumn("Overtime", format="%d"),
-            "temp": st.column_config.NumberColumn("Temp", format="%d"),
+            "required_workers": st.column_config.NumberColumn("Requis", format="%d"),
+            "regular": st.column_config.NumberColumn("Permanents", format="%d"),
+            "overtime": st.column_config.NumberColumn("Heures sup", format="%d"),
+            "temp": st.column_config.NumberColumn("Intérim", format="%d"),
             "total_staff": st.column_config.NumberColumn("Total", format="%d"),
-            "supervisors": st.column_config.NumberColumn("Sup.", format="%d"),
-            "planned_cost": st.column_config.NumberColumn("Cost (DZD)", format="%.0f"),
+            "supervisors": st.column_config.NumberColumn("Superviseurs", format="%d"),
+            "planned_cost": st.column_config.NumberColumn("Coût (DZD)", format="%.0f"),
         },
     )
 
-st.caption(f":material/cloud: Forecast weather: {plan['weather_provenance']}")
+st.caption(f":material/cloud: Météo de la prévision : {plan['weather_provenance']}")
 appdata.data_badge()
