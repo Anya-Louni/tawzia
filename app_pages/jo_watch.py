@@ -1,4 +1,4 @@
-"""Journal Officiel watch - keep the platform's rules current, and cost any change."""
+"""Veille Journal Officiel , garder les règles à jour et chiffrer tout changement."""
 
 import pandas as pd
 import streamlit as st
@@ -7,71 +7,71 @@ from core import appdata, regwatch, ai, labour_dz
 
 appdata.sidebar_controls()
 
-st.title("Journal Officiel watch")
-st.caption("The Algerian labour and payroll rules the platform tracks, whether "
-           "your settings are current, and the cost of any change before it lands.")
+st.title("Veille Journal Officiel")
+st.caption("Les règles algériennes du travail et de la paie que la plateforme "
+           "suit, si vos paramètres sont à jour, et le coût de tout changement "
+           "avant qu'il n'arrive.")
 
-# --- compliance status of the live configuration -------------------------
+# --- statut de conformité de la configuration réelle ----------------------
 rows = regwatch.status()
-out_of_date = [r for r in rows if r["Status"] != "Current"]
+out_of_date = [r for r in rows if r["Statut"] != "À jour"]
 with st.container(horizontal=True):
-    st.metric("Rules tracked", f"{len(rows)}", border=True)
-    st.metric("Out of date", f"{len(out_of_date)}", border=True)
-    st.metric("SNMG in force", f"{labour_dz.SNMG_MONTHLY:,.0f} DZD", border=True)
+    st.metric("Règles suivies", f"{len(rows)}", border=True)
+    st.metric("Obsolètes", f"{len(out_of_date)}", border=True)
+    st.metric("SNMG en vigueur", f"{labour_dz.SNMG_MONTHLY:,.0f} DZD", border=True)
 
 if out_of_date:
-    st.error(f"{len(out_of_date)} rule(s) no longer match the current legal value.",
+    st.error(f"{len(out_of_date)} règle(s) ne correspondent plus à la valeur légale actuelle.",
              icon=":material/error:")
 else:
-    st.success("Every tracked rule matches the current legal value.",
+    st.success("Chaque règle suivie correspond à la valeur légale actuelle.",
                icon=":material/verified:")
 
 with st.container(border=True):
-    st.subheader("Your compliance status")
+    st.subheader("Votre statut de conformité")
     df = pd.DataFrame(rows)
     st.dataframe(df, hide_index=True, width="stretch",
-                 column_config={"Reference": st.column_config.TextColumn(width="medium")})
+                 column_config={"Référence": st.column_config.TextColumn(width="medium")})
 
-# --- what-if: simulate a rule change -------------------------------------
+# --- simulation d'un changement de règle ----------------------------------
 with st.container(border=True):
-    st.subheader("Simulate a rule change")
-    st.caption("Point-of-law changes are money. Set a proposed value and see who "
-               "is affected and what it costs, across your live workforce.")
+    st.subheader("Simuler un changement de règle")
+    st.caption("Un changement de règle, c'est de l'argent. Fixez une valeur "
+               "proposée et voyez qui est affecté et ce que cela coûte, sur votre "
+               "effectif réel.")
     people = appdata.hr_people()
-    c1, c2, c3 = st.columns([1.2, 1, 1])
-    param = c1.selectbox("Rule", ["snmg", "cnas_employer"],
-                         format_func=lambda p: {"snmg": "SNMG (minimum wage)",
-                                                "cnas_employer": "CNAS employer rate"}[p])
+    c1, c2 = st.columns([1.2, 1])
+    param = c1.selectbox("Règle", ["snmg", "cnas_employer"],
+                         format_func=lambda p: {"snmg": "SNMG (salaire minimum)",
+                                                "cnas_employer": "Taux CNAS employeur"}[p])
     if param == "snmg":
-        new_value = c2.number_input("Proposed SNMG (DZD/month)", value=float(labour_dz.SNMG_MONTHLY + 6000),
+        new_value = c2.number_input("SNMG proposé (DZD/mois)", value=float(labour_dz.SNMG_MONTHLY + 6000),
                                     step=1000.0, min_value=0.0)
     else:
-        new_value = c2.number_input("Proposed employer rate", value=float(labour_dz.CNAS_EMPLOYER + 0.02),
+        new_value = c2.number_input("Taux employeur proposé", value=float(labour_dz.CNAS_EMPLOYER + 0.02),
                                     step=0.01, min_value=0.0, max_value=1.0, format="%.2f")
-    lang = c3.radio("Notice language", ["en", "fr"],
-                    format_func=lambda x: "English" if x == "en" else "Francais", horizontal=True)
 
     imp = regwatch.simulate_change(people, param, new_value)
     m1, m2 = st.columns(2)
-    m1.metric("Employees affected", f"{imp.affected} / {imp.workforce}", border=True)
-    m2.metric("Annual payroll cost change", appdata.dzd(imp.annual_cost_delta, compact=True), border=True)
+    m1.metric("Employés affectés", f"{imp.affected} / {imp.workforce}", border=True)
+    m2.metric("Variation annuelle de coût", appdata.dzd(imp.annual_cost_delta, compact=True), border=True)
     st.caption(ai.status_line())
-    if st.button("Draft the compliance notice", type="primary", icon=":material/edit_note:"):
-        with st.spinner("Drafting the notice..."):
-            st.session_state["jo_notice"] = regwatch.impact_notice(imp, lang=lang)
+    if st.button("Rédiger la note de conformité", type="primary", icon=":material/edit_note:"):
+        with st.spinner("Rédaction de la note..."):
+            st.session_state["jo_notice"] = regwatch.impact_notice(imp, lang="fr")
     if st.session_state.get("jo_notice"):
         st.info(st.session_state["jo_notice"], icon=":material/campaign:")
 
 with st.container(border=True):
-    st.subheader("Tracked register")
-    reg = pd.DataFrame([{"Rule": r["title"], "Domain": r["domain"],
-                         "Summary": r["summary"], "Reference": r["ref"]}
+    st.subheader("Registre suivi")
+    reg = pd.DataFrame([{"Règle": r["title"], "Domaine": r["domain"],
+                         "Résumé": r["summary"], "Référence": r["ref"]}
                         for r in regwatch.REGISTER])
     st.dataframe(reg, hide_index=True, width="stretch",
-                 column_config={"Summary": st.column_config.TextColumn(width="large")})
+                 column_config={"Résumé": st.column_config.TextColumn(width="large")})
 
-st.caption(":material/info: In this demo the register is a curated summary of the "
-           "tracked rules. In production it is fed by automatic ingestion of the "
-           "Journal Officiel and CNAS/DGI publications. The status check and the "
-           "simulator run on your live workforce.")
+st.caption(":material/info: Dans cette démonstration, le registre est un résumé "
+           "curé des règles suivies. En production, il est alimenté par l'ingestion "
+           "automatique du Journal Officiel et des publications CNAS/DGI. Le "
+           "contrôle de statut et le simulateur tournent sur votre effectif réel.")
 appdata.data_badge()
