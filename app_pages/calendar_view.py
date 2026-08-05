@@ -200,7 +200,11 @@ with st.container(border=True):
     else:
         st.dataframe(
             events, hide_index=True, width="stretch",
-            column_config={"Impact": st.column_config.TextColumn("Impact", width="large")},
+            column_config={
+                "Date": "Date",
+                "Event": "Événement",
+                "Impact": st.column_config.TextColumn("Impact", width="large"),
+            },
         )
 
 appdata.data_badge()

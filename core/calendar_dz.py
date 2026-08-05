@@ -516,9 +516,9 @@ def verify_key_dates(timeout: int = 10) -> pd.DataFrame:
         targets = []
         for hy in (hy_now, hy_now + 1):
             for (hm, hd, label) in (
-                (9, 1, "Ramadan begins"),
-                (10, 1, "Aid el-Fitr"),
-                (12, 10, "Aid el-Adha"),
+                (9, 1, "Début du Ramadan"),
+                (10, 1, "Aïd el-Fitr"),
+                (12, 10, "Aïd el-Adha"),
             ):
                 try:
                     g = from_hijri(hy, hm, hd, offset_days=0)
@@ -538,10 +538,10 @@ def verify_key_dates(timeout: int = 10) -> pd.DataFrame:
             local = (hy, hm, hd)
             delta = _islamic_to_jdn(*local) - _islamic_to_jdn(*remote)
             rows.append({
-                "Event": f"{label} {hy} AH",
+                "Event": f"{label} {hy} H",
                 "Our date": g.strftime("%d %b %Y"),
                 "Reference says": f"{remote[2]} {HIJRI_MONTHS.get(remote[1], remote[1])}",
-                "Agreement": "exact" if delta == 0 else f"{delta:+d} day",
+                "Agreement": "exact" if delta == 0 else f"{delta:+d} jour",
             })
     except Exception:
         return pd.DataFrame(columns=["Event", "Our date", "Reference says", "Agreement"])
@@ -559,33 +559,33 @@ def describe_upcoming(start=None, days: int = 120, hijri_offset_days: Optional[i
     if not ramadan.empty:
         events.append({
             "Date": ramadan["date"].min().date(),
-            "Event": "Ramadan begins",
-            "Impact": "Volume up, and the day reshapes - activity moves to the "
-                      "evening after f'tour. Working hours shorten.",
+            "Event": "Début du Ramadan",
+            "Impact": "Volume en hausse, et la journée se réorganise , l'activité "
+                      "passe au soir après le f'tour. Les horaires raccourcissent.",
         })
 
     for _, r in df[df["is_public_holiday"]].iterrows():
         events.append({
             "Date": r["date"].date(),
             "Event": r["holiday_name"],
-            "Impact": "Public holiday - reduced operations, premium labour rates.",
+            "Impact": "Jour férié , activité réduite, taux de main-d'œuvre majorés.",
         })
 
     diaspora = df[df["diaspora_intensity"] > 0.05]
     if not diaspora.empty:
         events.append({
             "Date": diaspora["date"].min().date(),
-            "Event": "Diaspora return season opens",
-            "Impact": "Sustained volume lift through to early September. "
-                      "Peaks late July.",
+            "Event": "Ouverture de la saison de retour de la diaspora",
+            "Impact": "Hausse de volume soutenue jusqu'à début septembre. "
+                      "Pic fin juillet.",
         })
 
     rentree = df[df["is_rentree"]]
     if not rentree.empty:
         events.append({
             "Date": rentree["date"].min().date(),
-            "Event": "Rentree scolaire window opens",
-            "Impact": "Sharp, narrow retail and delivery peak.",
+            "Event": "Ouverture de la fenêtre de rentrée scolaire",
+            "Impact": "Pic commercial et de livraison net et étroit.",
         })
 
     if not events:
