@@ -1,9 +1,9 @@
 """
-Algerian calendar — the moat, made visible.
+Le calendrier algérien , le moat, rendu visible.
 
-This page exists to make one argument concrete: the demand calendar in Algeria
-is not the demand calendar a global workforce tool was built for, and the gap
-is large, recurring, and measurable.
+Cette page existe pour rendre un argument concret : le calendrier de la demande
+en Algérie n'est pas celui pour lequel un outil RH mondial a été conçu, et
+l'écart est grand, récurrent et mesurable.
 """
 
 import datetime as dt
@@ -15,11 +15,11 @@ from core import appdata, calendar_dz
 
 appdata.sidebar_controls()
 
-st.title("The Algerian calendar")
-st.caption("Why a workforce tool built elsewhere mis-forecasts here, every week.")
+st.title("Le calendrier algérien")
+st.caption("Pourquoi un outil RH conçu ailleurs se trompe ici, chaque semaine.")
 
 # ---------------------------------------------------------------------------
-st.subheader("The weekend")
+st.subheader("Le week-end")
 
 today = dt.date.today()
 week_start = today - dt.timedelta(days=today.weekday())
@@ -30,10 +30,10 @@ for d in week:
     ctx = calendar_dz.day_context(d)
     rows.append({
         "Date": d.strftime("%d %b"),
-        "Day": ctx.weekday_name,
-        "Algeria": "Weekend" if ctx.is_weekend else "Working day",
-        "Most global tools assume": "Weekend" if d.weekday() in (5, 6) else "Working day",
-        "Agree": "✓" if (ctx.is_weekend == (d.weekday() in (5, 6))) else "✗ WRONG",
+        "Jour": ctx.weekday_name,
+        "Algérie": "Week-end" if ctx.is_weekend else "Jour ouvré",
+        "La plupart des outils supposent": "Week-end" if d.weekday() in (5, 6) else "Jour ouvré",
+        "Concordance": "✓" if (ctx.is_weekend == (d.weekday() in (5, 6))) else "✗ FAUX",
     })
 
 col1, col2 = st.columns([3, 2])
@@ -42,32 +42,32 @@ with col1:
         st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")
 with col2:
     with st.container(border=True):
-        st.markdown("**Two days wrong, every single week**")
+        st.markdown("**Deux jours faux, chaque semaine**")
         st.markdown(
-            "Algeria's weekend is **Friday–Saturday**. A tool that assumes "
-            "Saturday–Sunday gets Thursday, Friday and Sunday wrong on a "
-            "recurring weekly cycle.\n\n"
-            "It rosters heavy on Friday — the quietest day — and light on "
-            "Sunday, a full working day. That is not a tuning problem you can "
-            "fix with more training data; the tool has no way to express the "
-            "right answer."
+            "Le week-end algérien, c'est **vendredi-samedi**. Un outil qui suppose "
+            "samedi-dimanche se trompe sur le jeudi, le vendredi et le dimanche, "
+            "sur un cycle hebdomadaire récurrent.\n\n"
+            "Il planifie lourd le vendredi , le jour le plus calme , et léger le "
+            "dimanche, un jour ouvré complet. Ce n'est pas un problème de réglage "
+            "que plus de données corrigent ; l'outil n'a aucun moyen d'exprimer la "
+            "bonne réponse."
         )
         st.caption(
-            "The earlier version of this very project had the same bug: its "
-            "weekly pattern marked weekdays 5 and 6 as the low days. We found "
-            "it while rebuilding, which is rather the point."
+            "La première version de ce projet avait le même bug : son motif "
+            "hebdomadaire marquait les jours 5 et 6 comme les jours creux. Nous "
+            "l'avons trouvé en reconstruisant , ce qui illustre bien le propos."
         )
 
 st.divider()
 
 # ---------------------------------------------------------------------------
-st.subheader("The moving year")
+st.subheader("L'année mobile")
 
 st.markdown(
-    "Ramadan and the two Aïds are set by the Hijri calendar, which is about "
-    "11 days shorter than the Gregorian year. Algeria's two largest demand "
-    "events therefore **drift backwards through the seasons**. A model that "
-    "learned \"March is busy\" is already wrong by the time it ships."
+    "Le Ramadan et les deux Aïds sont fixés par le calendrier hégirien, environ "
+    "11 jours plus court que l'année grégorienne. Les deux plus grands événements "
+    "de demande en Algérie **reculent donc à travers les saisons**. Un modèle qui "
+    "a appris « mars est chargé » est déjà faux au moment où il est livré."
 )
 
 years = list(range(today.year - 2, today.year + 4))
@@ -83,9 +83,9 @@ for y in years:
             continue
         if r_start.year == y:
             drift.append({
-                "Gregorian year": y,
-                "Hijri year": hy,
-                "Ramadan begins": r_start.strftime("%d %b"),
+                "Année grégorienne": y,
+                "Année hégirienne": hy,
+                "Début du Ramadan": r_start.strftime("%d %b"),
                 "Aïd el-Fitr": fitr.strftime("%d %b %Y"),
                 "Aïd el-Adha": adha.strftime("%d %b %Y"),
             })
@@ -95,85 +95,91 @@ with col_a:
     with st.container(border=True):
         st.dataframe(pd.DataFrame(drift), hide_index=True, width="stretch")
         st.caption(
-            "Computed with the tabular Islamic calendar, verified round-trip "
-            "over 60 Hijri years. Accurate to within a day or two of Algeria's "
-            "official moon-sighting announcement — the app flags days where "
-            "that ambiguity matters."
+            "Calculé avec le calendrier islamique tabulaire, vérifié en "
+            "aller-retour sur 60 années hégiriennes. Exact à un jour ou deux près "
+            "de l'annonce officielle de l'observation lunaire , l'app signale les "
+            "jours où cette ambiguïté compte."
         )
 with col_b:
     with st.container(border=True):
-        st.markdown("**Why this is hard to bolt on**")
+        st.markdown("**Pourquoi c'est difficile à ajouter après coup**")
         st.markdown(
-            "Ramadan does not just raise volume. It **reshapes the day**: "
-            "activity moves to the evening after f'tour, working hours "
-            "shorten, and the last ten nights carry the Aïd shopping peak.\n\n"
-            "Then the two Aïd days are a near-shutdown, followed by a rebound. "
-            "Encoding that needs the Hijri calendar as a first-class citizen "
-            "of the feature set — not a holiday flag pasted on top."
+            "Le Ramadan n'augmente pas seulement le volume. Il **réorganise la "
+            "journée** : l'activité passe au soir après le f'tour, les horaires se "
+            "raccourcissent, et les dix dernières nuits portent le pic d'achats de "
+            "l'Aïd.\n\n"
+            "Puis les deux jours d'Aïd sont une quasi-fermeture, suivie d'un "
+            "rebond. Encoder cela exige le calendrier hégirien comme élément à part "
+            "entière du modèle , pas un simple drapeau de jour férié collé dessus."
         )
 
-st.markdown("**Checked against the reference, on the dates that matter**")
+st.markdown("**Vérifié contre la référence, sur les dates qui comptent**")
 hijri_check = appdata.load_hijri_check(st.session_state["allow_network"])
 if not hijri_check.empty:
-    with st.container(border=True):
-        st.dataframe(hijri_check, hide_index=True, width="stretch")
     exact = (hijri_check["Agreement"] == "exact").sum()
+    show = hijri_check.rename(columns={
+        "Event": "Événement", "Our date": "Notre date",
+        "Reference says": "La référence indique", "Agreement": "Concordance",
+    })
+    with st.container(border=True):
+        st.dataframe(show, hide_index=True, width="stretch")
     st.caption(
-        f"{exact} of {len(hijri_check)} key dates match the Aladhan reference "
-        "exactly; the rest differ by a single day. That ±1 day is real "
-        "moon-sighting uncertainty, not a bug — Algeria's Commission Nationale "
-        "d'Observation du Croissant Lunaire sets the actual date, and the app "
-        "flags the affected days so the forecaster widens its interval near "
-        "them instead of being confidently wrong. Note Ramadan starts, which "
-        "drive the largest demand shift, resolve exactly."
+        f"{exact} des {len(hijri_check)} dates clés correspondent exactement à la "
+        "référence Aladhan ; les autres diffèrent d'un seul jour. Ce ±1 jour est "
+        "la vraie incertitude d'observation lunaire, pas un bug , la Commission "
+        "Nationale d'Observation du Croissant Lunaire fixe la date réelle, et "
+        "l'app signale les jours concernés pour que la prévision élargisse son "
+        "intervalle plutôt que d'être faussement sûre. Les débuts de Ramadan, qui "
+        "portent le plus grand changement de demande, tombent exactement juste."
     )
 else:
     st.info(
-        "Running on the local tabular calendar (no network check). Accurate "
-        "to within a day or two of the official announcement — which the app "
-        "flags per day.",
+        "Fonctionne sur le calendrier tabulaire local (pas de vérification "
+        "réseau). Exact à un jour ou deux près de l'annonce officielle , ce que "
+        "l'app signale par jour.",
         icon=":material/wifi_off:",
     )
 
 st.divider()
 
 # ---------------------------------------------------------------------------
-st.subheader("The rest of the Algerian year")
+st.subheader("Le reste de l'année algérienne")
 
 drivers = pd.DataFrame([
     {
-        "Driver": "Diaspora return season",
-        "When": "mid-June → early September, peaking late July",
-        "Why it matters": "Several million Algerians resident abroad come home. "
-                          "In a European-trained model, summer reads as a demand "
-                          "trough. Here it is the annual peak.",
+        "Facteur": "Saison de retour de la diaspora",
+        "Quand": "mi-juin → début septembre, pic fin juillet",
+        "Pourquoi c'est important": "Plusieurs millions d'Algériens résidant à "
+                          "l'étranger rentrent. Dans un modèle entraîné en Europe, "
+                          "l'été est un creux de demande. Ici, c'est le pic annuel.",
     },
     {
-        "Driver": "Rentrée scolaire",
-        "When": "late August → mid-September",
-        "Why it matters": "Sharp, narrow retail and delivery peak on stationery, "
-                          "uniforms and textbooks.",
+        "Facteur": "Rentrée scolaire",
+        "Quand": "fin août → mi-septembre",
+        "Pourquoi c'est important": "Pic commercial et de livraison net et étroit "
+                          "sur les fournitures, uniformes et manuels scolaires.",
     },
     {
-        "Driver": "End-of-month payday",
-        "When": "around the 27th, every month",
-        "Why it matters": "Algerian salaries are overwhelmingly paid at month "
-                          "end. Consumer demand spikes in the first days of the "
-                          "following month and thins before it.",
+        "Facteur": "Paie de fin de mois",
+        "Quand": "autour du 27, chaque mois",
+        "Pourquoi c'est important": "Les salaires algériens sont massivement payés "
+                          "en fin de mois. La demande grimpe les premiers jours du "
+                          "mois suivant et s'amincit avant.",
     },
     {
-        "Driver": "Yennayer",
-        "When": "12 January",
-        "Why it matters": "Amazigh New Year, a gazetted public holiday since "
-                          "2018. Absent from essentially every foreign calendar "
-                          "library.",
+        "Facteur": "Yennayer",
+        "Quand": "12 janvier",
+        "Pourquoi c'est important": "Nouvel An amazigh, jour férié officiel depuis "
+                          "2018. Absent de quasiment toutes les bibliothèques de "
+                          "calendrier étrangères.",
     },
     {
-        "Driver": "Saharan heat",
-        "When": "June → September, south of the Atlas",
-        "Why it matters": "Ouargla recorded 84 days above 38°C in summer 2024 "
-                          "(observed, ERA5). Heat cuts sustainable pace and "
-                          "drives absenteeism — the same volume needs more bodies.",
+        "Facteur": "Chaleur saharienne",
+        "Quand": "juin → septembre, au sud de l'Atlas",
+        "Pourquoi c'est important": "Ouargla a enregistré 84 jours au-dessus de "
+                          "38°C à l'été 2024 (observé, ERA5). La chaleur réduit le "
+                          "rythme tenable et augmente l'absentéisme , le même "
+                          "volume demande plus de bras.",
     },
 ])
 
@@ -181,15 +187,16 @@ with st.container(border=True):
     st.dataframe(
         drivers, hide_index=True, width="stretch",
         column_config={
-            "Why it matters": st.column_config.TextColumn("Why it matters", width="large")
+            "Pourquoi c'est important": st.column_config.TextColumn(
+                "Pourquoi c'est important", width="large")
         },
     )
 
-st.subheader("Next 8 months")
+st.subheader("Les 8 prochains mois")
 events = appdata.load_calendar_events(days=240)
 with st.container(border=True):
     if events.empty:
-        st.caption("No major events detected in this window.")
+        st.caption("Aucun événement majeur détecté dans cette fenêtre.")
     else:
         st.dataframe(
             events, hide_index=True, width="stretch",
