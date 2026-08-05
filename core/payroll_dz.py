@@ -136,14 +136,14 @@ class Payslip:
 
     def as_dict(self) -> dict:
         return {
-            "Role": self.role_label,
-            "Gross (DZD)": round(self.gross),
+            "Poste": self.role_label,
+            "Brut (DZD)": round(self.gross),
             "CNAS 9% (DZD)": round(self.cnas_employee),
-            "Taxable (DZD)": round(self.taxable),
+            "Base imposable (DZD)": round(self.taxable),
             "IRG (DZD)": round(self.irg),
-            "Net pay (DZD)": round(self.net),
-            "CNAS 26% employer (DZD)": round(self.cnas_employer),
-            "Total employer cost (DZD)": round(self.employer_cost),
+            "Net à payer (DZD)": round(self.net),
+            "CNAS 26% employeur (DZD)": round(self.cnas_employer),
+            "Coût total employeur (DZD)": round(self.employer_cost),
         }
 
 
@@ -223,12 +223,12 @@ def payroll_register(
             "employer_cost": total_gross + total_cnas_er,
         },
         "declarations": {
-            # What actually gets filed and remitted each month.
-            "CNAS (base salaries)": total_gross,
-            "CNAS employee 9%": total_cnas_emp,
-            "CNAS employer 26%": total_cnas_er,
-            "CNAS total remitted (35%)": total_cnas_emp + total_cnas_er,
-            "IRG withheld (G50)": total_irg,
+            # Ce qui est effectivement déclaré et versé chaque mois.
+            "CNAS (salaires de base)": total_gross,
+            "CNAS salarié 9%": total_cnas_emp,
+            "CNAS employeur 26%": total_cnas_er,
+            "CNAS total versé (35%)": total_cnas_emp + total_cnas_er,
+            "IRG retenu (G50)": total_irg,
         },
         "dgi_check_flags": flagged,
     }
@@ -238,7 +238,7 @@ def declaration_lines(register: dict) -> pd.DataFrame:
     """The filing summary, as a tidy table for the UI / export."""
     d = register["declarations"]
     return pd.DataFrame(
-        [{"Declaration line": k, "Amount (DZD)": round(v)} for k, v in d.items()]
+        [{"Ligne de déclaration": k, "Montant (DZD)": round(v)} for k, v in d.items()]
     )
 
 

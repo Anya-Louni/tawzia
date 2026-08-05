@@ -130,7 +130,7 @@ class Role:
 ROLES = {
     "sorter": Role(
         key="sorter",
-        label="Hub sorter",
+        label="Agent de tri (hub)",
         snmg_coefficient=1.15,
         productivity_per_hour=sources.value("productivity_parcels_per_hour"),
         note="Manual sort with handheld scanning. The volume role - most of "
@@ -138,7 +138,7 @@ ROLES = {
     ),
     "courier": Role(
         key="courier",
-        label="Last-mile courier",
+        label="Livreur dernier kilomètre",
         snmg_coefficient=1.35,
         productivity_per_hour=6.5,
         note="Urban drops per hour including collection of cash on delivery. "
@@ -146,7 +146,7 @@ ROLES = {
     ),
     "supervisor": Role(
         key="supervisor",
-        label="Shift supervisor",
+        label="Superviseur de shift",
         snmg_coefficient=2.10,
         productivity_per_hour=0.0,
         can_be_temp=False,
@@ -155,7 +155,7 @@ ROLES = {
     ),
     "ramp_agent": Role(
         key="ramp_agent",
-        label="Ramp / baggage agent",
+        label="Agent de piste / bagages",
         snmg_coefficient=1.45,
         productivity_per_hour=1.6,
         note="Aircraft turnarounds per hour per agent. Airport ground "
@@ -163,14 +163,14 @@ ROLES = {
     ),
     "checkin_agent": Role(
         key="checkin_agent",
-        label="Check-in / boarding agent",
+        label="Agent d'enregistrement / embarquement",
         snmg_coefficient=1.50,
         productivity_per_hour=28.0,
         note="Passengers processed per hour. Airport ground handling vertical.",
     ),
     "warehouse_op": Role(
         key="warehouse_op",
-        label="Warehouse operative",
+        label="Agent d'entrepôt",
         snmg_coefficient=1.20,
         productivity_per_hour=32.0,
         note="Picking and put-away for retail distribution.",
@@ -178,7 +178,7 @@ ROLES = {
     # --- Hospitality vertical ---
     "housekeeper": Role(
         key="housekeeper",
-        label="Room attendant",
+        label="Femme/valet de chambre",
         snmg_coefficient=1.10,
         productivity_per_hour=2.6,
         note="Rooms turned per hour. The volume role in a hotel, and the one "
@@ -186,14 +186,14 @@ ROLES = {
     ),
     "front_desk": Role(
         key="front_desk",
-        label="Front-desk agent",
+        label="Réceptionniste",
         snmg_coefficient=1.45,
         productivity_per_hour=11.0,
         note="Guests checked in/out per hour. Peaks hard around arrival waves.",
     ),
     "fnb_staff": Role(
         key="fnb_staff",
-        label="F&B / restaurant staff",
+        label="Personnel restauration (F&B)",
         snmg_coefficient=1.20,
         productivity_per_hour=14.0,
         note="Covers served per hour. In Ramadan the whole load moves to the "
@@ -202,7 +202,7 @@ ROLES = {
     # --- Transport & fleet vertical ---
     "driver": Role(
         key="driver",
-        label="Driver",
+        label="Chauffeur",
         snmg_coefficient=1.55,
         productivity_per_hour=7.5,
         note="Passenger-trips (or shipments) handled per driver-hour. Cannot "
@@ -210,14 +210,14 @@ ROLES = {
     ),
     "loader": Role(
         key="loader",
-        label="Loader / baggage handler",
+        label="Manutentionnaire / bagagiste",
         snmg_coefficient=1.15,
         productivity_per_hour=26.0,
         note="Bags or parcels loaded per hour at the depot / station.",
     ),
     "dispatcher": Role(
         key="dispatcher",
-        label="Dispatcher",
+        label="Répartiteur",
         snmg_coefficient=1.70,
         productivity_per_hour=0.0,
         can_be_temp=False,

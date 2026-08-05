@@ -160,11 +160,11 @@ def scorecard(alerts: list) -> dict:
     crit = sum(1 for a in alerts if a.severity == "critical")
     warn = sum(1 for a in alerts if a.severity == "warning")
     if crit:
-        status, label = "critical", "Action required"
+        status, label = "critical", "Action requise"
     elif warn:
-        status, label = "warning", "Review recommended"
+        status, label = "warning", "Revue recommandée"
     else:
-        status, label = "ok", "Compliant"
+        status, label = "ok", "Conforme"
     return {"status": status, "label": label, "critical": crit,
             "warning": warn, "total": len(alerts)}
 
