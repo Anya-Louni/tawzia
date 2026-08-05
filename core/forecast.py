@@ -438,19 +438,22 @@ def walk_forward(
     residual_quantiles = pd.DataFrame(qrows)
 
     notes = [
-        f"{len(origin_indices)} forecast origins, each trained only on data "
-        f"available at that date. No future information reaches any model.",
-        f"Horizon {horizon} days; origins spaced {step} days apart; minimum "
-        f"training history {min_train_days} days.",
-        "Weather over the forecast window is taken from the realised record. "
-        "At a 14-day horizon a real operational forecast is available and "
-        "broadly accurate, so this mirrors production rather than flattering it.",
-        f"{int(preds['_was_shock'].sum())} of {len(preds)} scored rows fall on "
-        "injected shock days - flash sales, stock-outs, strikes - which no "
-        "model can predict. They are left in, because removing them would "
-        "flatter every model equally and mislead about real-world error.",
-        "The volume series is simulated. These figures validate the forecasting "
-        "machinery, not market accuracy. Real numbers require a pilot.",
+        f"{len(origin_indices)} origines de prévision, chacune entraînée "
+        f"uniquement sur les données disponibles à cette date. Aucune "
+        f"information future n'atteint un modèle.",
+        f"Horizon {horizon} jours ; origines espacées de {step} jours ; "
+        f"historique d'entraînement minimal {min_train_days} jours.",
+        "La météo sur la fenêtre de prévision est tirée du relevé réalisé. À un "
+        "horizon de 14 jours, une vraie prévision opérationnelle est disponible "
+        "et globalement fiable, donc ceci reflète la production plutôt que de la "
+        "flatter.",
+        f"{int(preds['_was_shock'].sum())} des {len(preds)} lignes évaluées "
+        "tombent sur des jours de choc injectés , ventes flash, ruptures, grèves "
+        ", qu'aucun modèle ne peut prédire. Ils sont laissés dedans, car les "
+        "retirer flatterait chaque modèle également et fausserait l'idée de "
+        "l'erreur réelle.",
+        "La série de volumes est simulée. Ces chiffres valident la mécanique de "
+        "prévision, pas la précision marché. De vrais chiffres exigent un pilote.",
     ]
 
     return BacktestResult(

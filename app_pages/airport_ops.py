@@ -1,11 +1,11 @@
 """
-Airport operations AI — the Air Algérie / Aéroport d'Alger module.
+IA opérations aéroportuaires — le module Air Algérie / Aéroport d'Alger.
 
-Three aviation-grade features on the real ALG network and the real Algerian
-calendar:
-  1. Passenger-flow forecast -> terminal staffing
-  2. Delay-cascade predictor (the "chaotic day", predicted)
-  3. Turnaround-risk board
+Trois fonctionnalités de niveau aéronautique sur le vrai réseau ALG et le vrai
+calendrier algérien :
+  1. Prévision du flux de passagers -> effectif du terminal
+  2. Prédicteur de cascade de retards (la « journée chaotique », prédite)
+  3. Tableau des risques de rotation
 """
 
 import datetime as dt
@@ -19,31 +19,38 @@ from core import appdata, aviation, calendar_dz
 
 appdata.sidebar_controls()
 
-st.title("Airport operations AI")
+st.title("IA opérations aéroportuaires")
 st.caption(
-    "Aéroport d'Alger (ALG) · Air Algérie network · built on the real route "
-    "map and the real Algerian calendar"
+    "Aéroport d'Alger (ALG) · réseau Air Algérie · construit sur la vraie carte "
+    "des routes et le vrai calendrier algérien"
 )
 
 st.info(
-    "**Why this matters now.** Air Algérie is scaling from ~8.8M passengers "
-    "(2025) toward ~10M (2026) and taking ~60 new aircraft onto a hub that "
-    "already congests at peak. The two expensive failure modes — unstaffed "
-    "passenger surges and delays that cascade across the day — are exactly "
-    "what this module predicts. Flight schedules and delays are simulated; the "
-    "route network and the calendar driving demand are real.",
+    "**Pourquoi c'est important maintenant.** Air Algérie passe de ~8,8M "
+    "passagers (2025) vers ~10M (2026) et intègre ~60 nouveaux appareils sur un "
+    "hub déjà congestionné au pic. Les deux modes d'échec coûteux , surges de "
+    "passagers non dotées et retards qui cascadent sur toute la journée , sont "
+    "exactement ce que ce module prédit. Les horaires de vols et les retards "
+    "sont simulés ; le réseau de routes et le calendrier qui pilote la demande "
+    "sont réels.",
     icon=":material/flight_takeoff:",
 )
 
-# --- Date picker -----------------------------------------------------------
+_DIR_FR = {"Arrival": "Arrivée", "Departure": "Départ"}
+_CAUSE_FR = {
+    "On time": "À l'heure", "On plan": "Conforme au plan",
+    "Root cause": "Cause racine", "Cascade (inherited)": "Cascade (héritée)",
+}
+
+# --- Sélecteur de date -----------------------------------------------------
 col_d, col_info = st.columns([1, 3])
 with col_d:
     day = st.date_input(
-        "Operations day",
+        "Journée d'exploitation",
         value=dt.date(2026, 7, 25),
         min_value=dt.date(2026, 1, 1),
         max_value=dt.date(2027, 12, 31),
-        help="Try a summer Saturday (diaspora peak) vs a January weekday.",
+        help="Essayez un samedi d'été (pic diaspora) vs un jour de semaine en janvier.",
     )
 day_iso = day.isoformat()
 ctx = calendar_dz.day_context(day)
@@ -51,184 +58,188 @@ ctx = calendar_dz.day_context(day)
 with col_info:
     tags = []
     if ctx.diaspora_intensity > 0.1:
-        tags.append(f":material/beach_access: Diaspora season ({ctx.diaspora_intensity:.0%} of peak)")
+        tags.append(f":material/beach_access: Saison diaspora ({ctx.diaspora_intensity:.0%} du pic)")
     if ctx.is_ramadan:
-        tags.append(f":material/nightlight: Ramadan day {ctx.ramadan_day}")
+        tags.append(f":material/nightlight: Ramadan jour {ctx.ramadan_day}")
     if ctx.is_public_holiday:
         tags.append(f":material/celebration: {ctx.holiday_name}")
     if ctx.is_weekend:
-        tags.append(":material/weekend: Algerian weekend (Fri–Sat)")
-    st.markdown(f"**{day:%A %d %B %Y}** — " + (" · ".join(tags) if tags else "ordinary day"))
+        tags.append(":material/weekend: Week-end algérien (ven-sam)")
+    st.markdown(f"**{day:%A %d %B %Y}** — " + (" · ".join(tags) if tags else "journée ordinaire"))
 
 sched = appdata.flight_day(day_iso)
 day_ctx = sched.attrs["day_context"]
 
 tab_flow, tab_cascade, tab_turnaround, tab_board = st.tabs([
-    "Passenger flow & staffing",
-    "Delay-cascade predictor",
-    "Turnaround risk",
-    "Flight board",
+    "Flux passagers & effectif",
+    "Prédicteur de cascade de retards",
+    "Risque de rotation",
+    "Tableau des vols",
 ])
 
 # ===========================================================================
-# TAB 1 — Passenger flow & terminal staffing
+# TAB 1 — Flux passagers & effectif du terminal
 # ===========================================================================
 with tab_flow:
     flow = appdata.pax_flow_for(day_iso)
     s = flow.summary
 
-    st.subheader("Passenger flow through the terminal")
+    st.subheader("Flux de passagers dans le terminal")
     st.caption(
-        "Passengers don't arrive in one lump at departure — they build up over "
-        "a show-up window before each flight, longer for long-haul. Stacked "
-        "across every flight, that's the crowd actually in the building each "
-        "hour. The **peak**, not the daily total, sets how many desks you open."
+        "Les passagers n'arrivent pas d'un bloc au départ , ils s'accumulent sur "
+        "une fenêtre de présentation avant chaque vol, plus longue pour le "
+        "long-courrier. Cumulé sur tous les vols, c'est la foule réellement dans "
+        "le bâtiment à chaque heure. Le **pic**, pas le total quotidien, "
+        "détermine combien de comptoirs ouvrir."
     )
 
     with st.container(horizontal=True):
-        st.metric("Departing today", f"{s['total_departing_pax']:,}", border=True)
-        st.metric("Arriving today", f"{s['total_arriving_pax']:,}", border=True)
+        st.metric("Départs aujourd'hui", f"{s['total_departing_pax']:,}", border=True)
+        st.metric("Arrivées aujourd'hui", f"{s['total_arriving_pax']:,}", border=True)
         st.metric(
-            "Busiest terminal hour",
+            "Heure de pointe du terminal",
             f"{s['peak_hour']:%H:%M}",
-            f"{s['peak_terminal_pax']:,} pax in building",
+            f"{s['peak_terminal_pax']:,} pax dans le bâtiment",
             border=True,
         )
         st.metric(
-            "Peak check-in agents",
+            "Agents d'enregistrement au pic",
             f"{s['peak_checkin_agents']}",
-            f"at {s['peak_checkin_hour']:%H:%M}",
+            f"à {s['peak_checkin_hour']:%H:%M}",
             border=True,
         )
-        st.metric("Peak security lanes", f"{s['peak_security_lanes']}", border=True)
+        st.metric("Files de sûreté au pic", f"{s['peak_security_lanes']}", border=True)
 
     with st.container(border=True):
-        st.markdown("**Passengers at each process, by hour**")
+        st.markdown("**Passagers à chaque processus, par heure**")
         h = flow.hourly.copy()
         h_long = h.melt(
             id_vars="hour",
             value_vars=["checkin", "security", "boarding", "immigration", "baggage"],
-            var_name="Process", value_name="Passengers",
+            var_name="Processus", value_name="Passagers",
         )
         proc_labels = {
-            "checkin": "Check-in", "security": "Security", "boarding": "Boarding",
-            "immigration": "Immigration (arr)", "baggage": "Baggage (arr)",
+            "checkin": "Enregistrement", "security": "Sûreté", "boarding": "Embarquement",
+            "immigration": "Immigration (arr)", "baggage": "Bagages (arr)",
         }
-        h_long["Process"] = h_long["Process"].map(proc_labels)
+        h_long["Processus"] = h_long["Processus"].map(proc_labels)
         chart = (
             alt.Chart(h_long)
             .mark_area(opacity=0.75)
             .encode(
                 x=alt.X("hour:T", title=None, axis=alt.Axis(format="%H:%M")),
-                y=alt.Y("Passengers:Q", stack=None, title="Passengers in process"),
-                color=alt.Color("Process:N",
+                y=alt.Y("Passagers:Q", stack=None, title="Passagers en cours de traitement"),
+                color=alt.Color("Processus:N",
                                 scale=alt.Scale(range=["#C8102E", "#16233A", "#B78B4A",
                                                        "#1E6F5C", "#7C8494"])),
-                tooltip=["hour:T", "Process:N", alt.Tooltip("Passengers:Q", format=".0f")],
+                tooltip=["hour:T", "Processus:N", alt.Tooltip("Passagers:Q", format=".0f")],
             )
             .properties(height=300)
         )
         st.altair_chart(chart, width="stretch")
 
     with st.container(border=True):
-        st.markdown("**Recommended terminal staffing, by hour**")
+        st.markdown("**Effectif recommandé du terminal, par heure**")
         st.caption(
-            "Agents per process per hour to clear demand without a queue — "
-            "night hours (21:00–05:00) carry the statutory +30% premium in the "
-            "costed total below."
+            "Agents par processus et par heure pour écouler la demande sans file "
+            "d'attente , les heures de nuit (21:00-05:00) portent la majoration "
+            "légale de +30% dans le total chiffré ci-dessous."
         )
         stf = flow.staffing.copy()
         stf_show = stf[stf["total_agents"] > 0].copy()
         stf_show["hour"] = pd.to_datetime(stf_show["hour"]).dt.strftime("%a %H:%M")
         st.dataframe(
             stf_show.rename(columns={
-                "hour": "Hour", "checkin": "Check-in", "security": "Security",
-                "boarding": "Boarding", "immigration": "Immigration",
-                "baggage": "Baggage", "total_agents": "Total",
+                "hour": "Heure", "checkin": "Enregistrement", "security": "Sûreté",
+                "boarding": "Embarquement", "immigration": "Immigration",
+                "baggage": "Bagages", "total_agents": "Total",
             }),
             hide_index=True, width="stretch", height=280,
         )
-        st.metric("Day's terminal staffing cost",
+        st.metric("Coût d'effectif du terminal sur la journée",
                   appdata.dzd(s["daily_staff_cost"], compact=True), border=True)
 
 # ===========================================================================
-# TAB 2 — Delay cascade predictor (flagship)
+# TAB 2 — Prédicteur de cascade de retards (fonction phare)
 # ===========================================================================
 with tab_cascade:
-    st.subheader("Delay-cascade predictor")
+    st.subheader("Prédicteur de cascade de retards")
     st.caption(
-        "Aircraft fly chains — one tail does ALG→CDG→ALG→ORN→ALG all day. A "
-        "late inbound eats its turnaround and pushes every following flight. "
-        "This predicts the chain **before** it happens and names the one flight "
-        "to protect to break it."
+        "Les avions volent en chaînes , un même appareil fait "
+        "ALG→CDG→ALG→ORN→ALG toute la journée. Un vol entrant en retard mange sa "
+        "rotation et repousse chaque vol suivant. Ceci prédit la chaîne **avant** "
+        "qu'elle ne se produise et nomme le vol unique à protéger pour la briser."
     )
 
     severity = st.select_slider(
-        "Day severity",
+        "Sévérité de la journée",
         options=[0.8, 1.0, 1.3, 1.6, 2.0, 2.4],
         value=1.3,
-        format_func=lambda v: {0.8: "Calm", 1.0: "Normal", 1.3: "Busy",
-                               1.6: "Rough", 2.0: "Bad weather", 2.4: "Chaotic day"}[v],
-        help="Scales how many flights pick up their own root delay. Watch the "
-             "cascade grow as the day gets worse.",
+        format_func=lambda v: {0.8: "Calme", 1.0: "Normale", 1.3: "Chargée",
+                               1.6: "Difficile", 2.0: "Mauvais temps",
+                               2.4: "Journée chaotique"}[v],
+        help="Module combien de vols prennent leur propre retard racine. "
+             "Regardez la cascade grandir à mesure que la journée empire.",
     )
 
     res = appdata.cascade(day_iso, severity)
     cs = res.summary
 
     with st.container(horizontal=True):
-        st.metric("On-time performance", f"{cs['on_time_pct']:.0f}%", border=True)
-        st.metric("Delayed flights", f"{cs['delayed_flights']}",
-                  f"of {cs['total_flights']}", border=True)
+        st.metric("Ponctualité", f"{cs['on_time_pct']:.0f}%", border=True)
+        st.metric("Vols retardés", f"{cs['delayed_flights']}",
+                  f"sur {cs['total_flights']}", border=True)
         st.metric(
-            "Cascade share",
+            "Part de cascade",
             f"{cs['cascade_share']:.0f}%",
-            "of delays are inherited",
+            "des retards sont hérités",
             border=True,
-            help="Delays that were another flight's fault, not their own. "
-                 "Industry-wide this 'reactionary' delay runs 40–50%.",
+            help="Retards qui étaient la faute d'un autre vol, pas les leurs. "
+                 "Dans l'industrie, ce retard « réactionnaire » représente 40-50%.",
         )
-        st.metric("Passengers on a delayed flight", f"{cs['pax_affected']:,}", border=True)
+        st.metric("Passagers sur un vol retardé", f"{cs['pax_affected']:,}", border=True)
 
     if cs["worst_keystone"]:
         k = cs["worst_keystone"]
         st.error(
-            f"**Keystone flight: {k['flight_no']} ({k['route_city']}, "
-            f"{k['direction'].lower()}).** If its inbound slips, "
-            f"**{int(k['downstream_flights'])} downstream flights** and "
-            f"**{int(k['downstream_pax']):,} passengers** are hit "
-            f"({int(k['downstream_delay_min'])} delay-minutes). Protect this "
-            f"turnaround first — hold a standby crew or swap the tail.",
+            f"**Vol pivot : {k['flight_no']} ({k['route_city']}, "
+            f"{_DIR_FR.get(k['direction'], k['direction']).lower()}).** Si son "
+            f"entrant glisse, **{int(k['downstream_flights'])} vols en aval** et "
+            f"**{int(k['downstream_pax']):,} passagers** sont touchés "
+            f"({int(k['downstream_delay_min'])} minutes de retard). Protégez "
+            f"cette rotation en priorité , gardez un équipage de réserve ou "
+            f"changez d'appareil.",
             icon=":material/priority_high:",
         )
 
     col_k, col_w = st.columns([3, 2])
     with col_k:
         with st.container(border=True):
-            st.markdown("**Keystone flights — protect these first**")
-            st.caption("Ranked by downstream passengers affected.")
+            st.markdown("**Vols pivots — à protéger en priorité**")
+            st.caption("Classés par passagers touchés en aval.")
             if len(res.keystones):
                 kk = res.keystones.copy()
                 kk["sched_time"] = pd.to_datetime(kk["sched_time"]).dt.strftime("%H:%M")
+                kk["direction"] = kk["direction"].map(_DIR_FR).fillna(kk["direction"])
                 st.dataframe(
                     kk[["flight_no", "route_city", "direction", "sched_time",
                         "downstream_flights", "downstream_pax", "downstream_delay_min"]]
                     .rename(columns={
-                        "flight_no": "Flight", "route_city": "Route",
-                        "direction": "Dir", "sched_time": "Sched",
-                        "downstream_flights": "↓Flights", "downstream_pax": "↓Pax",
-                        "downstream_delay_min": "↓Delay min",
+                        "flight_no": "Vol", "route_city": "Route",
+                        "direction": "Sens", "sched_time": "Prévu",
+                        "downstream_flights": "↓Vols", "downstream_pax": "↓Pax",
+                        "downstream_delay_min": "↓Retard min",
                     }),
                     hide_index=True, width="stretch",
                 )
             else:
-                st.success("No cascades predicted at this severity.")
+                st.success("Aucune cascade prédite à cette sévérité.")
     with col_w:
         with st.container(border=True):
-            st.markdown("**Delay breakdown**")
+            st.markdown("**Répartition des retards**")
             breakdown = pd.DataFrame({
-                "Type": ["On time", "Root cause", "Cascade (inherited)"],
-                "Flights": [
+                "Type": ["À l'heure", "Cause racine", "Cascade (héritée)"],
+                "Vols": [
                     cs["total_flights"] - cs["delayed_flights"],
                     cs["root_flights"], cs["cascade_flights"],
                 ],
@@ -237,30 +248,30 @@ with tab_cascade:
                 alt.Chart(breakdown)
                 .mark_arc(innerRadius=55)
                 .encode(
-                    theta="Flights:Q",
+                    theta="Vols:Q",
                     color=alt.Color("Type:N", scale=alt.Scale(
-                        domain=["On time", "Root cause", "Cascade (inherited)"],
+                        domain=["À l'heure", "Cause racine", "Cascade (héritée)"],
                         range=["#1E6F5C", "#9C6209", "#C8102E"])),
-                    tooltip=["Type:N", "Flights:Q"],
+                    tooltip=["Type:N", "Vols:Q"],
                 )
                 .properties(height=240)
             )
             st.altair_chart(donut, width="stretch")
             st.caption(
-                "The red slice is the prize: delays you can prevent upstream "
-                "instead of absorbing everywhere."
+                "La tranche rouge est le gain : des retards que l'on peut "
+                "prévenir en amont au lieu de les absorber partout."
             )
 
     with st.container(border=True):
-        st.markdown("**Rotation map — the busiest tails**")
-        st.caption("Each aircraft's total predicted delay across its chain of flights today.")
+        st.markdown("**Carte des rotations — les appareils les plus chargés**")
+        st.caption("Le retard total prédit de chaque appareil sur sa chaîne de vols du jour.")
         rot = res.rotations.head(12).copy()
         rot_chart = (
             alt.Chart(rot)
             .mark_bar()
             .encode(
-                y=alt.Y("tail:N", sort="-x", title="Aircraft"),
-                x=alt.X("total_delay:Q", title="Total predicted delay (min)"),
+                y=alt.Y("tail:N", sort="-x", title="Appareil"),
+                x=alt.X("total_delay:Q", title="Retard total prédit (min)"),
                 color=alt.value("#C8102E"),
                 tooltip=["tail:N", "aircraft:N", "legs:Q", "total_delay:Q", "pax:Q"],
             )
@@ -269,21 +280,22 @@ with tab_cascade:
         st.altair_chart(rot_chart, width="stretch")
 
 # ===========================================================================
-# TAB 3 — Turnaround risk
+# TAB 3 — Risque de rotation
 # ===========================================================================
 with tab_turnaround:
-    st.subheader("Turnaround-risk board")
+    st.subheader("Tableau des risques de rotation")
     st.caption(
-        "For each arriving aircraft with an onward flight, how tight is the "
-        "ground time versus the minimum turnaround? Tight ground time is where "
-        "a small inbound delay becomes a departure delay — Boeing's own "
-        "turnaround-optimisation use case, on the ALG schedule."
+        "Pour chaque appareil arrivant avec un vol de continuation, à quel point "
+        "le temps au sol est-il serré face à la rotation minimale ? Un temps au "
+        "sol serré est là où un petit retard entrant devient un retard au départ "
+        ", le cas d'usage d'optimisation de rotation de Boeing lui-même, sur le "
+        "programme ALG."
     )
 
     res2 = appdata.cascade(day_iso, 1.3)
     fl = res2.flights.copy()
 
-    # Compute ground slack for each tail between an arrival and its next departure.
+    # Calcule la marge au sol de chaque appareil entre une arrivée et son départ suivant.
     fl = fl.sort_values(["tail", "sched_time"])
     rows = []
     for tail, grp in fl.groupby("tail"):
@@ -293,48 +305,48 @@ with tab_turnaround:
                 ground = (pd.Timestamp(b["sched_time"]) - pd.Timestamp(a["sched_time"])).total_seconds() / 60
                 slack = ground - a["min_turnaround"]
                 rows.append({
-                    "Inbound": a["flight_no"], "from": a["route_city"],
-                    "Outbound": b["flight_no"], "to": b["route_city"],
-                    "Aircraft": a["aircraft_name"], "tail": tail,
-                    "Ground (min)": int(ground), "Min turn (min)": int(a["min_turnaround"]),
-                    "Slack (min)": int(slack), "Outbound pax": int(b["passengers"]),
+                    "Entrant": a["flight_no"], "de": a["route_city"],
+                    "Sortant": b["flight_no"], "vers": b["route_city"],
+                    "Appareil": a["aircraft_name"], "tail": tail,
+                    "Au sol (min)": int(ground), "Rotation min (min)": int(a["min_turnaround"]),
+                    "Marge (min)": int(slack), "Pax sortant": int(b["passengers"]),
                 })
     turn = pd.DataFrame(rows)
     if not turn.empty:
         def risk(slack):
             if slack < 10:
-                return "🔴 Critical"
+                return "🔴 Critique"
             if slack < 25:
-                return "🟠 Tight"
-            return "🟢 Comfortable"
-        turn["Risk"] = turn["Slack (min)"].apply(risk)
-        turn = turn.sort_values("Slack (min)")
+                return "🟠 Serrée"
+            return "🟢 Confortable"
+        turn["Risque"] = turn["Marge (min)"].apply(risk)
+        turn = turn.sort_values("Marge (min)")
 
         with st.container(horizontal=True):
-            st.metric("Turnarounds today", f"{len(turn)}", border=True)
-            st.metric("Critical (<10 min slack)",
-                      f"{(turn['Slack (min)'] < 10).sum()}", border=True)
-            st.metric("Tight (<25 min slack)",
-                      f"{(turn['Slack (min)'] < 25).sum()}", border=True)
-            st.metric("Pax on tight turnarounds",
-                      f"{turn.loc[turn['Slack (min)'] < 25, 'Outbound pax'].sum():,}",
+            st.metric("Rotations aujourd'hui", f"{len(turn)}", border=True)
+            st.metric("Critiques (<10 min de marge)",
+                      f"{(turn['Marge (min)'] < 10).sum()}", border=True)
+            st.metric("Serrées (<25 min de marge)",
+                      f"{(turn['Marge (min)'] < 25).sum()}", border=True)
+            st.metric("Pax sur rotations serrées",
+                      f"{turn.loc[turn['Marge (min)'] < 25, 'Pax sortant'].sum():,}",
                       border=True)
 
         with st.container(border=True):
             st.dataframe(
-                turn[["Risk", "Inbound", "from", "Outbound", "to", "Aircraft",
-                      "Ground (min)", "Min turn (min)", "Slack (min)", "Outbound pax"]],
+                turn[["Risque", "Entrant", "de", "Sortant", "vers", "Appareil",
+                      "Au sol (min)", "Rotation min (min)", "Marge (min)", "Pax sortant"]],
                 hide_index=True, width="stretch", height=380,
             )
     else:
-        st.caption("No linked turnarounds in this schedule.")
+        st.caption("Aucune rotation liée dans ce programme.")
 
 # ===========================================================================
-# TAB 4 — Flight board
+# TAB 4 — Tableau des vols
 # ===========================================================================
 with tab_board:
-    st.subheader("Predicted flight board")
-    st.caption("The full day with predicted delays and their cause.")
+    st.subheader("Tableau des vols prédit")
+    st.caption("La journée complète avec les retards prédits et leur cause.")
 
     res3 = appdata.cascade(day_iso, 1.3)
     board = res3.flights.copy()
@@ -343,10 +355,11 @@ with tab_board:
 
     c1, c2 = st.columns(2)
     with c1:
-        dirs = st.multiselect("Direction", ["Arrival", "Departure"],
-                              default=["Arrival", "Departure"])
+        dirs = st.multiselect("Sens", ["Arrival", "Departure"],
+                              default=["Arrival", "Departure"],
+                              format_func=lambda d: _DIR_FR.get(d, d))
     with c2:
-        show_delayed = st.toggle("Delayed flights only", value=False)
+        show_delayed = st.toggle("Vols retardés seulement", value=False)
 
     view = board[board["direction"].isin(dirs)]
     if show_delayed:
@@ -355,32 +368,37 @@ with tab_board:
     disp = view[["sched_time", "flight_no", "direction", "route_city",
                  "aircraft_name", "passengers", "predicted_delay", "delay_source"]].copy()
     disp["sched_time"] = disp["sched_time"].dt.strftime("%H:%M")
+    disp["direction"] = disp["direction"].map(_DIR_FR).fillna(disp["direction"])
+    disp["delay_source"] = disp["delay_source"].map(_CAUSE_FR).fillna(disp["delay_source"])
     st.dataframe(
         disp.rename(columns={
-            "sched_time": "Sched", "flight_no": "Flight", "direction": "Dir",
-            "route_city": "Route", "aircraft_name": "Aircraft",
-            "passengers": "Pax", "predicted_delay": "Delay (min)",
+            "sched_time": "Prévu", "flight_no": "Vol", "direction": "Sens",
+            "route_city": "Route", "aircraft_name": "Appareil",
+            "passengers": "Pax", "predicted_delay": "Retard (min)",
             "delay_source": "Cause",
         }),
         hide_index=True, width="stretch", height=460,
         column_config={
-            "Delay (min)": st.column_config.NumberColumn("Delay (min)", format="%d"),
+            "Retard (min)": st.column_config.NumberColumn("Retard (min)", format="%d"),
         },
     )
 
 st.divider()
-with st.expander("What's real vs modelled here", icon=":material/science:"):
+with st.expander("Ce qui est réel vs modélisé ici", icon=":material/science:"):
     st.markdown(
         """
-- **Real:** the ALG route network (actual destinations), realistic aircraft
-  types and seat counts, published minimum turnaround times, and the Algerian
-  calendar that drives load factors and traffic (diaspora summer, Ramadan, Aïd).
-- **Modelled:** the specific daily schedule, tail assignments, and the delays.
-  No airline publishes its live rotation plan or delay log — so these are
-  simulated the way the system actually behaves.
-- **The models are the real thing.** The cascade propagation and the passenger-
-  flow build-up are the exact computations you'd run on live AODB/FIDS data —
-  deploying on Air Algérie's real feed is a data-connection, not a rebuild.
+- **Réel :** le réseau de routes ALG (destinations réelles), des types d'appareils
+  et des nombres de sièges réalistes, les temps de rotation minimaux publiés, et
+  le calendrier algérien qui pilote les taux de remplissage et le trafic (été de
+  la diaspora, Ramadan, Aïd).
+- **Modélisé :** le programme quotidien précis, l'affectation des appareils, et les
+  retards. Aucune compagnie ne publie son plan de rotation en direct ni son
+  journal de retards , ils sont donc simulés à la manière dont le système se
+  comporte réellement.
+- **Les modèles sont, eux, réels.** La propagation en cascade et la montée du flux
+  passagers sont les calculs exacts que l'on ferait sur des données AODB/FIDS en
+  direct , déployer sur le vrai flux d'Air Algérie est une connexion de données,
+  pas une refonte.
 """
     )
 appdata.data_badge()

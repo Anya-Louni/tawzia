@@ -1,9 +1,9 @@
 """
-Evidence — the page that decides whether anyone believes the rest of the app.
+Preuves , la page qui décide si l'on croit au reste de l'app.
 
-Shows the walk-forward backtest, the comparison against a workforce tool that
-does not understand Algeria, and the out-of-sample money comparison where both
-rosters were built blind and scored against the same realised demand.
+Montre le backtest en marche avant, la comparaison contre un outil RH qui ne
+comprend pas l'Algérie, et la comparaison monétaire hors échantillon où les deux
+plannings ont été construits à l'aveugle et évalués sur la même demande réalisée.
 """
 
 import altair as alt
@@ -19,26 +19,26 @@ profile = demand_mod.PROFILES[st.session_state["profile_key"]]
 wilaya = st.session_state["wilaya"]
 horizon = st.session_state["horizon"]
 
-st.title("Evidence")
+st.title("Preuves")
 st.caption(
-    "Everything here is out-of-sample. No model on this page ever saw the "
-    "data it is scored on."
+    "Tout ici est hors échantillon. Aucun modèle de cette page n'a jamais vu "
+    "les données sur lesquelles il est évalué."
 )
 
 st.info(
-    "**The honest caveat, up front.** We do not have a real Algerian "
-    "operator's volume ledger — nobody outside those companies does. The "
-    "*demand volumes* on this page are simulated. What is real is the "
-    "**Algerian calendar** the demand responds to (actual Ramadan and Aïd "
-    "dates, actual Friday–Saturday weekend, actual gazetted holidays) and the "
-    "**observed weather** from the ERA5 archive for this wilaya. So these "
-    "results validate the method and the machinery — not the market. The "
-    "magnitude needs a pilot to confirm, and we say that to every investor "
-    "who asks.",
+    "**La réserve honnête, d'emblée.** Nous n'avons pas le registre de volumes "
+    "d'un vrai opérateur algérien , personne en dehors de ces entreprises ne "
+    "l'a. Les *volumes de demande* de cette page sont simulés. Ce qui est réel, "
+    "c'est le **calendrier algérien** auquel la demande répond (vraies dates de "
+    "Ramadan et d'Aïd, vrai week-end vendredi-samedi, vrais jours fériés "
+    "officiels) et la **météo observée** issue de l'archive ERA5 pour cette "
+    "wilaya. Ces résultats valident donc la méthode et la mécanique , pas le "
+    "marché. L'ampleur doit être confirmée par un pilote, et nous le disons à "
+    "chaque investisseur qui le demande.",
     icon=":material/info:",
 )
 
-with st.spinner("Running backtest and scoring rosters…"):
+with st.spinner("Backtest et évaluation des plannings en cours…"):
     ev = appdata.load_evidence(
         st.session_state["profile_key"],
         wilaya,
@@ -57,57 +57,70 @@ dz = float(metrics.loc[metrics["Model"] == "WorkForce.dz", "MAPE_%"].iloc[0])
 gen = float(metrics.loc[metrics["Model"] == "Generic international model", "MAPE_%"].iloc[0])
 sn = float(metrics.loc[metrics["Model"] == "Seasonal naive", "MAPE_%"].iloc[0])
 
+# Étiquettes françaises pour l'affichage, sans toucher aux clés internes.
+_MODEL_FR = {
+    "WorkForce.dz": "WorkForce.dz",
+    "Generic international model": "Modèle international générique",
+    "Seasonal naive": "Naïf saisonnier",
+}
+
 # ---------------------------------------------------------------------------
-st.subheader("1. Does the forecast beat the alternatives?")
+st.subheader("1. La prévision bat-elle les alternatives ?")
 
 with st.container(horizontal=True):
-    st.metric("Our forecast error (MAPE)", f"{dz:.1f}%", border=True)
+    st.metric("Notre erreur de prévision (MAPE)", f"{dz:.1f}%", border=True)
     st.metric(
-        "vs generic international tool",
+        "vs outil international générique",
         f"{gen:.1f}%",
-        f"-{(gen - dz) / gen * 100:.0f}% error",
+        f"-{(gen - dz) / gen * 100:.0f}% d'erreur",
         border=True,
-        help="Same algorithm, same data, same tuning — but with the feature "
-             "set a workforce tool built for Europe would have: Saturday–"
-             "Sunday weekend, no Hijri calendar, no diaspora season.",
+        help="Même algorithme, mêmes données, même réglage , mais avec le jeu "
+             "de variables qu'aurait un outil RH conçu pour l'Europe : week-end "
+             "samedi-dimanche, pas de calendrier hégirien, pas de saison de la "
+             "diaspora.",
     )
     st.metric(
-        "vs seasonal naive",
+        "vs naïf saisonnier",
         f"{sn:.1f}%",
-        f"-{(sn - dz) / sn * 100:.0f}% error",
+        f"-{(sn - dz) / sn * 100:.0f}% d'erreur",
         border=True,
-        help="Same shift, same weekday, last week. What a good ops manager "
-             "does in their head — and a genuinely hard baseline.",
+        help="Même shift, même jour de semaine, la semaine dernière. Ce qu'un "
+             "bon chef d'exploitation fait de tête , et une référence "
+             "réellement difficile à battre.",
     )
-    st.metric("Forecast origins", f"{bt.n_origins}", border=True)
+    st.metric("Origines de prévision", f"{bt.n_origins}", border=True)
 
 with st.container(border=True):
-    st.markdown("**Full backtest metrics**")
+    st.markdown("**Métriques complètes du backtest**")
+    metrics_show = metrics.copy()
+    metrics_show["Model"] = metrics_show["Model"].map(_MODEL_FR).fillna(metrics_show["Model"])
     st.dataframe(
-        metrics,
+        metrics_show,
         hide_index=True,
         width="stretch",
         column_config={
-            "Model": "Model",
+            "Model": "Modèle",
             "MAE": st.column_config.NumberColumn("MAE", format="%.0f"),
             "RMSE": st.column_config.NumberColumn("RMSE", format="%.0f"),
             "MAPE_%": st.column_config.NumberColumn("MAPE %", format="%.2f"),
-            "Bias_%": st.column_config.NumberColumn("Bias %", format="%+.2f"),
-            "Under_%": st.column_config.NumberColumn("Under-forecast %", format="%.1f"),
+            "Bias_%": st.column_config.NumberColumn("Biais %", format="%+.2f"),
+            "Under_%": st.column_config.NumberColumn("Sous-prévision %", format="%.1f"),
         },
     )
     st.caption(
-        "**Bias** matters more than MAPE for a roster. A forecast biased low "
-        "rosters short, and being short costs roughly "
-        f"{sources.value('understaffing_penalty_multiple')}× what the saved "
-        "wages were worth. Ours is deliberately left slightly positive — "
-        "erring high is the cheap direction."
+        "Le **biais** compte plus que le MAPE pour un planning. Une prévision "
+        "biaisée à la baisse sous-dote le planning, et être en sous-effectif "
+        "coûte environ "
+        f"{sources.value('understaffing_penalty_multiple')}× ce que valaient les "
+        "salaires économisés. Le nôtre est laissé délibérément un peu positif , "
+        "surestimer est la direction la moins chère."
     )
 
 with st.container(border=True):
-    st.markdown("**Error by forecast horizon**")
-    st.caption("How fast each approach degrades as you plan further ahead.")
+    st.markdown("**Erreur par horizon de prévision**")
+    st.caption("À quelle vitesse chaque approche se dégrade quand on planifie plus loin.")
     pivot = bt.by_horizon.pivot(index="horizon", columns="Model", values="MAPE_%")
+    pivot = pivot.rename(columns=_MODEL_FR)
     st.line_chart(
         pivot,
         height=280,
@@ -117,98 +130,100 @@ with st.container(border=True):
 st.divider()
 
 # ---------------------------------------------------------------------------
-st.subheader("2. Does the better forecast turn into money?")
+st.subheader("2. La meilleure prévision se transforme-t-elle en argent ?")
 st.caption(
-    "Both rosters were built from information available at the forecast "
-    "origin — neither saw the demand it would face. Both pay identical wage "
-    "rates, identical statutory premiums, and an identical penalty for demand "
-    "they failed to cover. The only difference is forecast quality."
+    "Les deux plannings ont été construits à partir des seules informations "
+    "disponibles à l'origine de la prévision , aucun n'a vu la demande qu'il "
+    "allait affronter. Les deux paient des taux salariaux identiques, des "
+    "majorations légales identiques, et une pénalité identique pour la demande "
+    "qu'ils n'ont pas couverte. La seule différence est la qualité de la prévision."
 )
 
 with st.container(horizontal=True):
     st.metric(
-        "Cost saving",
+        "Économie de coût",
         f"{delta['saving_pct']:.1f}%",
         appdata.dzd(delta["saving_dzd"], compact=True),
         border=True,
     )
     st.metric(
-        "Service level gain",
-        f"+{delta['service_gain_pp']:.1f} pp",
+        "Gain de niveau de service",
+        f"+{delta['service_gain_pp']:.1f} pts",
         border=True,
-        help="Share of demand actually served.",
+        help="Part de la demande réellement servie.",
     )
     st.metric(
-        "Win rate",
+        "Taux de victoire",
         f"{delta['win_rate']:.0f}%",
-        f"of {delta['origins']} origins",
+        f"sur {delta['origins']} origines",
         border=True,
     )
     st.metric(
-        "Worst origin",
+        "Pire origine",
         f"{delta['worst_origin_pct']:+.1f}%",
         border=True,
-        help="We lose money on some windows. A comparison that never loses "
-             "is a comparison that has been rigged.",
+        help="Nous perdons de l'argent sur certaines fenêtres. Une comparaison "
+             "qui ne perd jamais est une comparaison truquée.",
     )
 
 with st.container(border=True):
-    st.markdown("**Cost comparison, aggregated over every scored window**")
+    st.markdown("**Comparaison de coût, agrégée sur chaque fenêtre évaluée**")
     comp = ev.comparison.copy()
     st.dataframe(
         comp,
         hide_index=True,
         width="stretch",
         column_config={
-            "Strategy": "Strategy",
-            "Labour cost (DZD)": st.column_config.NumberColumn("Labour", format="%.0f"),
-            "Shortfall cost (DZD)": st.column_config.NumberColumn("Shortfall", format="%.0f"),
+            "Strategy": "Stratégie",
+            "Labour cost (DZD)": st.column_config.NumberColumn("Main-d'œuvre", format="%.0f"),
+            "Shortfall cost (DZD)": st.column_config.NumberColumn("Manque à couvrir", format="%.0f"),
             "Total cost (DZD)": st.column_config.NumberColumn("Total", format="%.0f"),
-            "Unserved units": st.column_config.NumberColumn("Unserved", format="%.0f"),
+            "Unserved units": st.column_config.NumberColumn("Non servies", format="%.0f"),
             "Service level": st.column_config.NumberColumn("Service", format="%.1%%"),
-            "Idle units": st.column_config.NumberColumn("Idle", format="%.0f"),
-            "Worker-shifts": st.column_config.NumberColumn("Worker-shifts", format="%d"),
-            "Cost per unit (DZD)": st.column_config.NumberColumn("Cost/unit", format="%.2f"),
+            "Idle units": st.column_config.NumberColumn("Sous-utilisées", format="%.0f"),
+            "Worker-shifts": st.column_config.NumberColumn("Shifts-employés", format="%d"),
+            "Cost per unit (DZD)": st.column_config.NumberColumn("Coût/unité", format="%.2f"),
         },
     )
     st.caption(
-        "Note the optimised plan spends **more** on labour and still comes out "
-        "ahead. That is the actual insight: the expensive failure in Algerian "
-        "shift operations is being short, not being generous."
+        "Notez que le plan optimisé dépense **plus** en main-d'œuvre et sort "
+        "quand même gagnant. C'est là l'enseignement réel : dans les opérations "
+        "en shifts en Algérie, l'échec coûteux est d'être en sous-effectif, pas "
+        "d'être généreux."
     )
 
 with st.container(border=True):
-    st.markdown("**Saving per forecast window**")
+    st.markdown("**Économie par fenêtre de prévision**")
     st.caption(
-        "Each bar is one independent window. The negative ones are real — "
-        "windows where a fixed roster happened to fit the demand better."
+        "Chaque barre est une fenêtre indépendante. Les négatives sont réelles , "
+        "des fenêtres où un planning fixe s'est trouvé mieux collé à la demande."
     )
     po = ev.per_origin.copy()
     po["origin"] = pd.to_datetime(po["origin"])
     po = po.sort_values("origin")
     po["label"] = po["origin"].dt.strftime("%d %b %y")
-    po["sign"] = np.where(po["saving_pct"] >= 0, "Saved", "Lost")
+    po["sign"] = np.where(po["saving_pct"] >= 0, "Économie", "Perte")
 
-    # Altair rather than st.bar_chart: a categorical axis would be sorted
-    # alphabetically by label ("01 Apr 24" before "02 Feb 26"), which scrambles
-    # the chronology. `sort=None` keeps the frame's own order.
+    # Altair plutôt que st.bar_chart : un axe catégoriel serait trié
+    # alphabétiquement par label, ce qui brouillerait la chronologie.
+    # `sort=None` conserve l'ordre du DataFrame.
     savings_chart = (
         alt.Chart(po)
         .mark_bar()
         .encode(
             x=alt.X("label:N", sort=None, title=None,
                     axis=alt.Axis(labelAngle=-45, labelFontSize=10)),
-            y=alt.Y("saving_pct:Q", title="Saving vs fixed roster (%)"),
+            y=alt.Y("saving_pct:Q", title="Économie vs planning fixe (%)"),
             color=alt.Color(
                 "sign:N",
-                scale=alt.Scale(domain=["Saved", "Lost"],
+                scale=alt.Scale(domain=["Économie", "Perte"],
                                 range=["#C8102E", "#7C8494"]),
                 legend=alt.Legend(title=None, orient="top"),
             ),
             tooltip=[
-                alt.Tooltip("label:N", title="Window starting"),
-                alt.Tooltip("saving_pct:Q", title="Saving %", format="+.1f"),
-                alt.Tooltip("saving:Q", title="Saving DZD", format=",.0f"),
+                alt.Tooltip("label:N", title="Fenêtre débutant le"),
+                alt.Tooltip("saving_pct:Q", title="Économie %", format="+.1f"),
+                alt.Tooltip("saving:Q", title="Économie DZD", format=",.0f"),
             ],
         )
         .properties(height=260)
@@ -218,30 +233,30 @@ with st.container(border=True):
 st.divider()
 
 # ---------------------------------------------------------------------------
-st.subheader("3. Which Algerian signals are actually earning their keep?")
+st.subheader("3. Quels signaux algériens gagnent réellement leur place ?")
 
 fi = appdata.load_feature_importance(
     st.session_state["profile_key"], wilaya, st.session_state["allow_network"]
 )
 
 label_map = {
-    "is_weekend_int": "Friday–Saturday weekend",
-    "is_holiday_int": "Algerian public holidays",
+    "is_weekend_int": "Week-end vendredi-samedi",
+    "is_holiday_int": "Jours fériés algériens",
     "is_ramadan_int": "Ramadan",
-    "ramadan_progress": "Position within Ramadan",
-    "eid_fitr_runup": "Aïd el-Fitr run-up",
-    "eid_adha_runup": "Aïd el-Adha run-up",
-    "diaspora_intensity": "Diaspora summer season",
+    "ramadan_progress": "Position dans le Ramadan",
+    "eid_fitr_runup": "Approche de l'Aïd el-Fitr",
+    "eid_adha_runup": "Approche de l'Aïd el-Adha",
+    "diaspora_intensity": "Saison estivale de la diaspora",
     "is_rentree_int": "Rentrée scolaire",
-    "payday_boost": "End-of-month payday cycle",
-    "shift_idx": "Shift of day",
-    "weekday": "Day of week",
-    "log_recent_level": "Recent operating level",
-    "horizon": "Forecast horizon",
-    "temp_max": "Max temperature (real)",
-    "precip_mm": "Rainfall (real)",
-    "heat_stress": "Heat stress (real)",
-    "weather_demand": "Weather demand effect",
+    "payday_boost": "Cycle de paie de fin de mois",
+    "shift_idx": "Shift de la journée",
+    "weekday": "Jour de la semaine",
+    "log_recent_level": "Niveau d'activité récent",
+    "horizon": "Horizon de prévision",
+    "temp_max": "Température max (réelle)",
+    "precip_mm": "Précipitations (réelles)",
+    "heat_stress": "Stress thermique (réel)",
+    "weather_demand": "Effet météo sur la demande",
 }
 fi_show = fi.copy()
 fi_show["Signal"] = fi_show["Feature"].map(label_map).fillna(fi_show["Feature"])
@@ -250,35 +265,34 @@ fi_show = fi_show[fi_show["Importance"] > 0].head(12)
 col_a, col_b = st.columns([3, 2])
 with col_a:
     with st.container(border=True):
-        st.markdown("**Permutation importance**")
-        # Explicit descending sort - a plain bar chart would order the
-        # categories alphabetically, which buries the point this chart exists
-        # to make.
+        st.markdown("**Importance par permutation**")
+        # Tri décroissant explicite , un graphe à barres simple ordonnerait les
+        # catégories alphabétiquement, ce qui enterre le point de ce graphique.
         fi_show = fi_show.copy()
         fi_show["is_dz"] = fi_show["Feature"].isin([
             "is_weekend_int", "is_holiday_int", "is_ramadan_int",
             "ramadan_progress", "eid_fitr_runup", "eid_adha_runup",
             "diaspora_intensity", "is_rentree_int", "payday_boost",
         ])
-        fi_show["Signal type"] = np.where(
-            fi_show["is_dz"], "Algeria-specific", "Generic"
+        fi_show["Type de signal"] = np.where(
+            fi_show["is_dz"], "Spécifique à l'Algérie", "Générique"
         )
         imp_chart = (
             alt.Chart(fi_show)
             .mark_bar()
             .encode(
                 y=alt.Y("Signal:N", sort="-x", title=None),
-                x=alt.X("Importance:Q", title="Permutation importance"),
+                x=alt.X("Importance:Q", title="Importance par permutation"),
                 color=alt.Color(
-                    "Signal type:N",
-                    scale=alt.Scale(domain=["Algeria-specific", "Generic"],
+                    "Type de signal:N",
+                    scale=alt.Scale(domain=["Spécifique à l'Algérie", "Générique"],
                                     range=["#C8102E", "#7C8494"]),
                     legend=alt.Legend(title=None, orient="top"),
                 ),
                 tooltip=[
                     alt.Tooltip("Signal:N"),
                     alt.Tooltip("Importance:Q", format=".4f"),
-                    alt.Tooltip("Signal type:N"),
+                    alt.Tooltip("Type de signal:N"),
                 ],
             )
             .properties(height=340)
@@ -286,27 +300,28 @@ with col_a:
         st.altair_chart(imp_chart, width="stretch")
 with col_b:
     with st.container(border=True):
-        st.markdown("**Why this is the moat**")
+        st.markdown("**Pourquoi c'est le moat**")
         st.markdown(
-            "The Algeria-specific signals — the Friday–Saturday weekend, the "
-            "gazetted holidays, Ramadan and the Aïd run-ups — carry real "
-            "predictive weight.\n\n"
-            "A workforce tool built for a Gregorian, Saturday–Sunday market "
-            "cannot represent any of them. It is not that such a tool is "
-            "badly built; it is that it is built for somewhere else.\n\n"
-            "That gap is measurable, and it is on this page: "
-            f"**{(gen - dz) / gen * 100:.0f}% lower error** than the same "
-            "algorithm without the Algerian feature set."
+            "Les signaux propres à l'Algérie , le week-end vendredi-samedi, les "
+            "jours fériés officiels, le Ramadan et les approches des Aïds , "
+            "portent un vrai poids prédictif.\n\n"
+            "Un outil RH conçu pour un marché grégorien, samedi-dimanche, ne "
+            "peut représenter aucun d'eux. Ce n'est pas qu'un tel outil est mal "
+            "construit ; c'est qu'il est construit pour ailleurs.\n\n"
+            "Cet écart est mesurable, et il est sur cette page : "
+            f"**{(gen - dz) / gen * 100:.0f}% d'erreur en moins** que le même "
+            "algorithme sans le jeu de variables algériennes."
         )
         st.caption(
-            "Weather features rank lower here than the calendar ones. Their "
-            "effect concentrates in Saharan wilayas and wet coastal winters — "
-            "switch the wilaya to Ouargla to see them matter more."
+            "Les variables météo se classent ici plus bas que les variables de "
+            "calendrier. Leur effet se concentre dans les wilayas sahariennes et "
+            "les hivers côtiers humides , basculez la wilaya sur Ouargla pour les "
+            "voir compter davantage."
         )
 
 st.divider()
 
-with st.expander("Method and its limits", icon=":material/science:"):
+with st.expander("Méthode et ses limites", icon=":material/science:"):
     for n in bt.notes:
         st.markdown(f"- {n}")
     st.markdown("---")

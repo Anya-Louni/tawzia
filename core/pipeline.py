@@ -194,8 +194,8 @@ def run_evidence(
     all_fix = pd.concat(fix_frames, ignore_index=True)
 
     comparison = pd.DataFrame([
-        staffing.summarise(all_fix, "Fixed roster (current practice)"),
-        staffing.summarise(all_opt, "WorkForce.dz optimised"),
+        staffing.summarise(all_fix, "Planning fixe (pratique actuelle)"),
+        staffing.summarise(all_opt, "Optimisé WorkForce.dz"),
     ])
 
     fixed_total = comparison.loc[0, "Total cost (DZD)"]
@@ -215,24 +215,25 @@ def run_evidence(
     }
 
     notes = [
-        f"Scored over {delta['origins']} independent forecast origins covering "
-        f"{delta['days_scored']} operating days.",
-        "Both rosters were built from information available at the forecast "
-        "origin. Neither saw the demand it would face.",
-        "Both pay identical wage rates, identical statutory premiums, and an "
-        "identical penalty for demand they failed to cover. The only "
-        "difference between them is forecast quality.",
-        f"The optimised plan beat the fixed roster on "
-        f"{delta['win_rate']:.0f}% of origins "
-        f"(worst {delta['worst_origin_pct']:+.1f}%, best "
+        f"Évalué sur {delta['origins']} origines de prévision indépendantes "
+        f"couvrant {delta['days_scored']} jours d'exploitation.",
+        "Les deux plannings ont été construits à partir des informations "
+        "disponibles à l'origine de la prévision. Aucun n'a vu la demande qu'il "
+        "affronterait.",
+        "Les deux paient des taux salariaux identiques, des majorations légales "
+        "identiques, et une pénalité identique pour la demande non couverte. La "
+        "seule différence entre eux est la qualité de la prévision.",
+        f"Le plan optimisé a battu le planning fixe sur "
+        f"{delta['win_rate']:.0f}% des origines "
+        f"(pire {delta['worst_origin_pct']:+.1f}%, meilleur "
         f"{delta['best_origin_pct']:+.1f}%).",
-        f"Understaffing is priced at "
-        f"{sources.value('understaffing_penalty_multiple')}x the marginal cost "
-        f"of covering the work - an assumption, and the one most worth "
-        f"challenging. It is a slider in the app.",
-        "Demand volumes are simulated on a real Algerian calendar and real "
-        "observed weather. The saving validates the method; the magnitude "
-        "needs a pilot to confirm.",
+        f"Le sous-effectif est chiffré à "
+        f"{sources.value('understaffing_penalty_multiple')}× le coût marginal de "
+        f"couverture du travail , une hypothèse, et celle qui mérite le plus "
+        f"d'être contestée. C'est un curseur dans l'app.",
+        "Les volumes de demande sont simulés sur un vrai calendrier algérien et "
+        "une vraie météo observée. L'économie valide la méthode ; l'ampleur doit "
+        "être confirmée par un pilote.",
     ]
 
     return EvidenceRun(

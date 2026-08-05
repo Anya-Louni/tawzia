@@ -66,15 +66,15 @@ class SiteConstraints:
 
     def describe(self) -> list:
         return [
-            f"Permanent pool: {self.regular_pool} workers.",
-            f"Weekly rest guaranteed - at most {self.max_shifts_per_week} "
-            f"shifts per worker per week.",
-            f"Overtime capped at {self.max_overtime_fraction:.0%} of legal "
-            f"working time (Loi 90-11). Enforced as a hard constraint.",
-            f"Agency temps available up to {self.temp_available_per_shift} "
-            f"per shift, at a {labour_dz.TEMP_AGENCY_MARKUP:.0%} markup.",
-            f"Roster built to the p{self.service_level * 100:.0f} demand "
-            f"quantile, not the mean.",
+            f"Effectif permanent : {self.regular_pool} salariés.",
+            f"Repos hebdomadaire garanti , au maximum {self.max_shifts_per_week} "
+            f"shifts par salarié et par semaine.",
+            f"Heures supplémentaires plafonnées à {self.max_overtime_fraction:.0%} "
+            f"du temps de travail légal (Loi 90-11). Imposé comme contrainte stricte.",
+            f"Intérimaires d'agence disponibles jusqu'à {self.temp_available_per_shift} "
+            f"par shift, avec une majoration de {labour_dz.TEMP_AGENCY_MARKUP:.0%}.",
+            f"Planning construit sur le quantile de demande p{self.service_level * 100:.0f}, "
+            f"pas sur la moyenne.",
         ]
 
 
@@ -370,8 +370,8 @@ def compare(
     fix_eval = evaluate_against_actual(fix, actual, constraints)
 
     table = pd.DataFrame([
-        summarise(fix_eval, "Fixed roster (current practice)"),
-        summarise(opt_eval, "WorkForce.dz optimised"),
+        summarise(fix_eval, "Planning fixe (pratique actuelle)"),
+        summarise(opt_eval, "Optimisé WorkForce.dz"),
     ])
 
     fixed_total = table.loc[0, "Total cost (DZD)"]

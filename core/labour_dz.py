@@ -251,9 +251,9 @@ class Shift:
 
 
 SHIFTS = {
-    "morning":   Shift("morning",   "Morning (06:00-14:00)",   6,  8.0),
-    "afternoon": Shift("afternoon", "Afternoon (14:00-22:00)", 14, 8.0),
-    "night":     Shift("night",     "Night (22:00-06:00)",     22, 8.0),
+    "morning":   Shift("morning",   "Matin (06:00-14:00)",       6,  8.0),
+    "afternoon": Shift("afternoon", "Après-midi (14:00-22:00)", 14, 8.0),
+    "night":     Shift("night",     "Nuit (22:00-06:00)",       22, 8.0),
 }
 
 
@@ -343,16 +343,16 @@ def cost_table() -> pd.DataFrame:
     rows = []
     for role in ROLES.values():
         rows.append({
-            "Role": role.label,
-            "SNMG coeff.": role.snmg_coefficient,
-            "Gross monthly (DZD)": round(role.gross_monthly),
-            "Gross hourly (DZD)": round(role.gross_hourly, 2),
-            "Employer charges (DZD/h)": round(role.loaded_hourly - role.gross_hourly, 2),
-            "Loaded hourly (DZD)": round(role.loaded_hourly, 2),
-            "Overtime hour (DZD)": round(role.hour_cost(overtime=True), 2),
-            "Temp hour (DZD)": round(role.hour_cost(temp=True), 2)
+            "Poste": role.label,
+            "Coeff. SNMG": role.snmg_coefficient,
+            "Brut mensuel (DZD)": round(role.gross_monthly),
+            "Brut horaire (DZD)": round(role.gross_hourly, 2),
+            "Charges patronales (DZD/h)": round(role.loaded_hourly - role.gross_hourly, 2),
+            "Coût horaire chargé (DZD)": round(role.loaded_hourly, 2),
+            "Heure sup. (DZD)": round(role.hour_cost(overtime=True), 2),
+            "Heure intérim (DZD)": round(role.hour_cost(temp=True), 2)
             if role.can_be_temp else None,
-            "Holiday hour (DZD)": round(role.hour_cost(holiday=True), 2),
+            "Heure jour férié (DZD)": round(role.hour_cost(holiday=True), 2),
         })
     return pd.DataFrame(rows)
 
@@ -360,22 +360,23 @@ def cost_table() -> pd.DataFrame:
 def derivation_notes() -> list:
     """Plain-language derivation of the cost stack, for the evidence tab."""
     return [
-        f"SNMG is {SNMG_MONTHLY:,.0f} DZD/month, in force since January 2026 "
-        f"(a 20% rise from 20,000 DZD).",
-        f"The legal working week is 40 hours, giving {LEGAL_MONTHLY_HOURS} "
-        f"paid hours a month.",
-        f"That puts the statutory floor hourly rate at "
-        f"{BASE_HOURLY_DZD:.2f} DZD.",
-        f"Employer CNAS contributions add {CNAS_EMPLOYER:.0%} on top of gross. "
-        f"This is the line most staffing plans omit.",
-        f"Overtime carries at least a {OVERTIME_PREMIUM:.0%} premium and is "
-        f"capped at {MAX_OVERTIME_FRACTION:.0%} of legal working time - so the "
-        f"optimiser treats excess overtime as infeasible, not merely expensive.",
-        f"Night work (21:00-05:00) adds {NIGHT_PREMIUM:.0%}; the Friday rest "
-        f"day adds {RESTDAY_PREMIUM:.0%}; gazetted public holidays are paid at "
-        f"double time.",
-        f"Agency temps cost a further {TEMP_AGENCY_MARKUP:.0%} on the loaded "
-        f"rate - the premium you pay for not having forecast the day.",
+        f"Le SNMG est de {SNMG_MONTHLY:,.0f} DZD/mois, en vigueur depuis janvier "
+        f"2026 (une hausse de 20% par rapport à 20 000 DZD).",
+        f"La semaine légale de travail est de 40 heures, soit {LEGAL_MONTHLY_HOURS} "
+        f"heures payées par mois.",
+        f"Cela fixe le taux horaire plancher légal à {BASE_HOURLY_DZD:.2f} DZD.",
+        f"Les cotisations patronales CNAS ajoutent {CNAS_EMPLOYER:.0%} au-dessus "
+        f"du brut. C'est la ligne que la plupart des plannings oublient.",
+        f"Les heures supplémentaires portent une majoration d'au moins "
+        f"{OVERTIME_PREMIUM:.0%} et sont plafonnées à {MAX_OVERTIME_FRACTION:.0%} "
+        f"du temps de travail légal , l'optimiseur traite donc les heures sup. "
+        f"excédentaires comme infaisables, pas seulement comme coûteuses.",
+        f"Le travail de nuit (21:00-05:00) ajoute {NIGHT_PREMIUM:.0%} ; le jour de "
+        f"repos du vendredi ajoute {RESTDAY_PREMIUM:.0%} ; les jours fériés "
+        f"officiels sont payés au double.",
+        f"Les intérimaires d'agence coûtent {TEMP_AGENCY_MARKUP:.0%} de plus sur "
+        f"le taux chargé , la prime que l'on paie pour ne pas avoir anticipé la "
+        f"journée.",
     ]
 
 

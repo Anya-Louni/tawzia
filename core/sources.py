@@ -47,7 +47,7 @@ class Fact:
     def cite(self) -> str:
         """Short inline citation string for the UI."""
         if self.kind == "assumption":
-            return f"Assumption — {self.note or 'modelling choice'}"
+            return f"Hypothèse — {self.note or 'choix de modélisation'}"
         bits = [self.source]
         if self.as_of:
             bits.append(self.as_of)
@@ -61,409 +61,424 @@ class Fact:
 _FACTS = [
     Fact(
         key="snmg_monthly_dzd",
-        label="SNMG (national guaranteed minimum wage)",
+        label="SNMG (salaire national minimum garanti)",
         value=24000,
-        unit="DZD/month",
+        unit="DZD/mois",
         kind="measured",
-        source="Conseil des ministres / APS — SNMG raised from 20,000 to 24,000 DZD",
+        source="Conseil des ministres / APS — SNMG relevé de 20 000 à 24 000 DZD",
         url="https://www.aps.dz/fr/presidence-news/mim6ow3o-augmentation-du-snmg-a-24-000-da-a-partir-de-janvier-2026",
-        as_of="in force January 2026",
-        note="A 20% rise — the largest in decades. Directly moves every labour "
-             "cost line in this model, which is why we key off it rather than "
-             "inventing a wage.",
+        as_of="en vigueur janvier 2026",
+        note="Une hausse de 20% , la plus forte depuis des décennies. Elle "
+             "déplace directement chaque ligne de coût de main-d'œuvre de ce "
+             "modèle, d'où le fait qu'on s'indexe dessus plutôt que d'inventer "
+             "un salaire.",
         tags=("labour", "cost"),
     ),
     Fact(
         key="legal_monthly_hours",
-        label="Legal monthly working hours",
+        label="Heures légales de travail mensuelles",
         value=173.33,
-        unit="hours/month",
+        unit="heures/mois",
         kind="measured",
-        source="Algerian labour code — 40h legal working week",
+        source="Code du travail algérien — semaine légale de 40h",
         as_of="2026",
-        note="40h/week x 52 / 12 = 173.33h/month. The statutory divisor used "
-             "to derive an hourly rate from a monthly wage.",
+        note="40h/semaine × 52 / 12 = 173,33h/mois. Le diviseur légal utilisé "
+             "pour dériver un taux horaire à partir d'un salaire mensuel.",
         tags=("labour",),
     ),
     Fact(
         key="cnas_employer_rate",
-        label="CNAS employer social contribution",
+        label="Cotisation sociale patronale CNAS",
         value=0.26,
-        unit="fraction of gross",
+        unit="fraction du brut",
         kind="measured",
-        source="CNAS employer contribution schedule",
+        source="Barème de cotisation patronale CNAS",
         as_of="2026",
-        note="Employer share (~25% + social works levy). The single biggest "
-             "reason headline wage != true cost of an hour of labour.",
+        note="Part patronale (~25% + versement œuvres sociales). La principale "
+             "raison pour laquelle le salaire affiché ≠ le vrai coût d'une heure "
+             "de travail.",
         tags=("labour", "cost"),
     ),
     Fact(
         key="cnas_employee_rate",
-        label="CNAS employee social contribution",
+        label="Cotisation sociale salariale CNAS",
         value=0.09,
-        unit="fraction of gross",
+        unit="fraction du brut",
         kind="measured",
-        source="CNAS contribution schedule",
+        source="Barème de cotisation CNAS",
         as_of="2026",
-        note="Deducted from the worker, not an employer cost. Tracked so the "
-             "model never double-counts it.",
+        note="Retenue sur le salarié, pas un coût employeur. Suivie pour que le "
+             "modèle ne la compte jamais deux fois.",
         tags=("labour",),
     ),
 
     # ---- Market: the problem we sell against -----------------------------
     Fact(
         key="ecom_market_usd",
-        label="Algerian e-commerce market size",
+        label="Taille du marché e-commerce algérien",
         value=2_000_000_000,
-        unit="USD/year",
+        unit="USD/an",
         kind="measured",
         source="EasySell market analysis — Algeria e-commerce & COD landscape",
         url="https://easysellapp.com/blogs/wiki/algeria-ecommerce-cod-market-entry-shopify-2026",
         as_of="2026",
-        note="Used for TAM framing only. Treated as an order-of-magnitude "
-             "figure, not a precise measurement.",
+        note="Utilisé uniquement pour le cadrage du TAM. Traité comme un ordre "
+             "de grandeur, pas comme une mesure précise.",
         tags=("market",),
     ),
     Fact(
         key="cod_share",
-        label="Share of Algerian e-commerce orders paid cash on delivery",
+        label="Part des commandes e-commerce algériennes payées à la livraison",
         value=0.95,
         unit="fraction",
         kind="measured",
         source="EasySell / dz-ecom market analyses",
         url="https://easysellapp.com/blogs/wiki/algeria-ecommerce-cod-market-entry-shopify-2026",
         as_of="2026",
-        note="Reported in the 70-95% range depending on source and segment. "
-             "COD is why a mis-staffed delivery day costs the merchant twice: "
-             "outbound AND return shipping.",
+        note="Rapportée dans la fourchette 70-95% selon la source et le segment. "
+             "Le paiement à la livraison explique qu'une journée mal dotée coûte "
+             "deux fois au marchand : envoi aller ET retour.",
         tags=("market", "problem"),
     ),
     Fact(
         key="cod_return_rate",
-        label="COD order return rate (MENA)",
+        label="Taux de retour des commandes payées à la livraison (MENA)",
         value=0.19,
         unit="fraction",
         kind="measured",
         source="MENA COD benchmark — 19% COD vs 8% prepaid",
         url="https://dz-ecom.com/en/blog/yalidine-vs-zr-express-vs-noest-comparatif-2026",
         as_of="2026",
-        note="In Algeria specifically, carrier choice and delivery reliability "
-             "swing this between roughly 15% and 25%. Late or missed delivery "
-             "attempts — i.e. understaffing — push it toward the top of that band.",
+        note="En Algérie précisément, le choix du transporteur et la fiabilité "
+             "de livraison font varier ce taux entre environ 15% et 25%. Les "
+             "tentatives de livraison tardives ou manquées , c'est-à-dire le "
+             "sous-effectif , le poussent vers le haut de la fourchette.",
         tags=("market", "problem"),
     ),
     Fact(
         key="yalidine_branches",
-        label="Largest Algerian carrier branch network",
+        label="Plus grand réseau d'agences d'un transporteur algérien",
         value=160,
-        unit="branches",
+        unit="agences",
         kind="measured",
         source="Yalidine network — 160+ branches, 1,469 communes, all 58 wilayas",
         url="https://dz-ecom.com/en/blog/yalidine-vs-zr-express-vs-noest-comparatif-2026",
         as_of="2026",
-        note="Each branch is a separate sorting-and-dispatch operation with its "
-             "own shift roster. This is what makes the market a multi-site "
-             "software sale rather than a single consulting engagement.",
+        note="Chaque agence est une opération de tri et de dispatch distincte "
+             "avec son propre planning de shifts. C'est ce qui fait du marché "
+             "une vente logicielle multi-sites plutôt qu'une mission de conseil "
+             "unique.",
         tags=("market", "sam"),
     ),
     Fact(
         key="port_demurrage_usd_day",
-        label="Vessel demurrage at congested Algerian ports",
+        label="Surestaries des navires dans les ports algériens congestionnés",
         value=5000,
-        unit="USD/day/vessel",
+        unit="USD/jour/navire",
         kind="measured",
         source="Recovery Advisers market alert — Algeria customs & port delays",
         url="https://www.recoveryadvisers.com/insights/market-alert-algeria/",
         as_of="2025",
-        note="Charged after the third day of delay. Waiting times exceeded 7 "
-             "days at Algiers and Skikda, with up to 15 vessels anchored at "
-             "peak. Evidence that Algerian logistics timing errors are already "
-             "priced in hard currency.",
+        note="Facturées après le troisième jour de retard. Les temps d'attente "
+             "ont dépassé 7 jours à Alger et Skikda, avec jusqu'à 15 navires au "
+             "mouillage au pic. Preuve que les erreurs de timing logistique en "
+             "Algérie sont déjà chiffrées en devise forte.",
         tags=("market", "problem", "expansion"),
     ),
     Fact(
         key="algiers_port_wait_days",
-        label="Vessel waiting time, Port of Algiers",
+        label="Temps d'attente des navires, port d'Alger",
         value=7,
-        unit="days",
+        unit="jours",
         kind="measured",
         source="Port congestion monitoring — Algiers & Skikda >7 days",
         url="https://www.gocomet.com/real-time-port-congestion/algeria",
         as_of="2025",
-        note="Bejaia and Djen-Djen 5-6 days, Oran ~3 days. Sets up the "
-             "expansion vertical: bonded-warehouse and clearance labour.",
+        note="Bejaia et Djen-Djen 5-6 jours, Oran ~3 jours. Pose le vertical "
+             "d'expansion : la main-d'œuvre des entrepôts sous douane et du "
+             "dédouanement.",
         tags=("market", "expansion"),
     ),
 
     # ---- Payroll & compliance -------------------------------------------
     Fact(
         key="irg_exemption_monthly",
-        label="IRG exemption threshold (monthly salary)",
+        label="Seuil d'exonération IRG (salaire mensuel)",
         value=30000,
-        unit="DZD/month",
+        unit="DZD/mois",
         kind="measured",
         source="DGI — IRG traitements et salaires (LF 2022 reform)",
         url="https://www.mfdgi.gov.dz/fr/particuliers/irg-traitements-et-salaires",
         as_of="2025",
-        note="Monthly salaries at or below 30,000 DZD pay no income tax. Since "
-             "the SNMG is 24,000, minimum-wage workers are exempt — which the "
-             "payroll engine must reflect exactly.",
+        note="Les salaires mensuels égaux ou inférieurs à 30 000 DZD ne paient "
+             "aucun impôt sur le revenu. Comme le SNMG est de 24 000, les "
+             "salariés au minimum sont exonérés , ce que le moteur de paie doit "
+             "refléter exactement.",
         tags=("payroll",),
     ),
     Fact(
         key="irg_abatement",
-        label="IRG proportional abatement on salary tax",
+        label="Abattement proportionnel IRG sur l'impôt salarial",
         value=0.40,
-        unit="fraction of computed IRG",
+        unit="fraction de l'IRG calculé",
         kind="measured",
         source="DGI — 40% abatement, floor 1,000 / cap 1,500 DZD per month",
         url="https://www.mfdgi.gov.dz/fr/particuliers/irg-traitements-et-salaires",
         as_of="2025",
-        note="Applied to the bracket-computed tax, bounded to [1000, 1500] "
-             "DZD/month.",
+        note="Appliqué à l'impôt calculé par barème, borné à [1000, 1500] "
+             "DZD/mois.",
         tags=("payroll",),
     ),
     Fact(
         key="irg_family_reduction",
-        label="IRG reduction per dependant",
+        label="Réduction IRG par personne à charge",
         value=1500,
-        unit="DZD/month each",
+        unit="DZD/mois chacune",
         kind="measured",
         source="DGI — 1,500 DZD/month for a non-earning spouse and per child (max 5)",
         url="https://www.mfdgi.gov.dz/fr/particuliers/irg-traitements-et-salaires",
         as_of="2025",
-        note="Directly reduces monthly IRG. A real deployment collects each "
-             "worker's dependants; the demo defaults to zero.",
+        note="Réduit directement l'IRG mensuel. Un déploiement réel collecte les "
+             "personnes à charge de chaque salarié ; la démo est à zéro par "
+             "défaut.",
         tags=("payroll",),
     ),
     Fact(
         key="cnas_social_works",
-        label="CNAS social-works levy (within employer 26%)",
+        label="Versement œuvres sociales CNAS (inclus dans les 26% patronaux)",
         value=0.005,
-        unit="fraction of gross",
+        unit="fraction du brut",
         kind="measured",
         source="CLEISS / CNAS — employer 25% across 5 branches + 0.5% oeuvres sociales",
         url="https://www.cleiss.fr/docs/cotisations/algerie.html",
         as_of="2025",
-        note="The employer 26% breaks down as social insurance 12.5%, "
-             "retirement 10%, work-accidents 1.25%, unemployment 1%, early "
-             "retirement 0.25%, plus 0.5% social works.",
+        note="Les 26% patronaux se décomposent en : assurances sociales 12,5%, "
+             "retraite 10%, accidents du travail 1,25%, chômage 1%, retraite "
+             "anticipée 0,25%, plus 0,5% d'œuvres sociales.",
         tags=("payroll",),
     ),
 
     # ---- HR / leave law --------------------------------------------------
     Fact(
         key="annual_leave_days",
-        label="Statutory annual paid leave",
+        label="Congé annuel payé légal",
         value=30,
-        unit="days/year",
+        unit="jours/an",
         kind="measured",
-        source="Algerian labour code — 2.5 days accrued per month worked",
+        source="Code du travail algérien — 2,5 jours acquis par mois travaillé",
         url="https://rivermate.com/guides/algeria/leave",
         as_of="2024",
-        note="30 days a year, accrued at 2.5/month. Southern (Saharan) "
-             "provinces add 10 days (40 total). The leave engine must accrue "
-             "and enforce this exactly.",
+        note="30 jours par an, acquis à raison de 2,5/mois. Les wilayas du Sud "
+             "(sahariennes) ajoutent 10 jours (40 au total). Le moteur de congés "
+             "doit acquérir et imposer cela exactement.",
         tags=("hr", "leave"),
     ),
     Fact(
         key="south_leave_bonus_days",
-        label="Extra annual leave, southern provinces",
+        label="Congé annuel supplémentaire, wilayas du Sud",
         value=10,
-        unit="days/year",
+        unit="jours/an",
         kind="measured",
-        source="Algerian labour code — Saharan provinces",
+        source="Code du travail algérien — wilayas sahariennes",
         url="https://vacationtracker.io/leave-laws/africa/algeria/",
         as_of="2024",
-        note="Workers in the southern wilayas receive 40 days total.",
+        note="Les salariés des wilayas du Sud reçoivent 40 jours au total.",
         tags=("hr", "leave"),
     ),
     Fact(
         key="maternity_leave_weeks",
-        label="Maternity leave",
+        label="Congé de maternité",
         value=14,
-        unit="weeks",
+        unit="semaines",
         kind="measured",
-        source="Algerian labour / social-security code — full salary",
+        source="Code du travail / de la sécurité sociale algérien — plein salaire",
         url="https://rivermate.com/guides/algeria/leave",
         as_of="2024",
-        note="14 weeks at full pay (typically 6 before, 8 after birth), "
-             "funded through CNAS.",
+        note="14 semaines à plein salaire (typiquement 6 avant, 8 après la "
+             "naissance), financées par la CNAS.",
         tags=("hr", "leave"),
     ),
     Fact(
         key="sick_leave_split_day",
-        label="Sick-pay step-up day",
+        label="Jour de passage du taux de maladie",
         value=15,
-        unit="days",
+        unit="jours",
         kind="measured",
-        source="Algerian social-security rules — 50% for first 15 days, then 100%",
+        source="Règles de sécurité sociale algérienne — 50% les 15 premiers jours, puis 100%",
         url="https://rivermate.com/guides/algeria/leave",
         as_of="2024",
-        note="First 15 days paid at half salary; full salary from day 16 or on "
-             "hospitalisation.",
+        note="Les 15 premiers jours payés à demi-salaire ; plein salaire à "
+             "partir du 16e jour ou en cas d'hospitalisation.",
         tags=("hr", "leave"),
     ),
 
     # ---- Aviation vertical (Air Algérie / Aéroport d'Alger) --------------
     Fact(
         key="airalgerie_pax_2025",
-        label="Air Algérie passengers, 2025",
+        label="Passagers Air Algérie, 2025",
         value=8_800_000,
-        unit="passengers/year",
+        unit="passagers/an",
         kind="measured",
         source="Air Algérie 2026 transformation plan reporting (DzairTube)",
         url="https://www.dzair-tube.dz/en/air-algerie-targets-nearly-10-million-passengers-in-2026-as-ambitious-transformation-drive-gains-momentum/",
         as_of="2025",
-        note="Up ~11% on 2024. The growth curve the airport has to staff for.",
+        note="En hausse d'environ 11% sur 2024. La courbe de croissance que "
+             "l'aéroport doit doter en personnel.",
         tags=("aviation", "market"),
     ),
     Fact(
         key="airalgerie_pax_target_2026",
-        label="Air Algérie passenger target, 2026",
+        label="Objectif de passagers Air Algérie, 2026",
         value=10_000_000,
-        unit="passengers/year",
+        unit="passagers/an",
         kind="measured",
         source="Air Algérie 2026 expansion strategy (DzairTube / Travel & Tour World)",
         url="https://www.dzair-tube.dz/en/air-algerie-targets-nearly-10-million-passengers-in-2026-as-ambitious-transformation-drive-gains-momentum/",
-        as_of="target 2026",
-        note="~10M target, plus ~60 new aircraft (Boeing 737 MAX 8/9, "
-             "widebody, ATR). Rapid growth onto a congested hub is precisely "
-             "the pressure the airport-ops module addresses.",
+        as_of="objectif 2026",
+        note="Objectif d'environ 10M, plus ~60 nouveaux appareils (Boeing 737 "
+             "MAX 8/9, gros-porteurs, ATR). Une croissance rapide sur un hub "
+             "congestionné est précisément la pression que traite le module "
+             "aéroportuaire.",
         tags=("aviation", "market"),
     ),
     Fact(
         key="alg_pax_2024",
-        label="Aéroport d'Alger passengers, 2024",
+        label="Passagers Aéroport d'Alger, 2024",
         value=9_151_517,
-        unit="passengers/year",
+        unit="passagers/an",
         kind="measured",
         source="Houari Boumediene Airport traffic figures",
         url="https://en.wikipedia.org/wiki/Houari_Boumediene_Airport",
         as_of="2024",
-        note="ALG is Air Algérie's main hub, with documented peak-period "
-             "delays and at least one publicised cascading-delay day.",
+        note="ALG est le hub principal d'Air Algérie, avec des retards de "
+             "période de pointe documentés et au moins une journée de retards en "
+             "cascade médiatisée.",
         tags=("aviation", "market"),
     ),
     Fact(
         key="reactionary_delay_share",
-        label="Reactionary (knock-on) share of airline delays",
+        label="Part réactionnaire (par ricochet) des retards aériens",
         value=0.45,
         unit="fraction",
         kind="measured",
         source="Industry norm for reactionary/cascade delay (Eurocontrol-style benchmark)",
-        as_of="general",
-        note="~40–50% of all airline delay is inherited from a previous "
-             "flight, not generated fresh. Our cascade model reproduces this "
-             "share from first principles, which is a validity check on it.",
+        as_of="général",
+        note="~40-50% de tout retard aérien est hérité d'un vol précédent, pas "
+             "généré à neuf. Notre modèle de cascade reproduit cette part à "
+             "partir de premiers principes, ce qui en est un contrôle de "
+             "validité.",
         tags=("aviation",),
     ),
 
     # ---- Startup / funding context ---------------------------------------
     Fact(
         key="asf_fund_dzd",
-        label="Algerian Startup Fund capital",
+        label="Capital de l'Algerian Startup Fund",
         value=2_400_000_000,
         unit="DZD",
         kind="measured",
-        source="Algerian Startup Fund (ASF), capitalised with six public banks",
+        source="Algerian Startup Fund (ASF), capitalisé par six banques publiques",
         url="https://asf.dz/",
         as_of="2026",
-        note="100+ startups funded from 350+ applications. Relevant because it "
-             "is a realistic first cheque for this company.",
+        note="100+ startups financées sur 350+ candidatures. Pertinent car c'est "
+             "un premier chèque réaliste pour cette entreprise.",
         tags=("funding",),
     ),
     Fact(
         key="startup_label_exemption_years",
-        label="Startup-label tax exemption",
+        label="Exonération fiscale du Label Startup",
         value=4,
-        unit="years",
+        unit="années",
         kind="measured",
         source="startup.dz — Label Startup benefits",
         url="https://www.upgrowth.dz/startup-algerie",
         as_of="2026",
-        note="4 years' exemption on corporate income tax (IBS), professional "
-             "activity tax (TAP) and founder income tax, plus 0% VAT on "
-             "imported equipment. Materially changes our runway maths.",
+        note="4 ans d'exonération d'impôt sur les bénéfices (IBS), de taxe sur "
+             "l'activité professionnelle (TAP) et d'impôt sur le revenu des "
+             "fondateurs, plus 0% de TVA sur les équipements importés. Change "
+             "sensiblement le calcul de trésorerie.",
         tags=("funding",),
     ),
 
     # ---- Live API sources -------------------------------------------------
     Fact(
         key="weather_api",
-        label="Historical & forecast weather",
+        label="Météo historique & prévisionnelle",
         value="open-meteo",
         unit="",
         kind="live",
-        source="Open-Meteo (ERA5 reanalysis archive + operational forecast)",
+        source="Open-Meteo (archive de réanalyse ERA5 + prévision opérationnelle)",
         url="https://open-meteo.com/",
-        note="Free, no API key, per-coordinate. Gives us genuine daily weather "
-             "for every wilaya capital, historical and forward.",
+        note="Gratuit, sans clé d'API, par coordonnée. Nous donne une vraie "
+             "météo quotidienne pour chaque chef-lieu de wilaya, en historique "
+             "et en prévisionnel.",
         tags=("data",),
     ),
     Fact(
         key="macro_api",
-        label="Algeria macroeconomic indicators",
+        label="Indicateurs macroéconomiques de l'Algérie",
         value="worldbank",
         unit="",
         kind="live",
-        source="World Bank Open Data — country DZA",
+        source="World Bank Open Data — pays DZA",
         url="https://data.worldbank.org/country/DZ",
-        note="Inflation, population, labour force. Used to index wages and to "
-             "sanity-check market sizing.",
+        note="Inflation, population, population active. Utilisés pour indexer les "
+             "salaires et contrôler la cohérence du dimensionnement du marché.",
         tags=("data",),
     ),
 
     # ---- Assumptions: stated as assumptions, never as findings ------------
     Fact(
         key="productivity_parcels_per_hour",
-        label="Parcels sorted per hub worker per hour",
+        label="Colis triés par employé de hub et par heure",
         value=45,
-        unit="parcels/worker/hour",
+        unit="colis/employé/heure",
         kind="assumption",
-        source="WorkForce.dz model",
-        note="Manual sort with handheld scanning. This is the first number a "
-             "pilot customer replaces with their own measured throughput — the "
-             "whole cost model scales off it, so we expose it as a slider "
-             "rather than burying it.",
+        source="Modèle WorkForce.dz",
+        note="Tri manuel avec scan portable. C'est le premier chiffre qu'un "
+             "client pilote remplace par son propre débit mesuré , tout le "
+             "modèle de coût s'échelonne dessus, d'où le fait qu'on l'expose "
+             "comme un curseur plutôt que de l'enterrer.",
         tags=("labour", "assumption"),
     ),
     Fact(
         key="overtime_premium",
-        label="Overtime premium",
+        label="Majoration des heures supplémentaires",
         value=0.50,
-        unit="fraction above base hourly",
+        unit="fraction au-dessus du taux horaire de base",
         kind="assumption",
-        source="WorkForce.dz model, aligned to Algerian labour code practice",
-        note="Algerian law sets overtime at a premium over the base hourly "
-             "rate; 50% is the common daytime figure. Night and rest-day work "
-             "attract higher premiums, modelled separately.",
+        source="Modèle WorkForce.dz, aligné sur la pratique du code du travail algérien",
+        note="La loi algérienne fixe les heures supplémentaires à une majoration "
+             "sur le taux horaire de base ; 50% est la valeur courante en "
+             "journée. Le travail de nuit et de jour de repos entraîne des "
+             "majorations plus élevées, modélisées séparément.",
         tags=("labour", "assumption"),
     ),
     Fact(
         key="temp_agency_markup",
-        label="Temp-agency markup over direct employment",
+        label="Majoration d'agence d'intérim sur l'emploi direct",
         value=0.35,
         unit="fraction",
         kind="assumption",
-        source="WorkForce.dz model",
-        note="Agency fee on top of the loaded hourly cost of a directly "
-             "employed worker. Varies widely by wilaya and by how late the "
-             "request is made — which is exactly the cost forecasting removes.",
+        source="Modèle WorkForce.dz",
+        note="Frais d'agence au-dessus du coût horaire chargé d'un salarié "
+             "employé en direct. Varie beaucoup selon la wilaya et le retard de "
+             "la demande , ce qui est exactement le coût que la prévision "
+             "supprime.",
         tags=("labour", "assumption"),
     ),
     Fact(
         key="understaffing_penalty_multiple",
-        label="Cost multiple of an uncovered hour vs. a covered one",
+        label="Multiple de coût d'une heure non couverte vs. une heure couverte",
         value=2.4,
-        unit="x",
+        unit="×",
         kind="assumption",
-        source="WorkForce.dz model",
-        note="An hour of demand you cannot serve does not merely cost the "
-             "wage you saved. In COD e-commerce it costs the failed delivery, "
-             "the return leg, and a share of lifetime customer value. We keep "
-             "this conservative and expose it — it is the single assumption "
-             "most likely to be challenged.",
+        source="Modèle WorkForce.dz",
+        note="Une heure de demande que l'on ne peut servir ne coûte pas "
+             "seulement le salaire économisé. En e-commerce payé à la livraison, "
+             "elle coûte la livraison ratée, le trajet retour, et une part de la "
+             "valeur vie client. Nous la gardons prudente et l'exposons , c'est "
+             "l'hypothèse la plus susceptible d'être contestée.",
         tags=("cost", "assumption"),
     ),
 ]
