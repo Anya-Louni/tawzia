@@ -346,14 +346,14 @@ def dzd(n: float, compact: bool = False) -> str:
 
 def data_badge() -> None:
     """Show where the data on this page comes from."""
-    hist_wx = "live" if st.session_state.get("allow_network", True) else "cached/offline"
+    hist_wx = "en direct" if st.session_state.get("allow_network", True) else "cache/hors-ligne"
     st.caption(
-        f":material/database: Weather: Open-Meteo ERA5 ({hist_wx}) · "
-        f"Calendar: computed Hijri + Algerian civil holidays · "
-        f"Macro: World Bank · "
-        f"Wages: SNMG {labour_dz.SNMG_MONTHLY:,.0f} DZD + CNAS "
+        f":material/database: Météo : Open-Meteo ERA5 ({hist_wx}) · "
+        f"Calendrier : Hijri calculé + jours fériés algériens · "
+        f"Macro : Banque mondiale · "
+        f"Salaires : SNMG {labour_dz.SNMG_MONTHLY:,.0f} DZD + CNAS "
         f"{labour_dz.CNAS_EMPLOYER:.0%} · "
-        f"**Operational volumes are simulated** — see Sources."
+        f"**Les volumes opérationnels sont simulés** , voir Sources."
     )
 
 
@@ -394,13 +394,13 @@ def sidebar_controls() -> None:
         from . import industry
         st.markdown("### WorkForce.dz")
         if industry.is_tailored():
-            st.caption(f":material/storefront: {industry.label()} edition")
+            st.caption(f":material/storefront: Édition {industry.label()}")
         else:
-            st.caption("The AI HR platform for Algerian operations")
+            st.caption("La plateforme RH par l'IA, conçue pour l'Algérie")
 
         profile_labels = {k: p.label for k, p in demand_mod.PROFILES.items()}
         st.selectbox(
-            "Operation type",
+            "Type d'activité",
             options=list(profile_labels),
             format_func=lambda k: profile_labels[k],
             key="profile_key",
@@ -409,30 +409,30 @@ def sidebar_controls() -> None:
             "Wilaya",
             options=list(weather_dz.WILAYAS),
             key="wilaya",
-            help="Drives the real weather series used by the model.",
+            help="Détermine la série météo réelle utilisée par le modèle.",
         )
 
-        with st.expander("Planning parameters", icon=":material/tune:"):
-            st.slider("Forecast horizon (days)", 7, 21, key="horizon")
+        with st.expander("Paramètres de planification", icon=":material/tune:"):
+            st.slider("Horizon de prévision (jours)", 7, 21, key="horizon")
             st.select_slider(
-                "Service level",
+                "Niveau de service",
                 options=[0.50, 0.75, 0.80, 0.90],
                 key="service_level",
                 format_func=lambda v: f"p{v * 100:.0f}",
-                help="Roster to this demand quantile. Higher means fewer "
-                     "missed deliveries and more idle wages.",
+                help="Dimensionner à ce quantile de demande. Plus élevé = moins "
+                     "de ruptures de service, mais plus de temps payé inactif.",
             )
-            st.number_input("Permanent workforce", 20, 400, key="regular_pool")
-            st.number_input("Temp ceiling per shift", 0, 200, key="temp_ceiling")
+            st.number_input("Effectif permanent", 20, 400, key="regular_pool")
+            st.number_input("Plafond d'intérimaires par shift", 0, 200, key="temp_ceiling")
 
-        with st.expander("Data source", icon=":material/cloud:"):
+        with st.expander("Source des données", icon=":material/cloud:"):
             st.toggle(
-                "Allow live API calls",
+                "Autoriser les appels API en direct",
                 key="allow_network",
-                help="Turn off to run entirely from the on-disk cache — "
-                     "useful if the venue wifi is unreliable.",
+                help="Désactiver pour fonctionner entièrement depuis le cache "
+                     "local , utile si le wifi du lieu est instable.",
             )
             st.caption(
-                "Open-Meteo and World Bank responses are cached to disk on "
-                "first fetch, so the app works offline afterwards."
+                "Les réponses d'Open-Meteo et de la Banque mondiale sont mises "
+                "en cache au premier appel : l'app fonctionne ensuite hors-ligne."
             )

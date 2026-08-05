@@ -99,7 +99,7 @@ class OperationProfile:
 PROFILES = {
     "ecom_hub": OperationProfile(
         key="ecom_hub",
-        label="E-commerce fulfilment hub",
+        label="Hub e-commerce",
         demand_unit="parcels",
         primary_role="sorter",
         base_daily_volume=9_500,
@@ -125,7 +125,7 @@ PROFILES = {
     ),
     "airport_ground": OperationProfile(
         key="airport_ground",
-        label="Airport ground handling",
+        label="Assistance aéroportuaire",
         demand_unit="passengers",
         primary_role="checkin_agent",
         base_daily_volume=14_000,
@@ -151,7 +151,7 @@ PROFILES = {
     ),
     "retail_dc": OperationProfile(
         key="retail_dc",
-        label="Retail distribution centre",
+        label="Centre de distribution retail",
         demand_unit="cases",
         primary_role="warehouse_op",
         base_daily_volume=6_800,
@@ -176,7 +176,7 @@ PROFILES = {
     ),
     "hotel": OperationProfile(
         key="hotel",
-        label="Hotel & hospitality",
+        label="Hôtellerie",
         demand_unit="occupied rooms",
         primary_role="housekeeper",
         base_daily_volume=520,
@@ -201,7 +201,7 @@ PROFILES = {
     ),
     "transport": OperationProfile(
         key="transport",
-        label="Passenger transport & fleet",
+        label="Transport de personnes & flotte",
         demand_unit="passenger-trips",
         primary_role="driver",
         base_daily_volume=4_200,
