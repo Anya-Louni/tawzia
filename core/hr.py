@@ -289,13 +289,13 @@ def workforce_frame(people: list, as_of: Optional[_dt.date] = None) -> pd.DataFr
     rows = []
     for e in people:
         rows.append({
-            "ID": e.emp_id, "Name": e.name, "Role": labour_dz.ROLES[e.role_key].label,
-            "Wilaya": e.wilaya, "Contract": e.contract,
-            "Seniority (yrs)": e.seniority_years(as_of),
-            "Entitlement (d)": e.annual_entitlement(),
-            "Accrued balance (d)": e.accrued_leave(as_of),
-            "Dependants": e.dependants,
-            "Monthly gross (DZD)": round(e.monthly_gross()),
+            "ID": e.emp_id, "Nom": e.name, "Poste": labour_dz.ROLES[e.role_key].label,
+            "Wilaya": e.wilaya, "Contrat": e.contract,
+            "Ancienneté (ans)": e.seniority_years(as_of),
+            "Droit (j)": e.annual_entitlement(),
+            "Solde acquis (j)": e.accrued_leave(as_of),
+            "Personnes à charge": e.dependants,
+            "Brut mensuel (DZD)": round(e.monthly_gross()),
         })
     return pd.DataFrame(rows)
 

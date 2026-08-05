@@ -13,8 +13,9 @@ appdata.sidebar_controls()
 
 profile = demand_mod.PROFILES[st.session_state["profile_key"]]
 
-st.title("AI HR copilot")
-st.caption("Ask about staff, leave, pay, attendance or the law. Answers come only from this site's data.")
+st.title("Copilote RH")
+st.caption("Posez vos questions sur le personnel, les congés, la paie, la présence "
+           "ou la loi. Les réponses viennent uniquement des données de ce site.")
 
 # Provider status: Provider for the jury, Groq free fallback.
 status = ai.status_line()
@@ -25,9 +26,9 @@ elif avail["groq"]:
     st.info(f":material/smart_toy: {status}")
 else:
     st.warning(
-        "No AI key set. Add **PROVIDER_API_KEY** (best, for the jury) or "
-        "**GROQ_API_KEY** (free) to a `.env` file. Every other HR page works "
-        "without it.",
+        "Aucune clé IA configurée. Ajoutez **PROVIDER_API_KEY** (idéale pour le "
+        "jury) ou **GROQ_API_KEY** (gratuite) dans les Secrets. Toutes les autres "
+        "pages RH fonctionnent sans.",
         icon=":material/key:",
     )
 
@@ -80,17 +81,18 @@ SYSTEM = (
     "concise and concrete, cite real names, dates and figures. Respect Algerian "
     "labour law (Friday-Saturday weekend; leave and pay rules as given). Costs "
     "are loaded costs including CNAS. If the data does not answer the question, "
-    "say so. Never invent employees, numbers or rules not present.\n\n"
+    "say so. Never invent employees, numbers or rules not present. "
+    "ALWAYS answer in French.\n\n"
     + context
 )
 
-with st.expander("Try asking", icon=":material/lightbulb:"):
+with st.expander("Exemples de questions", icon=":material/lightbulb:"):
     st.markdown(
-        "- Who is at risk of quitting, and why?\n"
-        "- How many leave days does the team have left in total?\n"
-        "- Are we breaking any labour law right now?\n"
-        "- Draft a reply approving the earliest demande de sortie.\n"
-        "- What will this month's CNAS bill be, and why is it 26%?"
+        "- Qui risque de partir, et pourquoi ?\n"
+        "- Combien de jours de congé reste-t-il à l'équipe au total ?\n"
+        "- Sommes-nous en infraction avec le droit du travail en ce moment ?\n"
+        "- Rédige une réponse approuvant la demande de sortie la plus proche.\n"
+        "- Quelle sera la facture CNAS de ce mois, et pourquoi 26% ?"
     )
 
 if "hr_chat" not in st.session_state:
@@ -100,16 +102,16 @@ for m in st.session_state["hr_chat"]:
     with st.chat_message(m["role"]):
         st.markdown(m["content"])
 
-q = st.chat_input("Ask the HR copilot...")
+q = st.chat_input("Posez votre question au copilote RH...")
 if q:
     if not (avail["provider"] or avail["groq"]):
-        st.warning("Set an AI key first (see above).", icon=":material/key:")
+        st.warning("Configurez d'abord une clé IA (voir ci-dessus).", icon=":material/key:")
     else:
         st.session_state["hr_chat"].append({"role": "user", "content": q})
         with st.chat_message("user"):
             st.markdown(q)
         with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
+            with st.spinner("Réflexion..."):
                 res = ai.chat(SYSTEM, q, max_tokens=700)
             if res.ok:
                 st.markdown(res.text)
@@ -119,10 +121,10 @@ if q:
                 st.caption(cap)
                 st.session_state["hr_chat"].append({"role": "assistant", "content": res.text})
             else:
-                st.error(res.error or "The AI provider could not answer.")
+                st.error(res.error or "Le fournisseur d'IA n'a pas pu répondre.")
 
 if st.session_state["hr_chat"]:
-    if st.button("Clear conversation", icon=":material/delete:"):
+    if st.button("Effacer la conversation", icon=":material/delete:"):
         st.session_state["hr_chat"] = []
         st.rerun()
 
