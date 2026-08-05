@@ -32,18 +32,19 @@ Repo visibility and app visibility are two different settings:
 
 ## Turn on the AI copilots (optional)
 
-The rule engine, forecasting, roster, inspection, Journal Officiel watch and
-retention all work with no key. To enable the AI-written text (copilot, CV
-screening, the inspector's report, the retention script), add a key in the app's
+The owned models (forecasting, roster, inspection, Journal Officiel watch,
+retention, anomaly detection, CV matching) all work with no key. To enable the
+natural-language layer (copilote décisionnel, plain-language answers, the
+inspector's report, the retention script), add the Groq key in the app's
 **Settings -> Secrets**:
 
 ```
 GROQ_API_KEY = "gsk_..."        # free, no card - console.groq.com
-# or, for the best quality in the jury demo:
-PROVIDER_API_KEY = "sk-ant-..."
 ```
 
-Everything else keeps working without them.
+Never commit this key to the repo. It lives only in the Streamlit Cloud Secrets
+panel (deployed) or in a gitignored .streamlit/secrets.toml (local). Everything
+else keeps working without it.
 
 ## Tailored demo links (industry mode)
 

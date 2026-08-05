@@ -17,18 +17,16 @@ st.title("Copilote RH")
 st.caption("Posez vos questions sur le personnel, les congés, la paie, la présence "
            "ou la loi. Les réponses viennent uniquement des données de ce site.")
 
-# Provider status: Provider for the jury, Groq free fallback.
+# Statut du fournisseur : Groq (clé gratuite) pour le langage naturel.
 status = ai.status_line()
 avail = ai.providers_available()
-if avail["provider"]:
-    st.success(f":material/smart_toy: {status}", icon=":material/verified:")
-elif avail["groq"]:
+if avail["groq"]:
     st.info(f":material/smart_toy: {status}")
 else:
     st.warning(
-        "Aucune clé IA configurée. Ajoutez **PROVIDER_API_KEY** (idéale pour le "
-        "jury) ou **GROQ_API_KEY** (gratuite) dans les Secrets. Toutes les autres "
-        "pages RH fonctionnent sans.",
+        "Aucune clé IA configurée. Ajoutez **GROQ_API_KEY** (gratuite sur "
+        "console.groq.com) dans les Secrets. Toutes les autres pages RH "
+        "fonctionnent sans.",
         icon=":material/key:",
     )
 
@@ -104,7 +102,7 @@ for m in st.session_state["hr_chat"]:
 
 q = st.chat_input("Posez votre question au copilote RH...")
 if q:
-    if not (avail["provider"] or avail["groq"]):
+    if not avail["groq"]:
         st.warning("Configurez d'abord une clé IA (voir ci-dessus).", icon=":material/key:")
     else:
         st.session_state["hr_chat"].append({"role": "user", "content": q})

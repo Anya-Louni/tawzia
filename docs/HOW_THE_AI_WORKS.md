@@ -137,9 +137,11 @@ clear: **we did not train a language model.** That costs millions and is not wha
 we do. Instead we **call a ready-made hosted model through its API**, the same way
 an app calls a payment or maps service.
 
-- For a free demo it uses **Groq** (Llama 3.3, free tier, no card).
-- For best quality it can use **Provider's the AI model**.
+- It uses **Groq** (Llama 3.3, free tier, no card) as the natural-language layer.
 - With no key at all, it falls back to simple rules so nothing crashes.
+- The language model is only the thin translation/narration layer. The real
+  intelligence is the owned models (forecast, roster optimiser, attrition,
+  anomaly detection, CV matching), which run locally with no key.
   (All of this lives in `core/ai.py`.)
 
 **How we use it (this is the clever part, not the model itself):**

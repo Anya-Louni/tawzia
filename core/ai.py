@@ -1,26 +1,26 @@
 """
 core/ai.py
 ----------
-One brain socket, two brains.
+One brain socket, one brain.
 
-The AI features (HR copilot, plain-language answers, law-risk explanations) call
-`chat()` here and never care which model answers. Two providers are wired:
+The AI features (copilote décisionnel, réponses en langage clair, explications de
+risque légal) call `chat()` here and never care about the wiring. The natural-
+language layer runs on **Groq (Llama)** with a single free API key, read from the
+environment or from Streamlit secrets. It is deliberately the *thin* part of the
+product: the real intelligence is the owned models (forecast, roster optimiser,
+attrition, anomaly detection, CV matching), which run locally with no key. Groq
+only translates questions and narrates the computed results.
 
-  * **Provider (the AI model)** - the best answers, used for the jury demonstration.
-    Enabled when PROVIDER_API_KEY is set and the `provider` package is
-    installed.
-  * **Groq (Llama)** - free, fast, no cost. The safety net: if the Provider
-    subscription lapses, everything keeps working on Groq with no code change.
+Key handling (security)
+=======================
+The key is NEVER hardcoded here. It is read at runtime via `_secret()` from:
+  1. the environment (GROQ_API_KEY), or
+  2. Streamlit secrets (st.secrets["GROQ_API_KEY"]) — set in the Streamlit Cloud
+     dashboard for the deployed app, or in a gitignored .streamlit/secrets.toml
+     for local development.
 
-Selection order (override with WORKFORCE_AI_PROVIDER = provider | groq):
-  1. Explicit `prefer` argument, if that provider is available.
-  2. Provider if its key + SDK are present.
-  3. Groq if its key is present.
-  4. Otherwise a clear, honest "no AI key configured" message - the rest of the
-     app keeps working; only the chat surface is affected.
-
-Nothing here is Algeria-specific; it is pure plumbing so the HR brain can be
-swapped without touching a single feature.
+If no key is configured, nothing crashes: `chat()` returns ok=False with a clear
+message, and the rest of the app (all the owned models) keeps working.
 """
 
 from __future__ import annotations
@@ -30,15 +30,14 @@ import os
 from dataclasses import dataclass
 from typing import Optional
 
-# Model ids are read from env so they can be changed without a code edit.
-PROVIDER_MODEL = os.environ.get("PROVIDER_MODEL", "model-name")
+# Model id is read from env/secrets so it can be changed without a code edit.
 GROQ_MODEL = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
 
 
 @dataclass
 class AIResult:
     text: str
-    provider: str          # "provider" | "groq" | "none"
+    provider: str          # "groq" | "none"
     model: str
     ok: bool
     error: Optional[str] = None
@@ -65,56 +64,35 @@ def _secret(name: str):
 def providers_available() -> dict:
     """Which brains can actually answer right now."""
     return {
-        "provider": bool(_secret("PROVIDER_API_KEY")) and _has_module("provider"),
         "groq": bool(_secret("GROQ_API_KEY")) and _has_module("groq"),
     }
 
 
 def choose_provider(prefer: Optional[str] = None) -> Optional[str]:
-    avail = providers_available()
-    env_pref = os.environ.get("WORKFORCE_AI_PROVIDER")
-    for candidate in (prefer, env_pref, "provider", "groq"):
-        if candidate and avail.get(candidate):
-            return candidate
-    return None
+    return "groq" if providers_available().get("groq") else None
 
 
 def status_line() -> str:
     """Human-readable summary for the UI."""
-    a = providers_available()
-    if a["provider"]:
-        return f"Provider the AI model ({PROVIDER_MODEL}) - jury mode. Groq standby: {'yes' if a['groq'] else 'no'}."
-    if a["groq"]:
-        return f"Groq ({GROQ_MODEL}) - free mode. Set PROVIDER_API_KEY for the AI model in the demo."
-    return "No AI key configured. Set PROVIDER_API_KEY (best) or GROQ_API_KEY (free)."
+    if providers_available()["groq"]:
+        model = _secret("GROQ_MODEL") or GROQ_MODEL
+        return f"Groq ({model}) actif. Le langage naturel tourne ; les modèles maison tournent sans clé."
+    return ("Aucune clé IA configurée. Ajoutez GROQ_API_KEY (clé gratuite sur "
+            "console.groq.com) pour le langage naturel. Tous les modèles maison "
+            "fonctionnent sans clé.")
 
 
 # ---------------------------------------------------------------------------
-# Provider calls
+# Provider call
 # ---------------------------------------------------------------------------
-
-def _call_provider(system: str, user: str, max_tokens: int, temperature: float) -> AIResult:
-    import provider  # lazy: only needed if this provider is chosen
-
-    client = provider.Provider(api_key=_secret("PROVIDER_API_KEY"))
-    resp = client.messages.create(
-        model=_secret("PROVIDER_MODEL") or PROVIDER_MODEL,
-        max_tokens=max_tokens,
-        temperature=temperature,
-        system=system,
-        messages=[{"role": "user", "content": user}],
-    )
-    # Concatenate any text blocks in the response.
-    text = "".join(getattr(b, "text", "") for b in resp.content).strip()
-    return AIResult(text=text, provider="provider", model=PROVIDER_MODEL, ok=True)
-
 
 def _call_groq(system: str, user: str, max_tokens: int, temperature: float) -> AIResult:
-    from groq import Groq  # lazy
+    from groq import Groq  # lazy: only imported when the key is present
 
     client = Groq(api_key=_secret("GROQ_API_KEY"))
+    model = _secret("GROQ_MODEL") or GROQ_MODEL
     resp = client.chat.completions.create(
-        model=GROQ_MODEL,
+        model=model,
         max_tokens=max_tokens,
         temperature=temperature,
         messages=[
@@ -123,7 +101,7 @@ def _call_groq(system: str, user: str, max_tokens: int, temperature: float) -> A
         ],
     )
     return AIResult(text=resp.choices[0].message.content.strip(),
-                    provider="groq", model=GROQ_MODEL, ok=True)
+                    provider="groq", model=model, ok=True)
 
 
 def chat(
@@ -134,37 +112,23 @@ def chat(
     temperature: float = 0.2,
 ) -> AIResult:
     """
-    Ask the best available brain. Never raises for a missing key or a provider
-    error - it returns an AIResult with ok=False and a clear message, so the UI
-    can show something useful instead of a stack trace.
+    Ask the Groq brain. Never raises for a missing key or a provider error — it
+    returns an AIResult with ok=False and a clear message, so the UI can show
+    something useful instead of a stack trace.
+
+    `prefer` is accepted for backward compatibility and ignored (Groq is the
+    only provider now).
     """
-    provider = choose_provider(prefer)
-    if provider is None:
+    if choose_provider() is None:
         return AIResult(
             text="", provider="none", model="", ok=False,
-            error="No AI provider configured. Set PROVIDER_API_KEY (best, for "
-                  "the jury demo) or GROQ_API_KEY (free). The rest of the app "
-                  "works without it.",
+            error="Aucune clé IA configurée. Ajoutez GROQ_API_KEY (clé gratuite "
+                  "sur console.groq.com). Le reste de l'app fonctionne sans elle.",
         )
     try:
-        if provider == "provider":
-            return _call_provider(system, user, max_tokens, temperature)
         return _call_groq(system, user, max_tokens, temperature)
-    except Exception as exc:  # noqa: BLE001 - one provider failing must not crash the app
-        # If the preferred provider errored, try the other one once.
-        other = "groq" if provider == "provider" else "provider"
-        if providers_available().get(other):
-            try:
-                if other == "provider":
-                    r = _call_provider(system, user, max_tokens, temperature)
-                else:
-                    r = _call_groq(system, user, max_tokens, temperature)
-                r.error = f"(fell back to {other}: {provider} failed - {exc})"
-                return r
-            except Exception as exc2:  # noqa: BLE001
-                return AIResult(text="", provider=provider, model="", ok=False,
-                                error=f"Both providers failed: {exc}; {exc2}")
-        return AIResult(text="", provider=provider, model="", ok=False, error=str(exc))
+    except Exception as exc:  # noqa: BLE001 - a provider error must not crash the app
+        return AIResult(text="", provider="groq", model="", ok=False, error=str(exc))
 
 
 if __name__ == "__main__":
