@@ -224,6 +224,32 @@ PROFILES = {
             "with drivers bound by statutory driving-time limits."
         ),
     ),
+    "school": OperationProfile(
+        key="school",
+        label="Établissement scolaire",
+        demand_unit="élèves présents",
+        primary_role="teacher",
+        base_daily_volume=820,
+        shift_split={"morning": 0.56, "afternoon": 0.42, "night": 0.02},
+        ramadan_lift=0.82,          # journées scolaires écourtées en Ramadan
+        ramadan_evening_shift=0.0,  # pas de shift de nuit à l'école
+        pre_eid_peak=0.70,          # activité retombe avant l'Aïd
+        eid_shutdown=0.02,          # établissement fermé les jours d'Aïd
+        friday_mult=0.02,           # vendredi-samedi = week-end scolaire
+        saturday_mult=0.05,
+        diaspora_lift=1.0,          # non concerné par la diaspora
+        rentree_lift=1.9,           # la rentrée est LE pic annuel
+        payday_lift=1.0,
+        holiday_mult=0.02,          # fermé les jours fériés
+        weather_sensitivity=0.3,
+        growth_per_year=0.03,
+        description=(
+            "A school / educational establishment. Attendance is driven by the "
+            "Algerian school calendar, not by markets: the September rentrée is "
+            "the annual peak, term breaks empty the site, and the June exam "
+            "season (BEM/BAC) demands a surge of invigilation staff."
+        ),
+    ),
 }
 
 
@@ -469,6 +495,46 @@ def future_features(
     out = long_df.merge(df, on="date", how="left").sort_values(["date", "shift"])
     out.attrs["weather_provenance"] = wx_provenance
     return out.reset_index(drop=True)
+
+
+def expected_forward(
+    profile_key: str,
+    wilaya: str,
+    start,
+    days: int = 14,
+    allow_network: bool = True,
+) -> pd.DataFrame:
+    """
+    A fast *expected* forward demand for a sector , no backtest, no model.
+
+    Unlike `forecast.walk_forward` (which learns the seasonality from data and is
+    expensive), this simply applies the profile's own known calendar and weather
+    response to the forward window. It is a planning heuristic for the sector
+    signature features, not a calibrated forecast: it has no prediction interval
+    and makes no accuracy claim. Cheap enough to recompute instantly when the
+    user switches "Type d'activité". Returns one row per day: date, shift, forecast.
+    """
+    p = PROFILES[profile_key]
+    start = pd.to_datetime(start)
+    end = start + pd.Timedelta(days=days - 1)
+
+    cal = calendar_dz.calendar_frame(start, end)
+    wx = weather_dz.fetch_forecast(wilaya, days=min(days, 16), allow_network=allow_network)
+    df = cal.merge(wx[["date", "weather_demand"]], on="date", how="left")
+    df["weather_demand"] = df["weather_demand"].ffill().bfill().fillna(1.0)
+
+    # Bring the 2023 base up to roughly today's level with the profile's growth.
+    years = max((start.year - 2023) + start.month / 12.0, 0.0)
+    level = p.base_daily_volume * (1.0 + p.growth_per_year * years)
+
+    cal_mult = df.apply(lambda r: _calendar_multiplier(r, p), axis=1).to_numpy()
+    wx_mult = 1.0 + (df["weather_demand"].to_numpy() - 1.0) * p.weather_sensitivity
+    volume = np.maximum(np.round(level * cal_mult * wx_mult), 0).astype(int)
+
+    out = pd.DataFrame({"date": df["date"].values, "shift": "all", "forecast": volume})
+    out.attrs["demand_unit"] = p.demand_unit
+    out.attrs["kind"] = "expected"  # not a calibrated forecast
+    return out
 
 
 if __name__ == "__main__":

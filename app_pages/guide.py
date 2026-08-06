@@ -1,4 +1,4 @@
-"""Guide , page d'accueil qui explique chaque section et chaque bouton."""
+"""Accueil , la page d'entrée qui présente la plateforme et ses sections."""
 
 import streamlit as st
 
@@ -6,89 +6,81 @@ from core import appdata
 
 appdata.sidebar_controls()
 
-st.title("Bienvenue sur WorkForce.dz")
-st.caption("La plateforme RH et de planification par l'IA, conçue pour le droit "
-           "du travail algérien : recruter, planifier, payer, se conformer, fidéliser.")
+st.title("WorkForce.dz")
+st.caption("La plateforme RH et de planification par l'IA, conçue pour toute "
+           "entreprise algérienne : recruter, planifier, payer, se conformer, "
+           "décider , sur le vrai calendrier et le droit du travail algériens.")
 
-st.info(
-    "Ce guide explique à quoi sert chaque section. Utilisez le menu à gauche "
-    "pour naviguer. Bonne visite !",
-    icon=":material/waving_hand:",
-)
+st.markdown(":violet-badge[:material/verified: Droit du travail algérien] "
+            ":blue-badge[:material/bolt: IA locale + langage naturel] "
+            ":green-badge[:material/domain: Tous secteurs]")
 
+# --- quick orientation -----------------------------------------------------
 with st.container(border=True):
-    st.subheader(":material/tune: La barre latérale (à gauche)")
-    st.markdown(
-        "- **Type d'activité** : choisit le secteur (hôtellerie, e-commerce, "
-        "transport…). Les chiffres et les rôles s'adaptent.\n"
-        "- **Wilaya** : détermine la météo réelle utilisée par les prévisions.\n"
-        "- **Paramètres de planification** : horizon, niveau de service, "
-        "effectif permanent, plafond d'intérimaires.\n"
-        "- **Source des données** : à désactiver pour travailler hors-ligne "
-        "(utile si le wifi est instable)."
-    )
-
-st.subheader("Les sections du menu")
-
-col1, col2 = st.columns(2)
-
-with col1:
-    with st.container(border=True):
-        st.markdown("**:material/dashboard: Accueil**")
-        st.caption("Le **Tableau de bord** : l'écran du matin. Qui travaille, la "
-                   "charge prévue, le planning recommandé et son coût.")
-    with st.container(border=True):
-        st.markdown("**:material/person_search: Recrutement & équipe**")
-        st.caption(
-            "- **Recrutement** : déposez un CV (PDF ou texte), l'IA donne un "
-            "verdict, les points forts/faibles et des questions d'entretien.\n"
-            "- **Employés** : l'annuaire du personnel et ses droits.\n"
-            "- **Demandes & présence** : congés, demandes de sortie, retards et "
-            "absences."
+    left, right = st.columns([3, 2])
+    with left:
+        st.subheader("Par où commencer")
+        st.markdown(
+            "1. **Importez vos données** dans *Décision IA › Données de "
+            "l'entreprise* , tout le reste apprend alors de vos vrais chiffres.\n"
+            "2. Ouvrez le **Tableau de bord** pour la charge prévue et le planning.\n"
+            "3. Explorez les **KPI**, la **détection d'anomalies** et le "
+            "**copilote décisionnel** pour piloter."
         )
-    with st.container(border=True):
-        st.markdown("**:material/trending_up: Planification**")
+    with right:
+        st.subheader("La barre latérale")
         st.caption(
-            "- **Prévision de la demande** : la charge attendue par shift.\n"
-            "- **Planning & coût** : le planning le moins cher qui respecte la loi.\n"
-            "- **Aéroport** (si activé) : flux passagers et cascade de retards."
+            "**Type d'activité** adapte les rôles et les chiffres à votre "
+            "secteur. **Wilaya** fixe la météo réelle utilisée. **Source des "
+            "données** permet de travailler hors-ligne."
         )
 
-with col2:
-    with st.container(border=True):
-        st.markdown("**:material/receipt_long: Paie & conformité**")
-        st.caption(
-            "- **Paie** : bulletins et déclarations CNAS/IRG.\n"
-            "- **Simulateur d'inspection** : passe l'inspection du travail sur "
-            "vous-même, avec les articles, les amendes indicatives et les corrections.\n"
-            "- **Veille Journal Officiel** : vérifie que vos paramètres sont à jour "
-            "et simule l'impact d'un changement de règle."
-        )
-    with st.container(border=True):
-        st.markdown("**:material/handshake: Fidélisation**")
-        st.caption(
-            "- **Risque de départ** : qui risque de partir, pourquoi, et le coût "
-            "de son remplacement.\n"
-            "- **Négociateur de rétention** : l'action la moins chère pour le "
-            "garder, plus le script de l'entretien."
-        )
-    with st.container(border=True):
-        st.markdown("**:material/smart_toy: Copilote IA & :material/fact_check: Preuves**")
-        st.caption(
-            "- **Copilote RH / Assistant** : posez vos questions en langage "
-            "naturel, l'IA répond à partir de vos vrais chiffres.\n"
-            "- **Preuves & business** : le backtest qui prouve la méthode, le "
-            "calendrier algérien, l'analyse économique et les sources."
-        )
+st.subheader("Les sections")
 
+_SECTIONS = [
+    (":material/home:", "Accueil",
+     "Le **tableau de bord** du matin : charge prévue par shift, planning "
+     "recommandé et son coût chargé."),
+    (":material/person_search:", "Recrutement",
+     "**Évaluation de CV** (verdict IA, points forts/faibles, questions "
+     "d'entretien) et **appariement CV/poste** par embeddings locaux qui "
+     "classe un lot de candidats."),
+    (":material/badge:", "Équipe & présence",
+     "**Employés** et leurs droits, **demandes & présence** (congés, sorties, "
+     "retards), **risque de départ** chiffré et **négociateur de rétention**."),
+    (":material/trending_up:", "Planification",
+     "**Prévision de la demande** par shift et **planning & coût** : le "
+     "roster le moins cher qui respecte la loi."),
+    (":material/receipt_long:", "Paie & conformité",
+     "**Paie** et déclarations CNAS/IRG, **détection d'anomalies** paie & "
+     "présence, **simulateur d'inspection** et **veille Journal Officiel**."),
+    (":material/neurology:", "Décision IA",
+     "**KPI**, **simulateur de scénarios**, les **copilotes** (décisionnel, "
+     "RH, opérations) et l'**import des données** de l'entreprise. La couche "
+     "qui apprend de votre base."),
+    (":material/fact_check:", "Preuves & sources",
+     "Le **backtest** qui prouve la méthode, le **calendrier algérien**, "
+     "l'**analyse économique** et toutes les **sources & hypothèses**."),
+]
+
+cols = st.columns(2)
+for i, (icon, title, body) in enumerate(_SECTIONS):
+    with cols[i % 2]:
+        with st.container(border=True):
+            st.markdown(f"#### {icon} {title}")
+            st.markdown(body)
+
+# --- honesty commitment ----------------------------------------------------
 with st.container(border=True):
     st.subheader(":material/verified_user: Notre engagement d'honnêteté")
     st.markdown(
-        "Pour la démonstration, les **volumes opérationnels sont simulés** , "
-        "aucun registre d'entreprise algérienne n'est public. En revanche, le "
-        "**calendrier, la météo, le droit du travail et la fiscalité sont réels**. "
-        "Sur un client, nous réentraînons les modèles sur ses **vraies données** "
-        "et la méthode reste identique. C'est écrit sur chaque page."
+        "Le **calendrier, la météo, le droit du travail et la fiscalité "
+        "sont réels**. Pour la démonstration, les **volumes opérationnels "
+        "sont simulés** , aucun registre d'entreprise algérienne n'est public. "
+        "Dès que vous importez votre fichier, chaque page bascule sur vos "
+        "**vraies données** et la méthode reste identique. La source est "
+        "affichée sur chaque page."
     )
 
-st.caption(":material/arrow_back: Choisissez une section dans le menu à gauche pour commencer.")
+st.caption(":material/arrow_back: Choisissez une section dans le menu à gauche "
+           "pour commencer.")

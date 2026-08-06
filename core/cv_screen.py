@@ -243,7 +243,7 @@ def score(candidate: Candidate, job: Job, method: str = "rules") -> Screening:
     if have >= need:
         pluses.append(f"Formation OK ({candidate.education})")
     else:
-        flags.append(f"Formation below the {job.min_education} required")
+        flags.append(f"Formation sous le niveau requis ({job.min_education})")
 
     # Experience
     if job.min_experience_years <= 0:
@@ -251,9 +251,10 @@ def score(candidate: Candidate, job: Job, method: str = "rules") -> Screening:
     else:
         parts["experience"] = min(candidate.experience_years / job.min_experience_years, 1.0)
         if candidate.experience_years >= job.min_experience_years:
-            pluses.append(f"{candidate.experience_years:.0f} yrs experience")
+            pluses.append(f"{candidate.experience_years:.0f} ans d'expérience")
         else:
-            flags.append(f"Only {candidate.experience_years:.0f} yrs (needs {job.min_experience_years:.0f})")
+            flags.append(f"Seulement {candidate.experience_years:.0f} an(s) "
+                         f"(requis {job.min_experience_years:.0f})")
 
     # Languages
     req = set(job.required_languages)
@@ -261,16 +262,16 @@ def score(candidate: Candidate, job: Job, method: str = "rules") -> Screening:
     missing = req - have_lang
     parts["languages"] = 1.0 - (len(missing) / max(len(req), 1))
     if not missing:
-        pluses.append("All required languages")
+        pluses.append("Toutes les langues requises")
     else:
-        flags.append("Missing language(s): " + ", ".join(sorted(missing)))
+        flags.append("Langue(s) manquante(s) : " + ", ".join(sorted(missing)))
 
     # Skills
     if job.skills:
         overlap = len(set(candidate.skills) & set(job.skills))
         parts["skills"] = min(overlap / len(job.skills), 1.0)
         if overlap:
-            pluses.append(f"{overlap}/{len(job.skills)} target skills")
+            pluses.append(f"{overlap}/{len(job.skills)} compétences ciblées")
     else:
         parts["skills"] = 1.0
 
@@ -278,7 +279,7 @@ def score(candidate: Candidate, job: Job, method: str = "rules") -> Screening:
     if job.needs_driving_licence:
         parts["licence"] = 1.0 if candidate.driving_licence else 0.0
         (pluses if candidate.driving_licence else flags).append(
-            "Permis de conduire" + ("" if candidate.driving_licence else " missing (required)"))
+            "Permis de conduire" + ("" if candidate.driving_licence else " manquant (requis)"))
     else:
         parts["licence"] = 1.0
 
@@ -287,11 +288,11 @@ def score(candidate: Candidate, job: Job, method: str = "rules") -> Screening:
         cleared = candidate.service_national in ("degage", "exempte", "n/a")
         parts["service_national"] = 1.0 if cleared else (0.4 if candidate.service_national == "en cours" else 0.5)
         if cleared:
-            pluses.append(f"Service national: {candidate.service_national}")
+            pluses.append(f"Service national : {candidate.service_national}")
         elif candidate.service_national == "en cours":
             flags.append("Service national en cours")
         else:
-            flags.append("Service national status unclear")
+            flags.append("Service national à clarifier")
     else:
         parts["service_national"] = 1.0
 

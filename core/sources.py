@@ -481,6 +481,57 @@ _FACTS = [
              "l'hypothèse la plus susceptible d'être contestée.",
         tags=("cost", "assumption"),
     ),
+
+    # ---- Sector-specific assumptions (signature features) ----------------
+    Fact(
+        key="ecom_avg_order_value_dzd",
+        label="Panier moyen d'une commande e-commerce (COD)",
+        value=3200,
+        unit="DZD/commande",
+        kind="assumption",
+        source="Modèle WorkForce.dz",
+        note="Valeur moyenne d'une commande payée à la livraison, pour chiffrer "
+             "la trésorerie transportée par les livreurs et la valeur immobilisée "
+             "dans les retours. Un pilote la remplace par le panier réel du "
+             "marchand.",
+        tags=("delivery", "assumption"),
+    ),
+    Fact(
+        key="transport_daily_driving_limit_h",
+        label="Limite quotidienne de conduite par chauffeur",
+        value=9.0,
+        unit="heures/jour",
+        kind="assumption",
+        source="Modèle WorkForce.dz, aligné sur la pratique du transport routier",
+        note="Plafond indicatif de temps de conduite avant repos obligatoire, "
+             "utilisé pour dimensionner la flotte sans dépassement. Un opérateur "
+             "cale la valeur exacte sur sa convention et la réglementation "
+             "transport en vigueur.",
+        tags=("transport", "assumption"),
+    ),
+    Fact(
+        key="school_students_per_teacher",
+        label="Élèves par enseignant (taux d'encadrement)",
+        value=25,
+        unit="élèves/enseignant",
+        kind="assumption",
+        source="Modèle WorkForce.dz, ordre de grandeur système éducatif algérien",
+        note="Taux d'encadrement indicatif pour dimensionner le corps enseignant. "
+             "Un établissement le remplace par ses effectifs réels de classe.",
+        tags=("school", "assumption"),
+    ),
+    Fact(
+        key="school_students_per_invigilator",
+        label="Élèves par surveillant en période d'examen",
+        value=20,
+        unit="élèves/surveillant",
+        kind="assumption",
+        source="Modèle WorkForce.dz, pratique de surveillance BEM/BAC",
+        note="Ratio indicatif de surveillance en salle d'examen (compositions, "
+             "BEM, BAC). Sert à chiffrer le renfort de surveillance pendant les "
+             "périodes d'examen.",
+        tags=("school", "assumption"),
+    ),
 ]
 
 

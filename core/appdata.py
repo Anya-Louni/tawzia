@@ -170,6 +170,20 @@ def _load_forward_plan(
     }
 
 
+@st.cache_data(ttl="6h", show_spinner="Estimation de la demande attendue…")
+def _load_expected_demand(hijri_offset: int, profile_key: str, wilaya: str,
+                          horizon: int, allow_network: bool) -> pd.DataFrame:
+    import datetime as _d
+    start = _d.date.today() + _d.timedelta(days=1)
+    return demand_mod.expected_forward(profile_key, wilaya, start, days=horizon,
+                                       allow_network=allow_network)
+
+
+def expected_demand(profile_key, wilaya, horizon, allow_network):
+    """Fast expected forward demand for the sector features (no backtest)."""
+    return _load_expected_demand(_off(), profile_key, wilaya, horizon, allow_network)
+
+
 @st.cache_data(ttl="24h", show_spinner=False)
 def load_macro(allow_network: bool) -> pd.DataFrame:
     return macro_dz.snapshot(allow_network=allow_network)
@@ -358,27 +372,139 @@ def data_badge() -> None:
 
 
 def inject_theme() -> None:
-    """Flat, sharp, trust-blue polish so the app matches the marketing site."""
+    """
+    Depth layer on top of the config.toml theme.
+
+    config.toml owns colour, radius and fonts; this adds what config cannot:
+    soft layered shadows, elevation on hover, gradient accents and coloured
+    surfaces so the app reads as tactile and three-dimensional rather than flat.
+    Requested explicitly by the product (colourful, 3D, shadowed).
+    """
     st.markdown(
         """
         <style>
-        .stApp h1 { color:#16172A; font-weight:800; letter-spacing:-0.02em; }
-        .stApp h2, .stApp h3 { color:#16172A; letter-spacing:-0.01em; }
+        :root {
+            --wf-indigo:#4F46E5; --wf-indigo-d:#4338CA; --wf-blue:#2563EB;
+            --wf-ink:#171A2B; --wf-line:#E6E8F2;
+            --wf-shadow-sm:0 1px 2px rgba(23,26,43,.06), 0 2px 6px rgba(23,26,43,.05);
+            --wf-shadow-md:0 4px 10px -4px rgba(37,40,90,.14), 0 12px 28px -14px rgba(37,40,90,.22);
+            --wf-shadow-lg:0 10px 24px -8px rgba(37,40,90,.20), 0 24px 48px -20px rgba(37,40,90,.30);
+        }
+
+        /* Soft depth backdrop so surfaces float above the page. */
+        [data-testid="stApp"] {
+            background:
+                radial-gradient(1100px 480px at 12% -8%, #EEF2FF 0%, rgba(238,242,255,0) 60%),
+                radial-gradient(900px 420px at 100% 0%, #F0F9FF 0%, rgba(240,249,255,0) 55%),
+                #FFFFFF;
+        }
+
+        /* Page titles: an indigo -> violet gradient headline. */
+        [data-testid="stMain"] h1 {
+            background:linear-gradient(92deg, #4338CA 0%, #4F46E5 45%, #7C3AED 100%);
+            -webkit-background-clip:text; background-clip:text;
+            -webkit-text-fill-color:transparent;
+            letter-spacing:-.025em; font-weight:800;
+        }
+        [data-testid="stMain"] h2, [data-testid="stMain"] h3 {
+            color:var(--wf-ink); letter-spacing:-.015em;
+        }
+
+        /* Metric tiles: elevated cards with a coloured top accent + hover lift. */
+        [data-testid="stMetric"] {
+            position:relative; background:linear-gradient(180deg,#FFFFFF 0%, #FBFCFF 100%);
+            border:1px solid var(--wf-line); border-radius:16px;
+            padding:16px 18px 15px; box-shadow:var(--wf-shadow-md);
+            transition:transform .16s ease, box-shadow .16s ease;
+            overflow:hidden;
+        }
+        [data-testid="stMetric"]::before {
+            content:""; position:absolute; inset:0 0 auto 0; height:4px;
+            background:linear-gradient(90deg,#4F46E5,#0EA5E9); opacity:.9;
+        }
+        [data-testid="stMetric"]:hover {
+            transform:translateY(-3px); box-shadow:var(--wf-shadow-lg);
+        }
+        [data-testid="stMetricValue"] { font-weight:800; letter-spacing:-.02em; }
+
+        /* Bordered containers become elevated cards. */
+        [data-testid="stVerticalBlockBorderWrapper"] {
+            background:#FFFFFF; border-radius:16px !important;
+            box-shadow:var(--wf-shadow-md);
+            transition:box-shadow .16s ease, transform .16s ease;
+        }
+        [data-testid="stVerticalBlockBorderWrapper"]:hover {
+            box-shadow:var(--wf-shadow-lg);
+        }
+
+        /* Buttons: gradient fill, real shadow, springy hover. */
         .stButton > button[kind="primary"], .stDownloadButton > button {
-            background:#2563EB; border:1px solid #2563EB; color:#fff; border-radius:0;
-            font-weight:700;
-            box-shadow:0 2px 0 0 #1D4ED8, 0 8px 18px -8px rgba(37,99,235,.45);
+            background:linear-gradient(180deg,#5B52F0 0%, #4F46E5 55%, #4338CA 100%);
+            border:1px solid #4338CA; color:#fff; font-weight:700;
+            box-shadow:0 6px 16px -6px rgba(79,70,229,.55), inset 0 1px 0 rgba(255,255,255,.18);
+            transition:transform .14s ease, box-shadow .14s ease, filter .14s ease;
         }
         .stButton > button[kind="primary"]:hover, .stDownloadButton > button:hover {
-            background:#1D4ED8; border-color:#1D4ED8;
+            transform:translateY(-2px); filter:brightness(1.04);
+            box-shadow:0 12px 26px -8px rgba(79,70,229,.6), inset 0 1px 0 rgba(255,255,255,.22);
         }
-        [data-testid="stMetric"] {
-            background:#fff; border:1px solid #E6E6EE; border-radius:0; padding:14px 16px;
-            box-shadow:0 1px 2px rgba(28,40,90,.05), 0 10px 22px -14px rgba(28,55,130,.20);
+        .stButton > button[kind="secondary"] {
+            box-shadow:var(--wf-shadow-sm);
+            transition:transform .14s ease, box-shadow .14s ease;
         }
-        [data-testid="stSidebar"] > div:first-child { border-top:3px solid #2563EB; }
-        .stTabs [aria-selected="true"] { color:#2563EB !important; }
-        a, .stMarkdown a { color:#2563EB; }
+        .stButton > button[kind="secondary"]:hover {
+            transform:translateY(-1px); box-shadow:var(--wf-shadow-md);
+            border-color:#C7CBEC;
+        }
+
+        /* Alerts: rounded, floated. */
+        [data-testid="stAlert"] {
+            border-radius:14px; box-shadow:var(--wf-shadow-sm);
+            border:1px solid var(--wf-line);
+        }
+
+        /* Expanders: card-like. */
+        [data-testid="stExpander"] details {
+            border-radius:14px !important; box-shadow:var(--wf-shadow-sm);
+            overflow:hidden;
+        }
+
+        /* Tabs: a raised pill bar with a coloured active tab. */
+        .stTabs [data-baseweb="tab-list"] {
+            gap:4px; background:#F4F6FD; padding:5px; border-radius:14px;
+            box-shadow:inset 0 1px 3px rgba(23,26,43,.06);
+        }
+        .stTabs [data-baseweb="tab"] {
+            border-radius:10px; padding:6px 14px; font-weight:600;
+        }
+        .stTabs [aria-selected="true"] {
+            background:#FFFFFF; color:var(--wf-indigo) !important;
+            box-shadow:var(--wf-shadow-sm);
+        }
+        .stTabs [data-baseweb="tab-highlight"], .stTabs [data-baseweb="tab-border"] {
+            display:none;
+        }
+
+        /* Dataframes: rounded, floated. */
+        [data-testid="stDataFrame"], [data-testid="stTable"] {
+            border-radius:14px; box-shadow:var(--wf-shadow-sm); overflow:hidden;
+        }
+
+        /* Sidebar: gradient rail + elevation for nav. */
+        [data-testid="stSidebar"] {
+            box-shadow:6px 0 24px -18px rgba(37,40,90,.35);
+        }
+        [data-testid="stSidebar"] > div:first-child {
+            border-top:4px solid transparent;
+            border-image:linear-gradient(90deg,#4F46E5,#0EA5E9) 1;
+        }
+        [data-testid="stSidebarNav"] a[aria-current="page"] {
+            background:linear-gradient(90deg, rgba(79,70,229,.14), rgba(14,165,233,.08));
+            border-radius:10px; font-weight:600;
+        }
+
+        /* Lighter dividers. */
+        [data-testid="stMain"] hr { border-color:var(--wf-line); opacity:.7; }
         </style>
         """,
         unsafe_allow_html=True,

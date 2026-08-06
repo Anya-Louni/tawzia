@@ -3,7 +3,8 @@
 import pandas as pd
 import streamlit as st
 
-from core import appdata, calendar_dz, demand as demand_mod, industry
+from core import (appdata, calendar_dz, company_data as cd, demand as demand_mod,
+                  industry, sector_features as sf)
 
 appdata.sidebar_controls()
 
@@ -93,6 +94,29 @@ with st.container(horizontal=True):
         help="Part des shifts couverts par des intérimaires, qui portent une "
              "majoration de 35%.",
     )
+
+st.divider()
+
+# --- Spotlight secteur : la fonctionnalité propre à l'activité choisie ------
+try:
+    _sfc = appdata.expected_demand(
+        st.session_state["profile_key"], wilaya, horizon,
+        st.session_state["allow_network"])
+    _sec_plan = {"forecast": _sfc}
+except Exception:
+    _sec_plan = plan
+_feat = sf.compute(st.session_state["profile_key"], _sec_plan, cd.people())
+if _feat is not None:
+    with st.container(border=True):
+        head = st.columns([3, 1])
+        head[0].subheader(f"{_feat.icon} {_feat.title}")
+        head[1].page_link("app_pages/sector_view.py", label="Analyse complète",
+                          icon=":material/arrow_forward:")
+        cols = st.columns(len(_feat.metrics)) if _feat.metrics else []
+        for col, (label, display, help_txt) in zip(cols, _feat.metrics):
+            col.metric(label, display, help=help_txt or None)
+        if _feat.insight:
+            st.caption(f":material/lightbulb: {_feat.insight}")
 
 st.divider()
 

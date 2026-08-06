@@ -71,6 +71,7 @@ class Employee:
     spouse: bool = False
     contract: str = "CDI"          # CDI (permanent) | CDD (fixed-term) | temp
     leave_taken_ytd: float = 0.0   # annual-leave days already used this year
+    gross_override: Optional[float] = None  # actual gross from an imported file
 
     # --- entitlements -------------------------------------------------------
     @property
@@ -102,6 +103,10 @@ class Employee:
         return round(max(accrued - self.leave_taken_ytd, 0.0), 1)
 
     def monthly_gross(self) -> float:
+        # An imported file's actual salary wins; otherwise derive from the role
+        # coefficient plus the seniority premium.
+        if self.gross_override is not None and self.gross_override > 0:
+            return float(self.gross_override)
         role = labour_dz.ROLES[self.role_key]
         return role.gross_monthly * (1 + self.seniority_premium(_dt.date.today()))
 

@@ -222,6 +222,9 @@ def sample_attendance(people: list, days: int = 14, seed: int = 8,
 
 def lateness_summary(records: list) -> pd.DataFrame:
     """Per-employee attendance scorecard - the raw material for attrition risk."""
+    if not records:
+        return pd.DataFrame(columns=["ID", "Name", "Shifts", "Late", "Absent",
+                                     "Late minutes", "Late %", "Absent %"])
     rows = {}
     for r in records:
         s = rows.setdefault(r.emp_id, {"Name": r.emp_name, "Shifts": 0, "Late": 0,

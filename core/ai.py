@@ -47,8 +47,28 @@ def _has_module(name: str) -> bool:
     return importlib.util.find_spec(name) is not None
 
 
+_DOTENV_LOADED = False
+
+
+def _load_dotenv_once() -> None:
+    """Load a local .env if python-dotenv is available (no-op on Cloud)."""
+    global _DOTENV_LOADED
+    if _DOTENV_LOADED:
+        return
+    _DOTENV_LOADED = True
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+    except Exception:
+        pass
+
+
 def _secret(name: str):
-    """Read a key from the environment or from Streamlit secrets (Cloud)."""
+    """Read a key from the environment, a local .env, or Streamlit secrets (Cloud)."""
+    v = os.environ.get(name)
+    if v:
+        return v
+    _load_dotenv_once()
     v = os.environ.get(name)
     if v:
         return v

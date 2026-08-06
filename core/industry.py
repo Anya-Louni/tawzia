@@ -22,7 +22,10 @@ INDUSTRIES = {
     "all": {
         "label": "All operations",
         "profile": None,
-        "show_airport": True,
+        # Airport is a sector module, not part of the general platform: it shows
+        # only in the airport edition, so the default app reads as built for any
+        # company rather than for airports.
+        "show_airport": False,
         "hook": "Forecast demand, staff every shift legally, and keep your people, "
                 "on the real Algerian calendar and labour law.",
     },
@@ -54,6 +57,14 @@ INDUSTRIES = {
         "hook": "Staff the distribution centre to the real Algerian calendar with "
                 "the cheapest legal roster.",
     },
+    "school": {
+        "label": "Écoles & établissements",
+        "profile": "school",
+        "show_airport": False,
+        "hook": "Staff to the Algerian school calendar , the September rentrée "
+                "peak, term breaks and the June BEM/BAC exam surge , not to a "
+                "market that ignores all three.",
+    },
     "airport": {
         "label": "Airport & ground ops",
         "profile": "airport_ground",
@@ -70,6 +81,8 @@ _ALIASES = {
     "logistics": "transport", "fleet": "transport", "transport_fleet": "transport",
     "warehouse": "retail", "distribution": "retail", "dc": "retail",
     "aviation": "airport", "ground": "airport",
+    "ecole": "school", "ecoles": "school", "education": "school",
+    "lycee": "school", "college": "school", "universite": "school",
 }
 
 

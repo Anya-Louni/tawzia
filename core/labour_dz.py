@@ -224,6 +224,23 @@ ROLES = {
         note="Coordinates the fleet; sized as a ratio to drivers, not by "
              "throughput. Not an agency-temp role.",
     ),
+    # --- Education vertical (écoles / établissements) ---
+    "teacher": Role(
+        key="teacher",
+        label="Enseignant",
+        snmg_coefficient=1.60,
+        productivity_per_hour=25.0,   # élèves encadrés par heure-enseignant
+        note="Students taught per teacher-hour (a class at a time). Substitutes "
+             "(vacataires) can be brought in, so the role can be temped.",
+    ),
+    "school_life": Role(
+        key="school_life",
+        label="Surveillant / vie scolaire",
+        snmg_coefficient=1.20,
+        productivity_per_hour=40.0,   # élèves surveillés par heure
+        note="Supervision and exam invigilation (BEM/BAC). Sized to student "
+             "count, and to a tighter ratio during exam periods.",
+    ),
 }
 
 SUPERVISOR_SPAN = 12  # one supervisor per N front-line workers

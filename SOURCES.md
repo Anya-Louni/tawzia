@@ -20,6 +20,10 @@ choice, labelled as one). Nothing is dressed up as more certain than it is.
 | **Macroeconomics** (population, labour force, CPI, unemployment) | **Real.** World Bank Open Data, fetched live. |
 | **Labour costs** (SNMG, CNAS, statutory premiums/caps) | **Real.** Derived from published Algerian rates and the labour code. |
 | **Operational volumes** (parcels/passengers/cases per shift) | **Simulated.** No real Algerian operator's ledger is public. The volumes are synthetic; the calendar and weather they respond to are real. |
+| **Company staff & attendance** (the new AI features run on this) | **Real when imported.** A company uploads its own staff/attendance CSV (page "Données de l'entreprise"); everything then reads its real figures. Without an import, a clearly-labelled demo is used. Source is always shown on-screen. |
+| **CV/poste matching** (appariement) | **Real, local.** TF-IDF embeddings (word + char n-grams, scikit-learn) computed on-device — no key, offline, reproducible. |
+| **Payroll/attendance anomalies** | **Real.** Cited Algerian rules (SNMG/IRG/CNAS) + an unsupervised IsolationForest fitted on the company's own data. |
+| **KPI, scenario simulator, decision copilot** | **Real derivations.** Aggregations of the above on the real SNMG+CNAS+IRG stack. The copilot's language layer (Groq) only narrates the locally-computed figures; it invents no numbers. |
 | **Savings figure** | **Out-of-sample, on simulated volumes.** Validates the method, not the market magnitude. |
 
 ---

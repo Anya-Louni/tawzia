@@ -1,17 +1,60 @@
+# WorkForce.dz theme , colourful, rounded, with depth (shadows added in
+# core/appdata.inject_theme, which the product explicitly asks for).
+# Single light theme: the app commits to one polished look.
+
 [theme]
 base = "light"
-primaryColor = "#2563EB"
+primaryColor = "#4F46E5"              # indigo , buttons, links, active elements
 backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#F5F8FF"
-textColor = "#16172A"
-linkColor = "#2563EB"
-borderColor = "#E6E6EE"
-baseRadius = "none"
-font = "sans-serif"
+secondaryBackgroundColor = "#F4F6FD"  # soft indigo tint for widgets/cards
+textColor = "#171A2B"
+linkColor = "#4F46E5"
+codeBackgroundColor = "#F1F3FC"
+codeTextColor = "#3730A3"
+borderColor = "#E6E8F2"
+showWidgetBorder = true
+showSidebarBorder = true
+baseRadius = "12px"
+buttonRadius = "12px"
+linkUnderline = false
+
+font = "'Inter':https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+headingFont = "'Inter':https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800&display=swap"
+codeFont = "'JetBrains Mono':https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
+baseFontSize = 15
+baseFontWeight = 400
+headingFontSizes = ["34px", "26px", "20px", "17px", "15px", "13px"]
+headingFontWeights = [800, 700, 700, 600, 600, 600]
+
+# A cohesive multi-hue set so charts and status colours feel like one system.
+chartCategoricalColors = ["#4F46E5", "#0EA5E9", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899"]
+chartSequentialColors = ["#EEF2FF", "#E0E7FF", "#C7D2FE", "#A5B4FC", "#818CF8", "#6366F1", "#4F46E5", "#4338CA", "#3730A3", "#312E81"]
+
+# Semantic palette (used by KPI bands, badges, alerts) with readable tints.
+blueColor = "#2563EB"
+greenColor = "#059669"
+greenBackgroundColor = "#D1FAE5"
+greenTextColor = "#065F46"
+orangeColor = "#D97706"
+orangeBackgroundColor = "#FEF3C7"
+orangeTextColor = "#92400E"
+redColor = "#DC2626"
+redBackgroundColor = "#FEE2E2"
+redTextColor = "#991B1B"
+violetColor = "#7C3AED"
+yellowColor = "#CA8A04"
+grayColor = "#6B7280"
+
+dataframeBorderColor = "#E6E8F2"
+dataframeHeaderBackgroundColor = "#EEF1FB"
 
 [theme.sidebar]
-backgroundColor = "#FFFFFF"
-borderColor = "#E6E6EE"
+backgroundColor = "#F7F9FE"
+secondaryBackgroundColor = "#EDF0FB"
+codeBackgroundColor = "#EDF0FB"
+textColor = "#171A2B"
+borderColor = "#E6E8F2"
+primaryColor = "#4F46E5"
 
 [browser]
 gatherUsageStats = false
