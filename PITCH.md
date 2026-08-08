@@ -70,6 +70,27 @@ A forecasting and rostering engine with Algeria as a first-class citizen:
   weekly rest day are encoded as **hard constraints** — a plan that breaks them
   is infeasible, not merely expensive.
 
+Since then it has become a full HR platform rather than a scheduling tool. 29
+screens across seven sections, covering the employee from before they apply to
+the day they leave:
+
+- **Sourcing.** A directory of real Algerian recruitment channels — the
+  universities and national schools, the CFPA/INSFP network, ANEM, the job
+  boards, internal referral — ranked for a given role and wilaya and turned into
+  a costed plan. It penalises over-qualification, because a graduate hired into
+  an operational post leaves and you pay the turnover twice.
+- **Screening that resists manipulation.** CV evaluation and batch matching on
+  local embeddings, plus detection of candidates who hide instructions in a PDF
+  to inflate their own score. Most tools on the market simply obey them.
+- **Skills and internal mobility.** Who already covers most of a vacancy, what
+  they are missing, and the arbitrage between training them and recruiting
+  outside, with both costs and both timelines.
+- **Payroll, compliance and document control.** CNAS/IRG payroll, anomaly
+  detection, an inspection dry run, and a trained vision model that reads
+  amounts off a payslip and checks them against the SNMG and the CNAS rate.
+- **A decision layer.** KPIs, a scenario simulator, and copilots that narrate
+  figures the engine computed rather than inventing their own.
+
 ## 4. The evidence
 
 Walk-forward backtest, 25+ independent forecast origins, no model ever seeing
@@ -239,6 +260,24 @@ placeholder until there's cohort data. We flag it in the app.
 **"Is a $5M TAM investable?"**
 Not on its own. Algeria is the beachhead and the proof. The regional case is
 the investable one.
+
+**"Is the AI real, or is it a chatbot with a dashboard around it?"**
+Two models are trained by us and both report their accuracy on data they never
+saw. The demand forecaster is backtested walk-forward against a generic
+international model. The digit reader in the document-control screen trains at
+startup on a public dataset of real handwritten digits and prints its held-out
+accuracy on screen, alongside a list of what it cannot do. Everything else is
+either planning maths, Algerian statute, or a hosted language model that
+narrates figures our engine computed. We keep those four categories separate on
+purpose.
+
+**"Do you detect forged documents?"**
+No, and the reason matters more than the answer. We built the standard detector
+(error-level analysis, noise inconsistency), measured it, and found it labelled
+clean payslips as retouched while failing to separate clean from spliced. We
+removed it. What we kept is opposable: what the file's metadata declares, and
+the amounts checked against the SNMG and the CNAS rate. A fraud detector that
+accuses an honest document costs a customer more than no detector at all.
 
 ---
 

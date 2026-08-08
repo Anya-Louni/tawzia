@@ -24,6 +24,11 @@ choice, labelled as one). Nothing is dressed up as more certain than it is.
 | **CV/poste matching** (appariement) | **Real, local.** TF-IDF embeddings (word + char n-grams, scikit-learn) computed on-device — no key, offline, reproducible. |
 | **Payroll/attendance anomalies** | **Real.** Cited Algerian rules (SNMG/IRG/CNAS) + an unsupervised IsolationForest fitted on the company's own data. |
 | **KPI, scenario simulator, decision copilot** | **Real derivations.** Aggregations of the above on the real SNMG+CNAS+IRG stack. The copilot's language layer (Groq) only narrates the locally-computed figures; it invents no numbers. |
+| **Recruitment channel directory** (sourcing) | **Real institutions.** USTHB, ESI, ENP, ESC Alger, the regional universities, the CFPA/INSFP network, ANEM, Emploitic and the rest exist and are verifiable. Their **volumes, costs and lead times are assumptions** (see below): no Algerian operator publishes its cost per hire. |
+| **Partner and influencer lists** | **Not generated.** The app returns partner *profiles* with verifiable selection criteria, never names. A language model asked to "find influencers" invents plausible false ones, which is the worst possible output in front of someone who knows the local scene. |
+| **Digit-reading model** (document check) | **Trained on real data.** The UCI/NIST *Optical Recognition of Handwritten Digits* set, 1797 digits written by 43 real people, a quarter held out. Printed digits are added to training and are **rendered by us** from the server's fonts; the two accuracies are reported separately and recomputed at every start. |
+| **Forgery / tampering detection** | **Not shipped.** Implemented with error-level analysis and noise inconsistency, then measured: it flagged clean payslips as retouched and did not separate clean from spliced. Removed. Only file metadata (a fact) and a human-read ELA image remain. |
+| **Skills reference and employee skill profiles** | **Modelling choice.** The per-role skill requirements are ours and are the first thing a customer replaces with their own grid. Demo profiles are derived deterministically from the synthetic workforce; in deployment they come from the annual review or the imported HR file. |
 | **Savings figure** | **Out-of-sample, on simulated volumes.** Validates the method, not the market magnitude. |
 
 ---
@@ -37,8 +42,8 @@ choice, labelled as one). Nothing is dressed up as more certain than it is.
 | **Aladhan** | Cross-check of the local Hijri calendar on Ramadan/Aïd dates | `api.aladhan.com/v1/gToH` |
 
 All responses cache to `data/cache/` on first fetch, so the app runs fully
-offline afterwards. Turn off "Allow live API calls" in the sidebar to force
-cache-only mode.
+offline afterwards. Turn off "Autoriser les appels API en direct" under
+**Données** in the top bar to force cache-only mode.
 
 ---
 
@@ -84,6 +89,10 @@ a measured value from their own operation on day one.
 | Overtime premium | +50% | Statutory floor; a given collective agreement may sit above it. |
 | Temp-agency markup | +35% | Varies by wilaya and by how late the request is made. |
 | Understaffing penalty multiple | 2.4× | The cost of an uncovered hour vs a covered one, capturing the failed COD delivery, the return leg and lost customer value. The single most challengeable number — exposed as a slider. |
+| Applicants needed per hire | 8 | Funnel ratio used to size a sourcing campaign. Varies hugely by channel and role; the first number a pilot replaces with a measured one. |
+| Share of applicants shortlisted | 22% | Combined with each channel's own quality to give expected hires per campaign. The per-channel volumes, costs and lead times in the directory are the same kind of framing estimate. |
+| Direct training cost per person-day | 3,500 DZD | Trainer amortised plus materials, excluding the trainee's own wage. Drives the training plan and the train-or-recruit arbitrage. A customer grid or a CFPA agreement replaces it. |
+| External recruitment cost | 45,000 DZD | Sourcing and selection, excluding salary and excluding the two-month ramp-up counted separately. Used as the comparison term against internal mobility. |
 
 ---
 

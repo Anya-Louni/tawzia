@@ -63,8 +63,23 @@ return, the rentrée scolaire, payday.
 - Aviation module on the real ALG route network: hourly passenger-flow →
   terminal staffing; delay-cascade prediction (reproduces the ~45% industry
   reactionary-delay share); turnaround-risk scoring.
-- The working product is a Python/Streamlit multi-page app (the live demo).
-- Verticals live today: e-commerce hub, retail DC, airport ground handling.
+- Full HR lifecycle beyond scheduling: sourcing (a directory of real Algerian
+  recruitment channels, ranked and costed), CV screening and batch matching on
+  local embeddings, skills mapping with internal-mobility and train-or-recruit
+  arbitrage, attrition risk, retention negotiation, payroll with CNAS/IRG,
+  anomaly detection, inspection simulation and Journal Officiel watch.
+- A computer-vision model trained in-app on the UCI handwritten-digit dataset,
+  reading amounts off payslips and checking them against SNMG, the CNAS rate and
+  legal hours. Held-out accuracy is measured at every start and displayed, never
+  hardcoded.
+- Prompt-injection defence on CV screening: candidates who hide instructions to
+  the automated screener are detected and flagged to the recruiter.
+- The working product is a Python/Streamlit multi-page app, 29 screens across
+  seven sections (the live demo), with an onboarding tour and a chat interface
+  built as a Streamlit custom component.
+- Verticals live today: e-commerce hub, retail DC, hotel, transport/fleet,
+  school, airport ground handling. Each sector only sees the drivers and shifts
+  that actually apply to it.
 
 ## Brand Commitments
 

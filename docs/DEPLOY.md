@@ -65,6 +65,6 @@ Replace `<your-url>` with the Streamlit URL from the deploy step.
 
 ## Offline / unreliable-wifi demos
 
-Open the app once with a connection so the caches fill, then in the sidebar under
+Open the app once with a connection so the caches fill, then in the top bar under
 **Data source** turn off **Allow live API calls**. The whole app then runs from
 `data/cache/`, which is handy for a pitch on venue wifi.

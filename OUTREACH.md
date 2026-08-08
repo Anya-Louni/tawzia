@@ -185,6 +185,8 @@ Placeholders to replace everywhere: `[Name]`, `[Company]`, `[Your name]`, `[demo
 
 *What it does.* Forecasts each shift's demand → builds the cheapest legally-compliant roster (statutory overtime cap and weekly rest) → proves the saving out-of-sample. For airports it adds passenger-flow staffing, delay-cascade prediction, and turnaround-risk scoring.
 
+*And beyond the roster.* The same platform covers the rest of the HR cycle on Algerian rules: sourcing through real local channels (universities, CFPA/INSFP, ANEM, job boards) with a costed hiring plan, CV screening and matching that runs on your own machine, skills mapping with a train-or-recruit arbitrage, attrition risk and retention, then CNAS/IRG payroll with anomaly detection, an inspection dry run and document control.
+
 *Evidence (in simulation).* ~50% lower forecast error than a generic international model; 6–8% lower labour cost; +12 points of service level; and it honestly shows the windows where it loses. **Operational volumes in the demo are simulated; the calendar, weather and labour law are real. We prove the numbers on your data in a free pilot.**
 
 *Pricing.* Free on one site · Pro 39,000 DZD/site/month · Enterprise (multi-site, airport module, integrations) custom.
