@@ -16,7 +16,7 @@ st.set_page_config(
     page_title="WorkForce.dz",
     page_icon=":material/hub:",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 # Mode secteur : adapte l'app au prospect via ?industry=hotel|delivery|...
@@ -52,6 +52,9 @@ pages = {
                 icon=":material/dashboard:"),
     ],
     "Recrutement": [
+        # Sourcing d'abord : c'est l'étape zéro, avant qu'un CV existe.
+        st.Page("app_pages/sourcing_view.py", title="Sourcing & marque employeur",
+                icon=":material/travel_explore:"),
         st.Page("app_pages/recruiting.py", title="Évaluation de CV",
                 icon=":material/person_search:"),
         st.Page("app_pages/matching_view.py", title="Appariement CV/poste",
@@ -62,6 +65,8 @@ pages = {
                 icon=":material/badge:"),
         st.Page("app_pages/requests_view.py", title="Demandes & présence",
                 icon=":material/how_to_reg:"),
+        st.Page("app_pages/skills_view.py", title="Compétences & mobilité",
+                icon=":material/school:"),
         st.Page("app_pages/attrition_view.py", title="Risque de départ",
                 icon=":material/trending_down:"),
         st.Page("app_pages/retention_negotiator.py", title="Négociateur de rétention",
@@ -73,6 +78,8 @@ pages = {
                 icon=":material/receipt_long:"),
         st.Page("app_pages/anomalies_view.py", title="Détection d'anomalies",
                 icon=":material/error:"),
+        st.Page("app_pages/document_check.py", title="Contrôle de documents",
+                icon=":material/document_scanner:"),
         st.Page("app_pages/inspector_sim.py", title="Simulateur d'inspection",
                 icon=":material/gavel:"),
         st.Page("app_pages/jo_watch.py", title="Veille Journal Officiel",
@@ -104,4 +111,19 @@ pages = {
     ],
 }
 
-st.navigation(pages).run()
+# Navigation faite main (voir core/nav.py) : les sept sections restent visibles
+# en grand, et cliquer sur l'une d'elles ouvre un sélecteur qui assombrit le
+# reste de l'écran. La navigation native `position="top"` est écartée , elle
+# replie toutes les sections dans un menu « N more » dès qu'elle ne parvient pas
+# à les mesurer, ce qui est un risque inacceptable sur une démonstration
+# projetée. `position="hidden"` désactive donc le rendu natif, et tout ce qui est
+# écrit avant `.run()` s'affiche en haut de la page (voir DESIGN.md).
+_nav = st.navigation(pages, position="hidden")
+
+from core import appdata, nav, tour  # noqa: E402  , après st.set_page_config
+
+appdata.init_state()
+appdata.inject_theme()
+nav.render(pages, _nav)
+_nav.run()
+tour.maybe_run(_nav)

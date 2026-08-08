@@ -61,6 +61,15 @@ from . import calendar_dz, weather_dz
 # Vertical profiles
 # ---------------------------------------------------------------------------
 
+# Un shift qui porte moins que ça n'est pas un shift, c'est un arrondi : il ne
+# doit apparaître ni dans les graphiques ni dans le planning.
+MIN_SHIFT_SHARE = 0.05
+
+# En deçà de 3 % d'effet, un moteur de calendrier ne se cite pas comme cause.
+DRIVER_MIN_EFFECT = 0.03
+WEATHER_MIN_SENSITIVITY = 0.25
+
+
 @dataclass
 class OperationProfile:
     """
@@ -95,6 +104,54 @@ class OperationProfile:
     shock_rate: float = 0.035    # probability of an unmodellable shock day
     description: str = ""
 
+    # Comment la météo se manifeste sur CE métier. Le dernier kilomètre n'existe
+    # pas dans une école, et une phrase importée d'un autre secteur suffit à
+    # faire croire que l'outil a été conçu pour quelqu'un d'autre.
+    weather_impact: str = "activité ralentie"
+
+    # --- ce que l'opération vit réellement ---------------------------------
+    # Le moteur calcule tous les indicateurs de calendrier pour tous les
+    # secteurs (c'est la même Algérie), mais l'interface ne doit citer que ceux
+    # qui déplacent VRAIMENT la demande de ce profil. Sans ce filtre, une école
+    # se voyait expliquer sa charge par la « saison diaspora », un phénomène
+    # aéroportuaire dont son coefficient vaut exactement 1.0 , c'est-à-dire
+    # aucun effet. Montrer une cause sans effet est pire qu'un chiffre faux :
+    # ça dit au prospect que le produit n'a pas été pensé pour lui.
+
+    def active_shifts(self) -> list:
+        """Les shifts que cette opération tient réellement, dans l'ordre."""
+        order = ["morning", "afternoon", "night"]
+        return [s for s in order
+                if self.shift_split.get(s, 0.0) >= MIN_SHIFT_SHARE]
+
+    def runs_night(self) -> bool:
+        return "night" in self.active_shifts()
+
+    def material_drivers(self) -> set:
+        """
+        Les moteurs de calendrier dont l'effet est perceptible sur ce profil.
+
+        Le seuil est lu sur les coefficients du profil lui-même : c'est donc
+        cohérent par construction avec le modèle, et non une liste tenue à la
+        main qui dériverait au premier réglage.
+        """
+        out = set()
+        if abs(self.ramadan_lift - 1.0) >= DRIVER_MIN_EFFECT:
+            out.add("ramadan")
+        if abs(self.diaspora_lift - 1.0) >= DRIVER_MIN_EFFECT:
+            out.add("diaspora")
+        if abs(self.rentree_lift - 1.0) >= DRIVER_MIN_EFFECT:
+            out.add("rentree")
+        if abs(self.payday_lift - 1.0) >= DRIVER_MIN_EFFECT:
+            out.add("payday")
+        if abs(self.holiday_mult - 1.0) >= DRIVER_MIN_EFFECT:
+            out.add("holiday")
+        if abs(self.friday_mult - 1.0) >= DRIVER_MIN_EFFECT:
+            out.add("weekend")
+        if self.weather_sensitivity >= WEATHER_MIN_SENSITIVITY:
+            out.add("weather")
+        return out
+
 
 PROFILES = {
     "ecom_hub": OperationProfile(
@@ -116,6 +173,7 @@ PROFILES = {
         holiday_mult=0.35,
         weather_sensitivity=1.0,
         growth_per_year=0.18,
+        weather_impact="dernier kilomètre ralenti",
         description=(
             "A parcel sorting and dispatch hub serving cash-on-delivery "
             "e-commerce. The beachhead vertical: private operators, many "
@@ -142,6 +200,7 @@ PROFILES = {
         holiday_mult=0.80,
         weather_sensitivity=0.6,
         growth_per_year=0.07,
+        weather_impact="rotations et piste ralenties",
         description=(
             "Check-in, boarding and ramp handling at a major Algerian "
             "gateway. Dominated by the summer diaspora return - a demand "
@@ -168,6 +227,7 @@ PROFILES = {
         holiday_mult=0.40,
         weather_sensitivity=0.8,
         growth_per_year=0.09,
+        weather_impact="quais et manutention ralentis",
         description=(
             "Grocery and FMCG distribution. The most Ramadan-exposed of the "
             "three: food volume front-loads hard into the first days of the "
@@ -193,6 +253,7 @@ PROFILES = {
         holiday_mult=1.15,
         weather_sensitivity=0.7,    # heat and rain move coastal vs city demand
         growth_per_year=0.10,
+        weather_impact="affluence et services décalés",
         description=(
             "Housekeeping, front desk and F&B in a hotel. Occupancy is "
             "seasonal, event-driven and diaspora-driven; Ramadan does not "
@@ -218,6 +279,7 @@ PROFILES = {
         holiday_mult=1.30,
         weather_sensitivity=0.9,    # storms and heat disrupt road schedules
         growth_per_year=0.08,
+        weather_impact="circulation et tournées ralenties",
         description=(
             "Intercity coach, airport-transfer and fleet operations. Demand is "
             "dominated by the pre-Aid travel surge and the diaspora summer, "
@@ -230,7 +292,8 @@ PROFILES = {
         demand_unit="élèves présents",
         primary_role="teacher",
         base_daily_volume=820,
-        shift_split={"morning": 0.56, "afternoon": 0.42, "night": 0.02},
+        shift_split={"morning": 0.57, "afternoon": 0.43, "night": 0.0},
+        weather_impact="absences en hausse",
         ramadan_lift=0.82,          # journées scolaires écourtées en Ramadan
         ramadan_evening_shift=0.0,  # pas de shift de nuit à l'école
         pre_eid_peak=0.70,          # activité retombe avant l'Aïd
@@ -404,6 +467,11 @@ def build_history(
             split["night"] += take_m + take_a
 
         for shift_key, share in split.items():
+            # Même règle que pour la prévision : pas d'historique sur un shift
+            # que l'opération ne tient pas, sinon le modèle apprend un créneau
+            # qui n'existe pas.
+            if share <= 0:
+                continue
             rows.append({
                 "date": r["date"],
                 "shift": shift_key,
@@ -489,6 +557,10 @@ def future_features(
             split["afternoon"] -= take_a
             split["night"] += take_m + take_a
         for shift_key, share in split.items():
+            # Un shift que l'opération ne tient pas ne produit pas de ligne :
+            # sinon le planning affecterait du personnel de nuit à une école.
+            if share <= 0:
+                continue
             rows.append({"date": r["date"], "shift": shift_key, "shift_share": share})
 
     long_df = pd.DataFrame(rows)

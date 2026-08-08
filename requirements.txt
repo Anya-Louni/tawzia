@@ -2,9 +2,18 @@ pandas>=2.0
 numpy>=1.24
 scikit-learn>=1.3
 scipy>=1.11
-streamlit>=1.57
+# Borne haute volontaire : l'interface repose sur des API récentes
+# (st.components.v2, st.container(key=...), st.dialog). Une montée de version
+# majeure doit être testée avant d'atteindre une démonstration client.
+streamlit>=1.59,<2
 altair>=5.0
 requests>=2.31
-pypdf>=4.0        # read uploaded PDF CVs in the recruiting screen
-groq             # natural-language layer (free key: console.groq.com, GROQ_API_KEY)
+pypdf>=4.0        # lecture des CV PDF déposés dans l'écran de recrutement
+groq              # couche langage naturel (clé gratuite : console.groq.com, GROQ_API_KEY)
 python-dotenv
+
+# Composant de conversation (assistant-ui + Custom Components v2). Installé
+# depuis le dépôt : les assets JS sont déjà construits dans
+# components/workforce-chat/workforce_chat/frontend/build/, car Streamlit Cloud
+# n'exécute pas npm.
+./components/workforce-chat

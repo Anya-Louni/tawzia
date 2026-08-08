@@ -18,6 +18,17 @@ optimized_schedule.csv
 # API responses cached at runtime (Open-Meteo, World Bank, Aladhan)
 data/cache/
 
+# Cache disque de st.cache_data : le backtest coûte ~170 s à froid, il est donc
+# persisté sur disque. C'est un artefact de la machine, pas du dépôt.
+.streamlit/cache/
+
+# Composant CCv2 : les dépendances npm ne se versionnent pas.
+# En revanche `frontend/build/` EST versionné volontairement , Streamlit Cloud
+# n'exécute pas npm, donc l'asset construit doit être présent dans le dépôt.
+components/**/node_modules/
+components/**/*.egg-info/
+*.egg-info/
+
 # OS / editor cruft
 .DS_Store
 .vscode/

@@ -11,9 +11,9 @@ st.caption("La plateforme RH et de planification par l'IA, conçue pour toute "
            "entreprise algérienne : recruter, planifier, payer, se conformer, "
            "décider , sur le vrai calendrier et le droit du travail algériens.")
 
-st.markdown(":violet-badge[:material/verified: Droit du travail algérien] "
+st.markdown(":green-badge[:material/verified: Droit du travail algérien] "
             ":blue-badge[:material/bolt: IA locale + langage naturel] "
-            ":green-badge[:material/domain: Tous secteurs]")
+            ":gray-badge[:material/domain: Tous secteurs]")
 
 # --- quick orientation -----------------------------------------------------
 with st.container(border=True):
@@ -28,11 +28,12 @@ with st.container(border=True):
             "**copilote décisionnel** pour piloter."
         )
     with right:
-        st.subheader("La barre latérale")
+        st.subheader("La bande de contexte")
         st.caption(
-            "**Type d'activité** adapte les rôles et les chiffres à votre "
-            "secteur. **Wilaya** fixe la météo réelle utilisée. **Source des "
-            "données** permet de travailler hors-ligne."
+            "En haut de chaque page. **Contexte** adapte les rôles et les "
+            "chiffres à votre secteur et fixe la wilaya, donc la météo réelle "
+            "utilisée. **Paramètres** règle l'horizon et le niveau de service. "
+            "**Données** permet de travailler hors-ligne."
         )
 
 st.subheader("Les sections")
@@ -42,12 +43,15 @@ _SECTIONS = [
      "Le **tableau de bord** du matin : charge prévue par shift, planning "
      "recommandé et son coût chargé."),
     (":material/person_search:", "Recrutement",
-     "**Évaluation de CV** (verdict IA, points forts/faibles, questions "
-     "d'entretien) et **appariement CV/poste** par embeddings locaux qui "
-     "classe un lot de candidats."),
+     "**Sourcing & marque employeur** : par quels canaux réels faire venir les "
+     "candidats, à quel coût. Puis **évaluation de CV** (verdict IA, points "
+     "forts/faibles, questions d'entretien) et **appariement CV/poste** par "
+     "embeddings locaux qui classe un lot de candidats."),
     (":material/badge:", "Équipe & présence",
      "**Employés** et leurs droits, **demandes & présence** (congés, sorties, "
-     "retards), **risque de départ** chiffré et **négociateur de rétention**."),
+     "retards), **compétences & mobilité interne** (qui peut déjà tenir le "
+     "poste à pourvoir), **risque de départ** chiffré et **négociateur de "
+     "rétention**."),
     (":material/trending_up:", "Planification",
      "**Prévision de la demande** par shift et **planning & coût** : le "
      "roster le moins cher qui respecte la loi."),
@@ -82,5 +86,5 @@ with st.container(border=True):
         "affichée sur chaque page."
     )
 
-st.caption(":material/arrow_back: Choisissez une section dans le menu à gauche "
-           "pour commencer.")
+st.caption(":material/arrow_upward: Choisissez une section dans le bandeau en "
+           "haut pour commencer.")

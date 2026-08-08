@@ -26,6 +26,12 @@ plan = appdata.load_forward_plan(
 fc = plan["forecast"].copy()
 
 _SHIFT_FR = {k: v.label for k, v in labour_dz.SHIFTS.items()}
+_SHIFT_COLOURS = ["#0A2540", "#1355C4", "#B45309"]
+
+# Ce que ce métier vit réellement : le moteur calcule tous les indicateurs de
+# calendrier pour toute l'Algérie, mais on ne cite comme cause que ceux dont le
+# coefficient de ce profil montre un effet réel (voir demand.material_drivers).
+drivers = profile.material_drivers()
 _CONF_FR = {
     "high": "élevée", "boundary": "limite (observation lunaire)",
     "medium": "moyenne", "low": "faible",
@@ -70,16 +76,28 @@ col1, col2 = st.columns(2)
 with col1:
     with st.container(border=True):
         st.subheader("Par shift")
-        by_shift = fc.pivot_table(
+        # Seuls les shifts que cette activité tient réellement : une école n'a
+        # pas de créneau 22h-06h, et en afficher un dit au prospect que l'outil
+        # a été conçu pour un autre métier que le sien.
+        active = profile.active_shifts()
+        by_shift = fc[fc["shift"].isin(active)].pivot_table(
             index="date", columns="shift", values="forecast", aggfunc="sum"
         )
+        by_shift = by_shift[[s for s in active if s in by_shift.columns]]
         by_shift = by_shift.rename(columns=_SHIFT_FR)
-        st.line_chart(by_shift, height=280, color=["#16233A", "#C8102E", "#B78B4A"])
-        if "is_ramadan_int" in fc.columns and fc["is_ramadan_int"].sum() > 0:
+        st.line_chart(by_shift, height=280,
+                      color=_SHIFT_COLOURS[:by_shift.shape[1]])
+        if (profile.runs_night() and "ramadan" in drivers
+                and "is_ramadan_int" in fc.columns and fc["is_ramadan_int"].sum() > 0):
             st.caption(
                 ":material/nightlight: Le Ramadan tombe dans cette fenêtre , "
                 "notez le shift de nuit qui monte à mesure que l'activité passe "
                 "à après le f'tour."
+            )
+        elif not profile.runs_night():
+            st.caption(
+                f":material/schedule: {profile.label} , "
+                f"{len(active)} shifts de jour, pas de travail de nuit."
             )
 
 with col2:
@@ -97,21 +115,21 @@ with st.container(border=True):
         reasons = []
         if r.get("holiday_name"):
             reasons.append(str(r["holiday_name"]))
-        if r.get("is_ramadan_int", 0):
+        if "ramadan" in drivers and r.get("is_ramadan_int", 0):
             reasons.append(f"Ramadan jour {int(r.get('ramadan_day', 0))}")
-        if r.get("diaspora_intensity", 0) > 0.15:
+        if "diaspora" in drivers and r.get("diaspora_intensity", 0) > 0.15:
             reasons.append(f"saison diaspora ({r['diaspora_intensity']:.0%} du pic)")
-        if r.get("is_rentree_int", 0):
+        if "rentree" in drivers and r.get("is_rentree_int", 0):
             reasons.append("rentrée scolaire")
         wd = pd.Timestamp(r["date"]).weekday()
-        if wd == 4:
+        if "weekend" in drivers and wd == 4:
             reasons.append("vendredi — week-end algérien")
-        elif wd == 5:
+        elif "weekend" in drivers and wd == 5:
             reasons.append("samedi — week-end algérien")
-        if r.get("temp_max", 0) >= 38:
+        if "weather" in drivers and r.get("temp_max", 0) >= 38:
             reasons.append(f"chaleur {r['temp_max']:.0f}°C — frein à la productivité")
-        if r.get("precip_mm", 0) >= 1:
-            reasons.append(f"pluie {r['precip_mm']:.1f}mm — dernier kilomètre ralenti")
+        if "weather" in drivers and r.get("precip_mm", 0) >= 1:
+            reasons.append(f"pluie {r['precip_mm']:.1f}mm — {profile.weather_impact}")
 
         day_total = fc.loc[fc["date"] == r["date"], "forecast"].sum()
         conf = r.get("calendar_confidence", "high")

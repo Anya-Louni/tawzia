@@ -89,6 +89,17 @@ if res:
     colour = {"strong": "green", "possible": "orange", "weak": "red"}[res["verdict"]]
     verdict_fr = {"strong": "FORT", "possible": "POSSIBLE", "weak": "FAIBLE"}[res["verdict"]]
 
+    if res.get("injection"):
+        st.error(
+            "**Ce CV tente de manipuler le tri automatique.** Il contient du "
+            "texte adressé à l'IA (souvent invisible à la lecture, en blanc sur "
+            "blanc dans le PDF) pour obtenir une meilleure note. Les consignes "
+            "ont été ignorées et l'évaluation ci-dessous reste valable, mais "
+            "ce candidat mérite une lecture manuelle.\n\n"
+            + "\n".join(f"- `{s}`" for s in res["injection"]),
+            icon=":material/security:",
+        )
+
     with st.container(border=True):
         top = st.columns([1, 3])
         top[0].metric("Score d'adéquation", f"{res['score']}%")

@@ -67,20 +67,23 @@ def current_constraints() -> staffing.SiteConstraints:
 # Cached loaders
 # ---------------------------------------------------------------------------
 
-@st.cache_data(ttl="6h", show_spinner="Loading real Algerian weather and calendar…")
+@st.cache_data(ttl="7d", persist="disk",
+               show_spinner="Chargement de la météo et du calendrier algériens…")
 def _load_history(hijri_offset: int, profile_key: str, wilaya: str, allow_network: bool) -> pd.DataFrame:
     return demand_mod.build_history(
         profile_key, wilaya, HISTORY_START, seed=7, allow_network=allow_network
     )
 
 
-@st.cache_data(ttl="6h", show_spinner="Running walk-forward backtest…")
+@st.cache_data(ttl="7d", persist="disk",
+               show_spinner="Backtest walk-forward (calculé une seule fois)…")
 def _load_backtest(hijri_offset: int, profile_key: str, wilaya: str, horizon: int, allow_network: bool):
     hist = _load_history(hijri_offset, profile_key, wilaya, allow_network)
     return forecast_mod.walk_forward(hist, horizon=horizon, step=28, min_train_days=400)
 
 
-@st.cache_data(ttl="6h", show_spinner="Scoring rosters against realised demand…")
+@st.cache_data(ttl="7d", persist="disk",
+               show_spinner="Évaluation des plannings sur la demande réalisée…")
 def _load_evidence(
     hijri_offset: int,
     profile_key: str,
@@ -111,7 +114,8 @@ def _load_evidence(
     )
 
 
-@st.cache_data(ttl="6h", show_spinner="Forecasting the next horizon…")
+@st.cache_data(ttl="7d", persist="disk",
+               show_spinner="Prévision de l'horizon à venir…")
 def _load_forward_plan(
     hijri_offset: int,
     profile_key: str,
@@ -170,7 +174,8 @@ def _load_forward_plan(
     }
 
 
-@st.cache_data(ttl="6h", show_spinner="Estimation de la demande attendue…")
+@st.cache_data(ttl="7d", persist="disk",
+               show_spinner="Estimation de la demande attendue…")
 def _load_expected_demand(hijri_offset: int, profile_key: str, wilaya: str,
                           horizon: int, allow_network: bool) -> pd.DataFrame:
     import datetime as _d
@@ -203,7 +208,7 @@ def load_hijri_check(allow_network: bool) -> pd.DataFrame:
     return calendar_dz.verify_key_dates()
 
 
-@st.cache_data(ttl="6h", show_spinner=False)
+@st.cache_data(ttl="7d", persist="disk", show_spinner=False)
 def _load_feature_importance(hijri_offset: int, profile_key: str, wilaya: str, allow_network: bool) -> pd.DataFrame:
     hist = _load_history(hijri_offset, profile_key, wilaya, allow_network)
     return forecast_mod.feature_importance(hist)
@@ -250,7 +255,8 @@ def load_feature_importance(profile_key, wilaya, allow_network):
 # Airport operations (aviation module)
 # ---------------------------------------------------------------------------
 
-@st.cache_data(ttl="6h", show_spinner="Building the ALG flight schedule…")
+@st.cache_data(ttl="7d", persist="disk",
+               show_spinner="Construction du programme de vols d'Alger…")
 def load_flight_day(hijri_offset: int, date_iso: str):
     import datetime as _d
     from . import aviation
@@ -373,138 +379,299 @@ def data_badge() -> None:
 
 def inject_theme() -> None:
     """
-    Depth layer on top of the config.toml theme.
+    La couche visuelle, par-dessus le thème de .streamlit/config.toml.
 
-    config.toml owns colour, radius and fonts; this adds what config cannot:
-    soft layered shadows, elevation on hover, gradient accents and coloured
-    surfaces so the app reads as tactile and three-dimensional rather than flat.
-    Requested explicitly by the product (colourful, 3D, shadowed).
+    THESIS , l'app se lit comme un registre public algérien, pas comme un
+    dashboard SaaS : réglé, équerré, lisible au vidéoprojecteur. Elle refuse
+    l'arrangement qu'elle avait avant (dégradé indigo-violet), parce qu'un
+    public qui évalue une promesse de conformité et de paie escompte la
+    décoration.
+
+    OWN-WORLD , fond ardoise #F1F5F9, surfaces blanches cerclées d'un trait
+    1px #CBD5E1 toujours visible, une seule couleur d'action (#1355C4) et un
+    navy (#0A2540) pour les titres et les chiffres. Aucun dégradé, nulle part.
+
+    FIRST VIEWPORT , barre de navigation navy en haut, bande de contexte sous
+    elle, puis l'espace de travail. Pas de rail latéral : les sept sections
+    sont l'architecture entière et se voient d'un coup d'œil.
+
+    FORM , le contraste fait le design : le fond est ardoise pour qu'une carte
+    blanche soit un objet avec un bord, ce qui remplace toutes les ombres que
+    l'ancien thème utilisait pour simuler la profondeur.
     """
     st.markdown(
         """
         <style>
         :root {
-            --wf-indigo:#4F46E5; --wf-indigo-d:#4338CA; --wf-blue:#2563EB;
-            --wf-ink:#171A2B; --wf-line:#E6E8F2;
-            --wf-shadow-sm:0 1px 2px rgba(23,26,43,.06), 0 2px 6px rgba(23,26,43,.05);
-            --wf-shadow-md:0 4px 10px -4px rgba(37,40,90,.14), 0 12px 28px -14px rgba(37,40,90,.22);
-            --wf-shadow-lg:0 10px 24px -8px rgba(37,40,90,.20), 0 24px 48px -20px rgba(37,40,90,.30);
+            --wf-navy:#0A2540; --wf-blue:#1355C4; --wf-blue-d:#0E42A0;
+            --wf-blue-soft:#E8F0FC; --wf-line:#CBD5E1; --wf-line-soft:#E2E8F0;
+            --wf-text:#0F172A; --wf-muted:#475569;
+            --wf-ground:#F1F5F9; --wf-surface:#FFFFFF;
+            /* Une ombre a un décalage et un vrai flou, sinon c'est un halo. */
+            --wf-shadow:0 1px 2px rgba(10,37,64,.06), 0 2px 8px -2px rgba(10,37,64,.08);
         }
 
-        /* Soft depth backdrop so surfaces float above the page. */
-        [data-testid="stApp"] {
-            background:
-                radial-gradient(1100px 480px at 12% -8%, #EEF2FF 0%, rgba(238,242,255,0) 60%),
-                radial-gradient(900px 420px at 100% 0%, #F0F9FF 0%, rgba(240,249,255,0) 55%),
-                #FFFFFF;
+        /* Fond plat. Aucun dégradé radial : la profondeur vient du trait. */
+        [data-testid="stApp"] { background:var(--wf-ground); }
+
+        /* Le chrome natif s'efface : notre bandeau le remplace. */
+        [data-testid="stHeader"] { background:transparent; }
+        [data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"] {
+            display:none !important;
+        }
+        /* La page commence sous le bandeau, pas 6rem plus bas. */
+        [data-testid="stMainBlockContainer"] { padding-top:2.4rem; }
+
+        /* ---- Bandeau navy : marque + les sept sections en grand ----------- */
+        .st-key-wf_topbar {
+            background:var(--wf-navy) !important;
+            border-radius:8px; padding:14px 18px 16px;
+            box-shadow:0 2px 4px rgba(10,37,64,.16), 0 10px 24px -12px rgba(10,37,64,.42);
+            margin-bottom:26px;
+        }
+        .wf-brand-light {
+            color:#FFFFFF; font-weight:800; font-size:19px;
+            letter-spacing:-.02em; line-height:1.7;
+        }
+        .wf-crumb {
+            text-align:right; color:#8FA9C7; font-size:13px; line-height:1.7;
+        }
+        .wf-crumb strong { color:#FFFFFF; font-weight:700; }
+        .wf-crumb-sep { margin:0 7px; opacity:.55; }
+        .wf-crumb-ed {
+            display:block; font-size:11.5px; color:#7590B2; letter-spacing:.01em;
         }
 
-        /* Page titles: an indigo -> violet gradient headline. */
+        /* Les sept boutons de section : taille identique, cliquables en grand.
+           C'est la seule règle de dimension qui compte pour la cohérence , tous
+           les boutons du bandeau partagent exactement la même boîte. */
+        /* Sélecteur descendant, pas `>` : `help=` enveloppe le bouton dans un
+           `stTooltipHoverTarget`, ce qui casserait la relation directe. */
+        .st-key-wf_topbar .stButton button {
+            background:rgba(255,255,255,.07) !important;
+            border:1px solid rgba(255,255,255,.16) !important;
+            color:#DCE8F7 !important; font-weight:600 !important;
+            min-height:58px !important; height:58px !important;
+            padding:8px 10px !important; border-radius:7px !important;
+            font-size:13.5px !important; line-height:1.25 !important;
+            white-space:normal !important;
+            transition:background .14s ease, border-color .14s ease,
+                       transform .14s ease, box-shadow .14s ease;
+        }
+        .st-key-wf_topbar .stButton button p {
+            color:inherit !important; font-weight:inherit !important;
+        }
+        .st-key-wf_topbar .stButton button:hover {
+            background:rgba(255,255,255,.15) !important;
+            border-color:rgba(255,255,255,.4) !important;
+            color:#FFFFFF !important;
+            transform:translateY(-2px);
+            box-shadow:0 6px 14px -6px rgba(0,0,0,.5);
+        }
+        .st-key-wf_topbar .stButton button:active { transform:translateY(0); }
+        /* Section ouverte : bleu plein, aucun dégradé. */
+        .st-key-wf_sec_active .stButton button {
+            background:var(--wf-blue) !important;
+            border-color:#4D82DC !important; color:#FFFFFF !important;
+            box-shadow:0 4px 12px -4px rgba(19,85,196,.75);
+        }
+        .st-key-wf_sec_active .stButton button:hover {
+            background:var(--wf-blue-d) !important;
+        }
+
+        /* ---- Sélecteur modal : le reste de l'écran s'assombrit ------------ */
+        /* `st.dialog` pose lui-même le voile ; on le fonce pour que le choix
+           soit la seule chose lisible à l'écran. */
+        [data-testid="stDialog"] > div:first-child,
+        div[role="dialog"] ~ div[aria-hidden="true"] { background:rgba(10,37,64,.62); }
+        [data-testid="stDialog"] div[role="dialog"] {
+            border:1px solid var(--wf-line); border-radius:10px;
+            box-shadow:0 24px 60px -20px rgba(10,37,64,.55);
+        }
+        /* Les entrées du sélecteur : cartes de taille égale, effet de survol. */
+        [data-testid="stDialog"] [data-testid="stLayoutWrapper"]
+            > [data-testid="stVerticalBlock"] {
+            transition:border-color .14s ease, box-shadow .14s ease,
+                       transform .14s ease;
+        }
+        [data-testid="stDialog"] [data-testid="stLayoutWrapper"]
+            > [data-testid="stVerticalBlock"]:hover {
+            border-color:var(--wf-blue) !important;
+            box-shadow:0 6px 18px -8px rgba(19,85,196,.5);
+            transform:translateY(-2px);
+        }
+
+        /* ---- Typographie ------------------------------------------------- */
         [data-testid="stMain"] h1 {
-            background:linear-gradient(92deg, #4338CA 0%, #4F46E5 45%, #7C3AED 100%);
-            -webkit-background-clip:text; background-clip:text;
-            -webkit-text-fill-color:transparent;
-            letter-spacing:-.025em; font-weight:800;
+            color:var(--wf-navy); letter-spacing:-.022em; font-weight:800;
         }
-        [data-testid="stMain"] h2, [data-testid="stMain"] h3 {
-            color:var(--wf-ink); letter-spacing:-.015em;
+        [data-testid="stMain"] h2 { color:var(--wf-navy); letter-spacing:-.014em; }
+        [data-testid="stMain"] h3 { color:var(--wf-text); letter-spacing:-.01em; }
+        /* Le secondaire est teinté de l'encre, jamais d'un gris neutre. */
+        [data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p {
+            color:var(--wf-muted) !important;
         }
 
-        /* Metric tiles: elevated cards with a coloured top accent + hover lift. */
+        /* ---- Cartes et métriques ----------------------------------------- */
+        /* Hauteur minimale commune : une rangée de métriques dont les libellés
+           font une ou deux lignes ne doit pas produire des tuiles inégales. */
         [data-testid="stMetric"] {
-            position:relative; background:linear-gradient(180deg,#FFFFFF 0%, #FBFCFF 100%);
-            border:1px solid var(--wf-line); border-radius:16px;
-            padding:16px 18px 15px; box-shadow:var(--wf-shadow-md);
-            transition:transform .16s ease, box-shadow .16s ease;
-            overflow:hidden;
-        }
-        [data-testid="stMetric"]::before {
-            content:""; position:absolute; inset:0 0 auto 0; height:4px;
-            background:linear-gradient(90deg,#4F46E5,#0EA5E9); opacity:.9;
+            background:var(--wf-surface); border:1px solid var(--wf-line);
+            border-radius:8px; padding:15px 17px 14px;
+            min-height:96px;
+            box-shadow:var(--wf-shadow);
+            transition:border-color .14s ease, box-shadow .14s ease,
+                       transform .14s ease;
         }
         [data-testid="stMetric"]:hover {
-            transform:translateY(-3px); box-shadow:var(--wf-shadow-lg);
+            border-color:#9DB6D6;
+            box-shadow:0 3px 6px rgba(10,37,64,.09), 0 12px 24px -12px rgba(10,37,64,.28);
+            transform:translateY(-2px);
         }
-        [data-testid="stMetricValue"] { font-weight:800; letter-spacing:-.02em; }
-
-        /* Bordered containers become elevated cards. */
-        [data-testid="stVerticalBlockBorderWrapper"] {
-            background:#FFFFFF; border-radius:16px !important;
-            box-shadow:var(--wf-shadow-md);
-            transition:box-shadow .16s ease, transform .16s ease;
+        [data-testid="stMetricValue"] {
+            font-weight:800; letter-spacing:-.02em; color:var(--wf-navy);
         }
-        [data-testid="stVerticalBlockBorderWrapper"]:hover {
-            box-shadow:var(--wf-shadow-lg);
+        [data-testid="stMetricLabel"] p {
+            color:var(--wf-muted) !important; font-weight:600;
+            text-transform:none; font-size:13px;
         }
 
-        /* Buttons: gradient fill, real shadow, springy hover. */
-        .stButton > button[kind="primary"], .stDownloadButton > button {
-            background:linear-gradient(180deg,#5B52F0 0%, #4F46E5 55%, #4338CA 100%);
-            border:1px solid #4338CA; color:#fff; font-weight:700;
-            box-shadow:0 6px 16px -6px rgba(79,70,229,.55), inset 0 1px 0 rgba(255,255,255,.18);
-            transition:transform .14s ease, box-shadow .14s ease, filter .14s ease;
+        /* Les conteneurs bordés deviennent de vraies cartes blanches.
+           Streamlit ne leur donne aucun marqueur propre : le seul repère
+           stable est d'être l'enfant direct d'un stLayoutWrapper. On exclut
+           nos propres conteneurs nommés (st-key-*), qui ont leur style.
+           Aucune classe emotion (st-emotion-cache-…) n'est ciblée : ces
+           empreintes changent à chaque version de Streamlit, et cette app est
+           déployée sans borne haute de version. */
+        [data-testid="stLayoutWrapper"] > [data-testid="stVerticalBlock"]:not([class*="st-key-"]) {
+            background:var(--wf-surface);
+            border-radius:8px;
+            box-shadow:var(--wf-shadow);
+            transition:box-shadow .16s ease, border-color .16s ease;
         }
-        .stButton > button[kind="primary"]:hover, .stDownloadButton > button:hover {
-            transform:translateY(-2px); filter:brightness(1.04);
-            box-shadow:0 12px 26px -8px rgba(79,70,229,.6), inset 0 1px 0 rgba(255,255,255,.22);
-        }
-        .stButton > button[kind="secondary"] {
-            box-shadow:var(--wf-shadow-sm);
-            transition:transform .14s ease, box-shadow .14s ease;
-        }
-        .stButton > button[kind="secondary"]:hover {
-            transform:translateY(-1px); box-shadow:var(--wf-shadow-md);
-            border-color:#C7CBEC;
+        [data-testid="stMain"] [data-testid="stLayoutWrapper"]
+            > [data-testid="stVerticalBlock"]:not([class*="st-key-"]):hover {
+            box-shadow:0 3px 6px rgba(10,37,64,.08), 0 14px 28px -14px rgba(10,37,64,.26);
         }
 
-        /* Alerts: rounded, floated. */
+        /* ---- Actions ------------------------------------------------------ */
+        /* Une seule boîte pour TOUS les boutons de l'application, y compris
+           ceux des fenêtres modales : restreindre la règle à `stMain` laissait
+           les boutons du sélecteur à 38 px pendant que le reste était à 42, ce
+           qui est précisément l'incohérence de tailles qu'on corrige ici.
+           Le bandeau navy garde sa propre boîte (58 px) et n'est pas visé. */
+        [data-testid="stMain"] .stButton button,
+        [data-testid="stDialog"] .stButton button,
+        .stDownloadButton button,
+        [data-testid="stPopover"] > div > button,
+        [data-testid="stFormSubmitButton"] button {
+            min-height:42px; padding:0 18px; border-radius:7px;
+            font-weight:600; font-size:14px;
+        }
+        /* Le bandeau reprend la main sur sa propre hauteur. */
+        .st-key-wf_topbar .stButton button { min-height:58px; }
+        .stButton > button[kind="primary"], .stDownloadButton > button,
+        [data-testid="stFormSubmitButton"] > button {
+            background:var(--wf-blue); border:1px solid var(--wf-blue);
+            color:#FFFFFF; font-weight:600;
+            box-shadow:0 1px 2px rgba(10,37,64,.14), 0 5px 12px -6px rgba(19,85,196,.6);
+            transition:background .13s ease, border-color .13s ease,
+                       transform .13s ease, box-shadow .13s ease;
+        }
+        .stButton > button[kind="primary"]:hover, .stDownloadButton > button:hover,
+        [data-testid="stFormSubmitButton"] > button:hover {
+            background:var(--wf-blue-d); border-color:var(--wf-blue-d);
+            transform:translateY(-1px);
+            box-shadow:0 2px 4px rgba(10,37,64,.18), 0 10px 20px -8px rgba(19,85,196,.68);
+        }
+        .stButton > button[kind="primary"]:active, .stDownloadButton > button:active {
+            transform:translateY(0);
+            box-shadow:0 1px 2px rgba(10,37,64,.2);
+        }
+        .stButton > button[kind="secondary"],
+        [data-testid="stPopover"] > div > button {
+            background:var(--wf-surface); border:1px solid var(--wf-line);
+            color:var(--wf-navy); font-weight:600;
+            box-shadow:0 1px 2px rgba(10,37,64,.05);
+            transition:background .13s ease, border-color .13s ease,
+                       transform .13s ease, box-shadow .13s ease;
+        }
+        .stButton > button[kind="secondary"]:hover,
+        [data-testid="stPopover"] > div > button:hover {
+            background:var(--wf-blue-soft); border-color:var(--wf-blue);
+            color:var(--wf-blue-d); transform:translateY(-1px);
+            box-shadow:0 4px 10px -4px rgba(19,85,196,.35);
+        }
+        .stButton > button[kind="secondary"]:active { transform:translateY(0); }
+        .stButton > button:disabled,
+        .stButton > button:disabled:hover {
+            opacity:.45; transform:none; box-shadow:none;
+        }
+
+        /* Champs de saisie : même hauteur que les boutons, même bord. */
+        [data-testid="stMain"] [data-baseweb="input"],
+        [data-testid="stMain"] [data-baseweb="select"] > div,
+        [data-testid="stMain"] [data-baseweb="base-input"] {
+            min-height:42px; border-radius:7px;
+        }
+
+        /* Anneau de focus visible : la navigation au clavier doit se voir. */
+        .stButton > button:focus-visible, .stDownloadButton > button:focus-visible,
+        a:focus-visible {
+            outline:2px solid var(--wf-blue); outline-offset:2px;
+        }
+        [data-baseweb="select"]:focus-within {
+            outline:2px solid var(--wf-blue); outline-offset:1px;
+        }
+
+        /* ---- Signalements ------------------------------------------------- */
         [data-testid="stAlert"] {
-            border-radius:14px; box-shadow:var(--wf-shadow-sm);
-            border:1px solid var(--wf-line);
+            border-radius:6px; border:1px solid var(--wf-line);
+            box-shadow:none;
         }
 
-        /* Expanders: card-like. */
         [data-testid="stExpander"] details {
-            border-radius:14px !important; box-shadow:var(--wf-shadow-sm);
-            overflow:hidden;
+            border-radius:6px !important; border:1px solid var(--wf-line);
+            background:var(--wf-surface);
         }
+        [data-testid="stExpander"] summary { font-weight:600; color:var(--wf-navy); }
 
-        /* Tabs: a raised pill bar with a coloured active tab. */
+        /* ---- Onglets : soulignés, pas des pastilles ----------------------- */
         .stTabs [data-baseweb="tab-list"] {
-            gap:4px; background:#F4F6FD; padding:5px; border-radius:14px;
-            box-shadow:inset 0 1px 3px rgba(23,26,43,.06);
+            gap:2px; background:transparent; padding:0;
+            border-bottom:1px solid var(--wf-line);
         }
         .stTabs [data-baseweb="tab"] {
-            border-radius:10px; padding:6px 14px; font-weight:600;
+            border-radius:0; padding:8px 16px; font-weight:600;
+            color:var(--wf-muted);
         }
         .stTabs [aria-selected="true"] {
-            background:#FFFFFF; color:var(--wf-indigo) !important;
-            box-shadow:var(--wf-shadow-sm);
+            color:var(--wf-blue-d) !important;
+            box-shadow:inset 0 -2px 0 0 var(--wf-blue);
         }
-        .stTabs [data-baseweb="tab-highlight"], .stTabs [data-baseweb="tab-border"] {
-            display:none;
-        }
+        .stTabs [data-baseweb="tab-highlight"] { display:none; }
 
-        /* Dataframes: rounded, floated. */
+        /* ---- Tableaux ----------------------------------------------------- */
         [data-testid="stDataFrame"], [data-testid="stTable"] {
-            border-radius:14px; box-shadow:var(--wf-shadow-sm); overflow:hidden;
+            border-radius:6px; border:1px solid var(--wf-line); overflow:hidden;
         }
 
-        /* Sidebar: gradient rail + elevation for nav. */
-        [data-testid="stSidebar"] {
-            box-shadow:6px 0 24px -18px rgba(37,40,90,.35);
+        /* ---- Bande de contexte -------------------------------------------- */
+        .wf-context {
+            display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;
         }
-        [data-testid="stSidebar"] > div:first-child {
-            border-top:4px solid transparent;
-            border-image:linear-gradient(90deg,#4F46E5,#0EA5E9) 1;
+        .wf-brand {
+            font-weight:800; font-size:17px; color:var(--wf-navy);
+            letter-spacing:-.02em;
         }
-        [data-testid="stSidebarNav"] a[aria-current="page"] {
-            background:linear-gradient(90deg, rgba(79,70,229,.14), rgba(14,165,233,.08));
-            border-radius:10px; font-weight:600;
+        .wf-chip {
+            display:inline-block; padding:2px 9px; border-radius:4px;
+            background:var(--wf-blue-soft); color:var(--wf-blue-d);
+            border:1px solid #C3D9F6; font-size:12.5px; font-weight:600;
         }
+        .wf-meta { color:var(--wf-muted); font-size:13px; }
 
-        /* Lighter dividers. */
-        [data-testid="stMain"] hr { border-color:var(--wf-line); opacity:.7; }
+        [data-testid="stMain"] hr { border-color:var(--wf-line-soft); opacity:1; }
         </style>
         """,
         unsafe_allow_html=True,
@@ -512,53 +679,12 @@ def inject_theme() -> None:
 
 
 def sidebar_controls() -> None:
-    """The shared control panel, rendered on every page."""
+    """
+    Point d'entrée conservé : les 26 pages l'appellent en première ligne.
+
+    La navigation et les réglages sont passés dans le bandeau supérieur, rendu
+    par `page_header()` depuis `dashboard.py`. Il ne reste ici que la garantie
+    que l'état et le thème existent, quel que soit l'ordre d'exécution.
+    """
     init_state()
     inject_theme()
-
-    with st.sidebar:
-        from . import industry
-        st.markdown("### WorkForce.dz")
-        if industry.is_tailored():
-            st.caption(f":material/storefront: Édition {industry.label()}")
-        else:
-            st.caption("La plateforme RH par l'IA, conçue pour l'Algérie")
-
-        profile_labels = {k: p.label for k, p in demand_mod.PROFILES.items()}
-        st.selectbox(
-            "Type d'activité",
-            options=list(profile_labels),
-            format_func=lambda k: profile_labels[k],
-            key="profile_key",
-        )
-        st.selectbox(
-            "Wilaya",
-            options=list(weather_dz.WILAYAS),
-            key="wilaya",
-            help="Détermine la série météo réelle utilisée par le modèle.",
-        )
-
-        with st.expander("Paramètres de planification", icon=":material/tune:"):
-            st.slider("Horizon de prévision (jours)", 7, 21, key="horizon")
-            st.select_slider(
-                "Niveau de service",
-                options=[0.50, 0.75, 0.80, 0.90],
-                key="service_level",
-                format_func=lambda v: f"p{v * 100:.0f}",
-                help="Dimensionner à ce quantile de demande. Plus élevé = moins "
-                     "de ruptures de service, mais plus de temps payé inactif.",
-            )
-            st.number_input("Effectif permanent", 20, 400, key="regular_pool")
-            st.number_input("Plafond d'intérimaires par shift", 0, 200, key="temp_ceiling")
-
-        with st.expander("Source des données", icon=":material/cloud:"):
-            st.toggle(
-                "Autoriser les appels API en direct",
-                key="allow_network",
-                help="Désactiver pour fonctionner entièrement depuis le cache "
-                     "local , utile si le wifi du lieu est instable.",
-            )
-            st.caption(
-                "Les réponses d'Open-Meteo et de la Banque mondiale sont mises "
-                "en cache au premier appel : l'app fonctionne ensuite hors-ligne."
-            )

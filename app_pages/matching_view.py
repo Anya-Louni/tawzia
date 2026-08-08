@@ -72,6 +72,21 @@ if use_samples:
 
 st.caption(f"{len(cvs)} CV prêts à classer.")
 
+# Un lot déposé est exactement l'endroit où un CV piégé passe inaperçu : on
+# vérifie chaque fichier avant le classement et on nomme les candidats
+# concernés (voir core/cv_screen.detect_injection).
+_suspect = {name: hits for name, hits in
+            ((n, cv_screen.detect_injection(t)) for n, t in cvs.items()) if hits}
+if _suspect:
+    st.error(
+        "**Des CV tentent de manipuler le tri automatique.** Ils contiennent du "
+        "texte adressé à l'IA, souvent invisible à la lecture. Le classement "
+        "ci-dessous les traite comme de simples données, mais ces candidatures "
+        "méritent une lecture manuelle :\n\n"
+        + "\n".join(f"- **{n}** : `{h[0]}`" for n, h in _suspect.items()),
+        icon=":material/security:",
+    )
+
 st.divider()
 
 if st.button("Classer les candidats", type="primary", icon=":material/sort:"):

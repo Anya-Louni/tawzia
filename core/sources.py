@@ -455,6 +455,81 @@ _FACTS = [
         tags=("labour", "assumption"),
     ),
     Fact(
+        key="digit_model_dataset",
+        label="Jeu d'entraînement du lecteur de chiffres",
+        value=1797,
+        unit="chiffres manuscrits réels",
+        kind="measured",
+        source="Optical Recognition of Handwritten Digits , E. Alpaydin & "
+               "C. Kaynak, UCI Machine Learning Repository",
+        url="https://archive.ics.uci.edu/dataset/80/optical+recognition+of+handwritten+digits",
+        note="Données réelles écrites par 43 personnes. Le modèle du Contrôle "
+             "de documents est entraîné dessus ; son exactitude est mesurée à "
+             "chaque démarrage sur un quart du jeu tenu à l'écart, et affichée "
+             "telle quelle. Les chiffres imprimés ajoutés à l'entraînement sont "
+             "générés depuis les polices du serveur, et leur exactitude est "
+             "rapportée séparément , jamais fondue avec celle du manuscrit.",
+        tags=("vision", "measured"),
+    ),
+
+    # ---- Sourcing & compétences : hypothèses de cadrage -------------------
+    # Le répertoire de canaux (universités, CFPA/INSFP, ANEM, sites d'emploi)
+    # nomme des institutions réelles et vérifiables ; ce sont les *chiffres*
+    # attachés à chaque canal qui sont modélisés, parce qu'aucun opérateur
+    # algérien ne publie son coût par embauche. Enregistrés ici pour que la
+    # page Sources les montre au lieu de les laisser dans le code.
+    Fact(
+        key="applicants_per_hire",
+        label="Candidatures nécessaires pour une embauche",
+        value=8.0,
+        unit="candidatures/embauche",
+        kind="assumption",
+        source="Modèle WorkForce.dz",
+        note="Ratio d'entonnoir servant à dimensionner une campagne de "
+             "sourcing. Varie fortement selon le canal et le poste ; c'est la "
+             "première valeur qu'un pilote remplace par le ratio mesuré du "
+             "client dès la première campagne.",
+        tags=("sourcing", "assumption"),
+    ),
+    Fact(
+        key="sourcing_shortlist_rate",
+        label="Part des candidatures retenues en short-list",
+        value=0.22,
+        unit="fraction",
+        kind="assumption",
+        source="Modèle WorkForce.dz",
+        note="Combinée à la qualité propre au canal, elle donne les embauches "
+             "attendues par campagne. Les volumes, coûts et délais portés par "
+             "chaque canal du répertoire relèvent du même cadrage.",
+        tags=("sourcing", "assumption"),
+    ),
+    Fact(
+        key="training_cost_per_day",
+        label="Coût direct d'une journée de formation par personne",
+        value=3500,
+        unit="DZD/jour/personne",
+        kind="assumption",
+        source="Modèle WorkForce.dz",
+        note="Formateur amorti et support, hors salaire du stagiaire. Avec "
+             "4 jours par niveau de compétence gagné, c'est ce qui chiffre le "
+             "plan de formation et l'arbitrage former/recruter. Une grille "
+             "client ou une convention CFPA le remplace.",
+        tags=("skills", "assumption"),
+    ),
+    Fact(
+        key="external_recruit_cost",
+        label="Coût de sourcing et de sélection d'un recrutement externe",
+        value=45000,
+        unit="DZD/recrutement",
+        kind="assumption",
+        source="Modèle WorkForce.dz",
+        note="Hors salaire, et hors la montée en compétence (2 mois à demi-"
+             "productivité) comptée séparément. Sert de terme de comparaison "
+             "face à la mobilité interne ; le moteur conclut au recrutement "
+             "externe quand l'écart de compétences est trop large.",
+        tags=("skills", "assumption"),
+    ),
+    Fact(
         key="temp_agency_markup",
         label="Majoration d'agence d'intérim sur l'emploi direct",
         value=0.35,

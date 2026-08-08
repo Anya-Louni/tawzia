@@ -1,0 +1,2 @@
+recursive-include workforce_chat/frontend/build *
+include pyproject.toml
