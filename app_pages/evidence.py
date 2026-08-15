@@ -53,13 +53,13 @@ bt = ev.backtest
 metrics = bt.metrics
 delta = ev.delta
 
-dz = float(metrics.loc[metrics["Model"] == "WorkForce.dz", "MAPE_%"].iloc[0])
+dz = float(metrics.loc[metrics["Model"] == "Tawzia", "MAPE_%"].iloc[0])
 gen = float(metrics.loc[metrics["Model"] == "Generic international model", "MAPE_%"].iloc[0])
 sn = float(metrics.loc[metrics["Model"] == "Seasonal naive", "MAPE_%"].iloc[0])
 
 # Étiquettes françaises pour l'affichage, sans toucher aux clés internes.
 _MODEL_FR = {
-    "WorkForce.dz": "WorkForce.dz",
+    "Tawzia": "Tawzia",
     "Generic international model": "Modèle international générique",
     "Seasonal naive": "Naïf saisonnier",
 }

@@ -1,20 +1,25 @@
 """
 dashboard.py
 ------------
-WorkForce.dz , la plateforme RH et de planification par l'IA, conçue pour le
-droit du travail algérien.
+Tawzia , la plateforme RH et de planification par l'IA, conçue pour le droit du
+travail algérien. Le nom vient de l'arabe توزيع, « répartition » : affecter les
+bonnes personnes aux bons postes est le geste que fait le moteur.
 
 Lancer :
     streamlit run dashboard.py
 """
 
+from pathlib import Path
+
 import streamlit as st
 
 from core import industry
 
+_ICON = Path(__file__).parent / "assets" / "brand" / "tawzia-mark.svg"
+
 st.set_page_config(
-    page_title="WorkForce.dz",
-    page_icon=":material/hub:",
+    page_title="Tawzia",
+    page_icon=str(_ICON) if _ICON.exists() else ":material/groups:",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
@@ -53,8 +58,17 @@ pages = {
     ],
     "Recrutement": [
         # Sourcing d'abord : c'est l'étape zéro, avant qu'un CV existe.
+        # L'offre se rédige avant de sourcer : c'est elle qui dit quoi publier
+        # et sur quels critères le vivier sera trié.
+        st.Page("app_pages/job_post_view.py", title="Rédiger une offre",
+                icon=":material/edit_note:"),
         st.Page("app_pages/sourcing_view.py", title="Sourcing & marque employeur",
                 icon=":material/travel_explore:"),
+        # Puis le vivier : le classement de toutes les candidatures reçues, qui
+        # est le geste quotidien du recrutement. Les deux écrans suivants
+        # traitent une candidature à la fois.
+        st.Page("app_pages/talent_pool.py", title="Vivier de candidats",
+                icon=":material/groups_2:"),
         st.Page("app_pages/recruiting.py", title="Évaluation de CV",
                 icon=":material/person_search:"),
         st.Page("app_pages/matching_view.py", title="Appariement CV/poste",
@@ -76,6 +90,11 @@ pages = {
     "Paie & conformité": [
         st.Page("app_pages/payroll_view.py", title="Paie",
                 icon=":material/receipt_long:"),
+        # Les échéances passent tôt dans la section : c'est la seule page qui
+        # porte une date butoir, donc la seule qui coûte de l'argent si on
+        # l'ouvre trop tard.
+        st.Page("app_pages/deadlines_view.py", title="Échéances & déclarations",
+                icon=":material/event_available:"),
         st.Page("app_pages/anomalies_view.py", title="Détection d'anomalies",
                 icon=":material/error:"),
         st.Page("app_pages/document_check.py", title="Contrôle de documents",
@@ -90,11 +109,10 @@ pages = {
                 icon=":material/monitoring:"),
         st.Page("app_pages/scenarios_view.py", title="Simulateur de scénarios",
                 icon=":material/tune:"),
-        st.Page("app_pages/copilot_decision.py", title="Copilote décisionnel",
-                icon=":material/neurology:"),
-        st.Page("app_pages/hr_copilot.py", title="Copilote RH",
-                icon=":material/smart_toy:"),
-        st.Page("app_pages/assistant.py", title="Assistant opérations",
+        # Un seul assistant. Les trois écrans de conversation d'avant posaient
+        # la même question à trois endroits : le routeur de core/copilot.py
+        # choisit maintenant le domaine tout seul.
+        st.Page("app_pages/assistant.py", title="Assistant",
                 icon=":material/forum:"),
         st.Page("app_pages/company_data_view.py", title="Données de l'entreprise",
                 icon=":material/database:"),
@@ -108,6 +126,10 @@ pages = {
                 icon=":material/payments:"),
         st.Page("app_pages/sources_view.py", title="Sources & hypothèses",
                 icon=":material/menu_book:"),
+        # La confidentialité vit avec les preuves : c'est la même promesse,
+        # « voilà ce que nous faisons vraiment de vos données et de vos chiffres ».
+        st.Page("app_pages/privacy_view.py", title="Confidentialité",
+                icon=":material/lock:"),
     ],
 }
 
@@ -120,10 +142,16 @@ pages = {
 # écrit avant `.run()` s'affiche en haut de la page (voir DESIGN.md).
 _nav = st.navigation(pages, position="hidden")
 
-from core import appdata, nav, tour  # noqa: E402  , après st.set_page_config
+from core import appdata, gate, nav, tour  # noqa: E402  , après st.set_page_config
 
 appdata.init_state()
 appdata.inject_theme()
+
+# Le portillon d'accès : exigé seulement si un APP_PASSWORD est configuré, pour
+# qu'une démonstration ne se heurte pas à un écran de connexion inutile. Placé
+# après le thème, afin que l'écran de connexion porte déjà la marque.
+if not gate.require_access():
+    st.stop()
 nav.render(pages, _nav)
 _nav.run()
 tour.maybe_run(_nav)

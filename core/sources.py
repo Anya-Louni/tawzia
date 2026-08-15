@@ -2,7 +2,7 @@
 core/sources.py
 ---------------
 A single registry for every externally-sourced number used anywhere in
-WorkForce.dz, plus every assumption we make.
+Tawzia, plus every assumption we make.
 
 Why this exists
 ===============
@@ -434,7 +434,7 @@ _FACTS = [
         value=45,
         unit="colis/employé/heure",
         kind="assumption",
-        source="Modèle WorkForce.dz",
+        source="Modèle Tawzia",
         note="Tri manuel avec scan portable. C'est le premier chiffre qu'un "
              "client pilote remplace par son propre débit mesuré , tout le "
              "modèle de coût s'échelonne dessus, d'où le fait qu'on l'expose "
@@ -447,7 +447,7 @@ _FACTS = [
         value=0.50,
         unit="fraction au-dessus du taux horaire de base",
         kind="assumption",
-        source="Modèle WorkForce.dz, aligné sur la pratique du code du travail algérien",
+        source="Modèle Tawzia, aligné sur la pratique du code du travail algérien",
         note="La loi algérienne fixe les heures supplémentaires à une majoration "
              "sur le taux horaire de base ; 50% est la valeur courante en "
              "journée. Le travail de nuit et de jour de repos entraîne des "
@@ -484,7 +484,7 @@ _FACTS = [
         value=8.0,
         unit="candidatures/embauche",
         kind="assumption",
-        source="Modèle WorkForce.dz",
+        source="Modèle Tawzia",
         note="Ratio d'entonnoir servant à dimensionner une campagne de "
              "sourcing. Varie fortement selon le canal et le poste ; c'est la "
              "première valeur qu'un pilote remplace par le ratio mesuré du "
@@ -497,7 +497,7 @@ _FACTS = [
         value=0.22,
         unit="fraction",
         kind="assumption",
-        source="Modèle WorkForce.dz",
+        source="Modèle Tawzia",
         note="Combinée à la qualité propre au canal, elle donne les embauches "
              "attendues par campagne. Les volumes, coûts et délais portés par "
              "chaque canal du répertoire relèvent du même cadrage.",
@@ -509,7 +509,7 @@ _FACTS = [
         value=3500,
         unit="DZD/jour/personne",
         kind="assumption",
-        source="Modèle WorkForce.dz",
+        source="Modèle Tawzia",
         note="Formateur amorti et support, hors salaire du stagiaire. Avec "
              "4 jours par niveau de compétence gagné, c'est ce qui chiffre le "
              "plan de formation et l'arbitrage former/recruter. Une grille "
@@ -522,7 +522,7 @@ _FACTS = [
         value=45000,
         unit="DZD/recrutement",
         kind="assumption",
-        source="Modèle WorkForce.dz",
+        source="Modèle Tawzia",
         note="Hors salaire, et hors la montée en compétence (2 mois à demi-"
              "productivité) comptée séparément. Sert de terme de comparaison "
              "face à la mobilité interne ; le moteur conclut au recrutement "
@@ -535,7 +535,7 @@ _FACTS = [
         value=0.35,
         unit="fraction",
         kind="assumption",
-        source="Modèle WorkForce.dz",
+        source="Modèle Tawzia",
         note="Frais d'agence au-dessus du coût horaire chargé d'un salarié "
              "employé en direct. Varie beaucoup selon la wilaya et le retard de "
              "la demande , ce qui est exactement le coût que la prévision "
@@ -548,7 +548,7 @@ _FACTS = [
         value=2.4,
         unit="×",
         kind="assumption",
-        source="Modèle WorkForce.dz",
+        source="Modèle Tawzia",
         note="Une heure de demande que l'on ne peut servir ne coûte pas "
              "seulement le salaire économisé. En e-commerce payé à la livraison, "
              "elle coûte la livraison ratée, le trajet retour, et une part de la "
@@ -564,7 +564,7 @@ _FACTS = [
         value=3200,
         unit="DZD/commande",
         kind="assumption",
-        source="Modèle WorkForce.dz",
+        source="Modèle Tawzia",
         note="Valeur moyenne d'une commande payée à la livraison, pour chiffrer "
              "la trésorerie transportée par les livreurs et la valeur immobilisée "
              "dans les retours. Un pilote la remplace par le panier réel du "
@@ -577,7 +577,7 @@ _FACTS = [
         value=9.0,
         unit="heures/jour",
         kind="assumption",
-        source="Modèle WorkForce.dz, aligné sur la pratique du transport routier",
+        source="Modèle Tawzia, aligné sur la pratique du transport routier",
         note="Plafond indicatif de temps de conduite avant repos obligatoire, "
              "utilisé pour dimensionner la flotte sans dépassement. Un opérateur "
              "cale la valeur exacte sur sa convention et la réglementation "
@@ -590,7 +590,7 @@ _FACTS = [
         value=25,
         unit="élèves/enseignant",
         kind="assumption",
-        source="Modèle WorkForce.dz, ordre de grandeur système éducatif algérien",
+        source="Modèle Tawzia, ordre de grandeur système éducatif algérien",
         note="Taux d'encadrement indicatif pour dimensionner le corps enseignant. "
              "Un établissement le remplace par ses effectifs réels de classe.",
         tags=("school", "assumption"),
@@ -601,7 +601,7 @@ _FACTS = [
         value=20,
         unit="élèves/surveillant",
         kind="assumption",
-        source="Modèle WorkForce.dz, pratique de surveillance BEM/BAC",
+        source="Modèle Tawzia, pratique de surveillance BEM/BAC",
         note="Ratio indicatif de surveillance en salle d'examen (compositions, "
              "BEM, BAC). Sert à chiffrer le renfort de surveillance pendant les "
              "périodes d'examen.",

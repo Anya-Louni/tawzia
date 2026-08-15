@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="WorkForce.dz : plateforme RH IA con&#xe7;ue pour le droit du travail alg&#xe9;rien">
-<title>WorkForce.dz : plateforme RH IA con&#xe7;ue pour le droit du travail alg&#xe9;rien</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='88'>%F0%9F%A4%9D</text></svg>">
+<meta name="description" content="Tawzia : la plateforme RH par l&#x27;IA con&#xe7;ue pour l&#x27;Alg&#xe9;rie">
+<title>Tawzia : la plateforme RH par l&#x27;IA con&#xe7;ue pour l&#x27;Alg&#xe9;rie</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%22-14%20-22%20228%20220%22%20fill%3D%22%236CBEF5%22%3E%3Ccircle%20cx%3D%2248%22%20cy%3D%2224%22%20r%3D%2222%22%2F%3E%3Ccircle%20cx%3D%22100%22%20cy%3D%2224%22%20r%3D%2222%22%2F%3E%3Ccircle%20cx%3D%22152%22%20cy%3D%2224%22%20r%3D%2222%22%2F%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M4%2C58%20L196%2C58%20L100%2C170%20Z%20M56%2C58%20C54%2C92%2066%2C118%2088%2C132%20Q92%2C134%2094%2C128%20C92%2C104%2088%2C80%2082%2C58%20Z%20M144%2C58%20C146%2C92%20134%2C118%20112%2C132%20Q108%2C134%20106%2C128%20C108%2C104%20112%2C80%20118%2C58%20Z%22%2F%3E%3C%2Fsvg%3E">
 </head>
 <body>
-<!-- WorkForce.dz landing page -->
+<!-- Tawzia landing page -->
 <style>
   :root {
     --bg:        #FFFFFF;
@@ -21,10 +21,10 @@
     --line-2:    #D3D3E0;
     --ink-line:  #16172A;
 
-    --primary:   #2563EB;
-    --primary-2: #1D4ED8;
-    --blue:      #3B82F6;
-    --violet:    #0EA5E9;
+    --primary:   #0B57A8;
+    --primary-2: #084684;
+    --blue:      #4E98E0;
+    --violet:    #6CBEF5;
     --primary-soft:#E6EEFE;
     --blue-soft: #E8F1FE;
     --violet-soft:#E1F4FD;
@@ -60,8 +60,9 @@
   .nav.scrolled { background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom-color: var(--line); }
   .nav-in { display:flex; align-items:center; justify-content:space-between; height:66px; gap:16px; }
   .brand { display:flex; align-items:center; gap:.55rem; font-weight:800; font-size:1.12rem; letter-spacing:-.02em; }
-  .brand .mk { width:28px; height:28px; background: var(--primary); display:inline-grid; place-items:center; color:#fff; font-size:.95rem; }
-  .brand .tld { color: var(--primary); }
+  /* Le logo : TA + la marque en guise de W + ZIA. Les lettres sont du
+     texte, donc le logo reste net a toute taille et suit la police du site. */
+  .brand svg.mk { height:1.02em; width:auto; display:block; flex:none; }
   .nav-links { display:flex; align-items:center; gap:1.5rem; }
   .nav-links a.lk { font-size:.93rem; font-weight:600; color:var(--ink-2); }
   .nav-links a.lk:hover { color: var(--ink); }
@@ -388,7 +389,7 @@
   <!-- NAV -->
     <nav class="nav" id="nav">
     <div class="nav-bar">
-      <a class="brand" href="#top"><span class="mk">W</span>WorkForce<span class="tld">.dz</span></a>
+      <a class="brand" href="#top" aria-label="Tawzia">TA<svg class="mk" viewBox="0 0 200 176" style="height:1.02em;width:auto;display:block;flex:none" fill="#6CBEF5" aria-hidden="true"><circle cx="48" cy="24" r="22"/><circle cx="100" cy="24" r="22"/><circle cx="152" cy="24" r="22"/><path fill-rule="evenodd" d="M4,58 L196,58 L100,170 Z M56,58 C54,92 66,118 88,132 Q92,134 94,128 C92,104 88,80 82,58 Z M144,58 C146,92 134,118 112,132 Q108,134 106,128 C108,104 112,80 118,58 Z"/></svg>ZIA</a>
       <div class="nav-links">
         <a class="lk" href="#platform">Plateforme</a>
         <a class="lk" href="#how">Fonctionnement</a>
@@ -397,7 +398,7 @@
       </div>
       <div class="nav-cta">
         <a class="lang" href="index.html">EN</a>
-        <a class="btn btn-ghost btn-sm" href="mailto:hello@workforce.dz?subject=WorkForce.dz">Nous contacter</a>
+        <a class="btn btn-ghost btn-sm" href="mailto:hello@tawzia.com?subject=Tawzia">Nous contacter</a>
         <a class="btn btn-primary btn-sm" href="#demo"><span>Demander une d&#xe9;mo</span> <span class="arw">&rarr;</span></a>
       </div>
     </div>
@@ -542,7 +543,7 @@
       <div class="alg reveal"><div class="in">
         <span class="eyebrow" style="background:rgba(255,255,255,.16);color:#fff;"><span class="dot" style="background:#fff;"></span>Pourquoi il l'emporte ici</span>
         <h2 style="margin-top:.8rem;">Il conna&#xee;t vraiment l'Alg&#xe9;rie</h2>
-        <p class="lead">Les outils RH internationaux pr&#xe9;sument une semaine du samedi au dimanche, une ann&#xe9;e gr&#xe9;gorienne et des r&#xe8;gles de paie &#xe9;trang&#xe8;res. WorkForce.dz repose sur la r&#xe9;alit&#xe9; alg&#xe9;rienne : c'est pourquoi il voit juste, et pas eux.</p>
+        <p class="lead">Les outils RH internationaux pr&#xe9;sument une semaine du samedi au dimanche, une ann&#xe9;e gr&#xe9;gorienne et des r&#xe8;gles de paie &#xe9;trang&#xe8;res. Tawzia repose sur la r&#xe9;alit&#xe9; alg&#xe9;rienne : c'est pourquoi il voit juste, et pas eux.</p>
         <div class="alg-grid">
           <div class="it"><h4>Du vendredi au samedi</h4><p>Le week-end que les outils import&#xe9;s confondent chaque semaine.</p></div>
           <div class="it"><h4>Calendrier h&#xe9;girien</h4><p>Ramadan et les deux A&iuml;ds, calcul&#xe9;s et v&#xe9;rifi&#xe9;s, qui pilotent la demande et les cong&#xe9;s.</p></div>
@@ -592,7 +593,7 @@
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg> Paie et d&#xe9;clarations CNAS/IRG</li>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg> Recrutement et analyse de CV</li>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg> Fid&#xe9;lisation et conformit&#xe9;</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg> Copilote RH par IA</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg> Assistant RH par IA</li>
           </ul>
           <a class="btn btn-primary" href="#demo"><span>Essayer Pro</span> <span class="arw">&rarr;</span></a>
         </div>
@@ -634,7 +635,7 @@
       <p id="pilot">Recrutement, planification, paie et conformit&#xe9; au m&#xea;me endroit. Ou r&#xe9;servez un pilote gratuit : nous l'installons sur vos propres chiffres.</p>
       <div class="cta-btns">
         <a class="btn btn-light" href="#" onclick="return false;"><span>Voir la d&#xe9;mo</span> <span class="arw">&rarr;</span></a>
-        <a class="btn btn-outline" href="mailto:hello@workforce.dz?subject=WorkForce.dz%20pilot">R&#xe9;server un pilote gratuit</a>
+        <a class="btn btn-outline" href="mailto:hello@tawzia.com?subject=Tawzia%20pilot">R&#xe9;server un pilote gratuit</a>
       </div>
       <p class="note" style="color:rgba(255,255,255,.8);margin-top:13px;">Gratuit, sans carte bancaire.</p>
     </div></div>
@@ -643,8 +644,8 @@
   <!-- FOOTER -->
   <footer class="foot">
     <div class="wrap foot-in">
-      <a class="brand" href="#top"><span class="mk">W</span>WorkForce<span class="tld">.dz</span></a>
-      <div class="foot-links"><a href="#platform">Plateforme</a><a href="#pricing">Tarifs</a><a href="#faq">FAQ</a><a href="index.html">English</a><a href="mailto:hello@workforce.dz">Contact</a></div>
+      <a class="brand" href="#top" aria-label="Tawzia">TA<svg class="mk" viewBox="0 0 200 176" style="height:1.02em;width:auto;display:block;flex:none" fill="#6CBEF5" aria-hidden="true"><circle cx="48" cy="24" r="22"/><circle cx="100" cy="24" r="22"/><circle cx="152" cy="24" r="22"/><path fill-rule="evenodd" d="M4,58 L196,58 L100,170 Z M56,58 C54,92 66,118 88,132 Q92,134 94,128 C92,104 88,80 82,58 Z M144,58 C146,92 134,118 112,132 Q108,134 106,128 C108,104 112,80 118,58 Z"/></svg>ZIA</a>
+      <div class="foot-links"><a href="#platform">Plateforme</a><a href="#pricing">Tarifs</a><a href="#faq">FAQ</a><a href="index.html">English</a><a href="mailto:hello@tawzia.com">Contact</a></div>
       <div class="foot-made">Fait en Alg&#xe9;rie <b>&bull;</b> pour les entreprises alg&#xe9;riennes</div>
     </div>
   </footer>

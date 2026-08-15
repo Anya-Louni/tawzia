@@ -114,7 +114,7 @@ export default function (component) {
       tour.drive();
     } catch (err) {
       window.__wfTourRunning = false;
-      console.error("WorkForce.dz , visite guidée :", err);
+      console.error("Tawzia , visite guidée :", err);
     }
   }, 300);
 }
@@ -158,7 +158,7 @@ _CSS = _DRIVER_CSS + """
 STEPS = [
     {
         "element": ".st-key-wf_topbar",
-        "title": "Bienvenue sur WorkForce.dz",
+        "title": "Bienvenue sur Tawzia",
         "text": "La plateforme RH et de planification conçue pour l'Algérie : "
                 "le vrai calendrier, la vraie météo, le vrai droit du travail. "
                 "Tout se pilote depuis ce bandeau.",

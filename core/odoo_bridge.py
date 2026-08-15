@@ -4,7 +4,7 @@ core/odoo_bridge.py
 Odoo connector.
 
 Many Algerian SMEs already run Odoo (often with a local payroll module like
-dz_paie or eloapps_hr_dz). Rather than replace it, WorkForce.dz plugs in: it
+dz_paie or eloapps_hr_dz). Rather than replace it, Tawzia plugs in: it
 reads employees and contracts out of Odoo over the standard XML-RPC API and maps
 them into our own Employee model, so all the AI (forecasting, the inspection
 simulator, the Journal Officiel watch, retention) runs on the customer's real

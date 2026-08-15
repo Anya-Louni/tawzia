@@ -3,14 +3,14 @@ requires = ["setuptools>=77.0.3", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "workforce-chat"
+name = "tawzia-chat"
 version = "0.0.1"
-description = "Interface de conversation IA pour WorkForce.dz (assistant-ui + CCv2)"
+description = "Interface de conversation IA pour Tawzia (assistant-ui + CCv2)"
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
 requires-python = ">=3.10"
-authors = [{ name = "WorkForce.dz", email = "contact@workforce.dz" }]
+authors = [{ name = "Tawzia", email = "contact@tawzia.com" }]
 dependencies = ["streamlit >= 1.51"]
 
 [project.optional-dependencies]
@@ -24,10 +24,10 @@ devel = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["workforce_chat*"]
+include = ["tawzia_chat*"]
 
 [tool.setuptools]
 include-package-data = true
 
 [tool.setuptools.package-data]
-workforce_chat = ["frontend/build/**/*", "pyproject.toml"]
+tawzia_chat = ["frontend/build/**/*", "pyproject.toml"]

@@ -3,7 +3,7 @@ core/calendar_dz.py
 -------------------
 The Algerian demand calendar.
 
-This is the part of WorkForce.dz that imported workforce-management software
+This is the part of Tawzia that imported workforce-management software
 gets wrong, and it is the reason a local product can beat a global one here.
 
 What foreign tools assume, and why it breaks in Algeria

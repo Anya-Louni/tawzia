@@ -1,7 +1,7 @@
 """
 core/copilot.py
 ---------------
-Copilote décisionnel — qui apprend de la base de l'entreprise.
+Le moteur de décision de l'Assistant — il apprend de la base de l'entreprise.
 
 The other AI touchpoints answer one narrow question each. This one is the manager
 sitting across the desk: you ask "faut-il embaucher ?", "qui risque de partir ?",
@@ -138,7 +138,7 @@ def rule_recommendation(brief: dict) -> list:
 # ---------------------------------------------------------------------------
 
 _SYSTEM = (
-    "Tu es le copilote décisionnel RH de WorkForce.dz, pour un employeur algérien. "
+    "Tu es le copilote décisionnel RH de Tawzia, pour un employeur algérien. "
     "Tu raisonnes UNIQUEMENT à partir du BRIEF chiffré fourni (les vrais chiffres de "
     "l'entreprise, calculés par les modèles maison). N'invente aucun chiffre : si une "
     "donnée manque, dis-le. Cite les indicateurs du brief pour justifier chaque point. "
@@ -183,6 +183,80 @@ SUGGESTED_QUESTIONS = [
 ]
 
 
+# ---------------------------------------------------------------------------
+# Routage : une seule conversation, trois domaines de connaissance
+# ---------------------------------------------------------------------------
+# L'assistant avait trois écrans (planning, RH, décision) qui posaient la même
+# question à trois endroits différents. Il n'en reste qu'un, et c'est ce routeur
+# qui choisit le contexte à donner au modèle. Il est volontairement à base de
+# mots-clés : pas d'appel réseau, pas de latence, et un choix qu'on peut
+# expliquer et tester. En cas d'égalité ou de doute, on retombe sur "decision",
+# qui porte les indicateurs de l'entreprise et répond au plus grand nombre de
+# questions.
+
+TOPICS = {
+    "planning": "Planning et charge",
+    "rh": "Personnel, paie et droit du travail",
+    "decision": "Indicateurs et décisions",
+}
+
+_ROUTER_KEYWORDS = {
+    "planning": (
+        "planning", "prevision", "prévision", "charge", "shift", "poste du",
+        "interim", "intérim", "roster", "effectif de pic", "pic", "demande",
+        "volume", "colis", "passager", "couvrir", "couverture", "horaire",
+        "heures supplementaires", "heures supplémentaires", "week-end",
+        "vendredi", "samedi", "meteo", "météo", "saison",
+    ),
+    "rh": (
+        "conge", "congé", "absence", "absent", "retard", "salaire", "paie",
+        "bulletin", "cnas", "irg", "snmg", "contrat", "cdd", "cdi", "loi",
+        "droit", "legal", "légal", "inspection", "inspecteur", "maternite",
+        "maternité", "maladie", "demission", "démission", "preavis", "préavis",
+        "embauche", "licenciement", "declaration", "déclaration", "cotisation",
+        "anciennete", "ancienneté", "sortie", "prime",
+    ),
+    "decision": (
+        "faut-il", "dois-je", "combien", "rentable", "recruter", "economie",
+        "économie", "kpi", "indicateur", "risque de depart", "risque de départ",
+        "turnover", "budget", "decision", "décision", "priorite", "priorité",
+        "urgent", "reduire", "réduire", "cout", "coût", "rentabilite",
+        "rentabilité", "investir", "arbitrer",
+    ),
+}
+
+
+# Tournures qui annoncent une demande d'arbitrage. Elles pèsent double : « faut-il
+# embaucher » contient le mot « embauche », qui est un mot RH, alors que la
+# question posée est une décision. L'intention exprimée par la tournure est un
+# signal plus fiable que le domaine du nom employé.
+_INTENT_MARKERS = ("faut-il", "faut il", "dois-je", "dois je", "devrais-je",
+                   "vaut-il mieux", "est-ce que je dois", "ai-je intérêt",
+                   "ai-je interet", "que faire", "quoi faire")
+
+
+def route(question: str) -> str:
+    """
+    Le domaine à interroger pour cette question.
+
+    Renvoie une clé de `TOPICS`. Le comptage privilégie le domaine qui a le plus
+    de mots-clés présents ; à égalité, l'ordre planning > rh > decision tranche,
+    parce qu'une question qui mentionne à la fois le planning et un congé porte
+    presque toujours sur l'arbitrage de planning.
+    """
+    q = (question or "").lower()
+    scores = {topic: sum(1 for kw in kws if kw in q)
+              for topic, kws in _ROUTER_KEYWORDS.items()}
+    scores["decision"] += 2 * sum(1 for m in _INTENT_MARKERS if m in q)
+    best = max(scores.values())
+    if best == 0:
+        return "decision"
+    for topic in ("planning", "rh", "decision"):
+        if scores[topic] == best:
+            return topic
+    return "decision"
+
+
 if __name__ == "__main__":
     from . import attendance as att_mod, hr
 
@@ -195,3 +269,22 @@ if __name__ == "__main__":
     for r in rule_recommendation(brief):
         print("   ", r.split(": ", 1)[-1])
     print("\nIA disponible :", any(ai.providers_available().values()))
+
+    print("\nRoutage des questions :")
+    cases = [
+        ("Combien de personnes prévoir vendredi prochain ?", "planning"),
+        ("Quel jour dépend-on le plus des intérimaires ?", "planning"),
+        ("Combien de jours de congé reste-t-il à Amine ?", "rh"),
+        ("Quelle sera la facture CNAS ce mois-ci ?", "rh"),
+        ("Sommes-nous en règle avec le droit du travail ?", "rh"),
+        ("Faut-il embaucher ce trimestre ?", "decision"),
+        ("Qui risque de partir et pourquoi ?", "decision"),
+        ("Bonjour", "decision"),
+    ]
+    bad = 0
+    for question, expected in cases:
+        got = route(question)
+        ok = got == expected
+        bad += 0 if ok else 1
+        print(f"  {'OK ' if ok else 'ECHEC'} {TOPICS[got]:34s} <- {question}")
+    print(f"\n{len(cases) - bad}/{len(cases)} questions routées comme attendu")

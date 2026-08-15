@@ -125,7 +125,7 @@ def run_evidence(
 
         # Lift the point forecast to the service level using realised error.
         window["forecast"] = _service_level_forecast(
-            window["WorkForce.dz"].to_numpy(),
+            window["Tawzia"].to_numpy(),
             window["horizon"].to_numpy(),
             backtest.residual_quantiles,
             constraints.service_level,
@@ -195,7 +195,7 @@ def run_evidence(
 
     comparison = pd.DataFrame([
         staffing.summarise(all_fix, "Planning fixe (pratique actuelle)"),
-        staffing.summarise(all_opt, "Optimisé WorkForce.dz"),
+        staffing.summarise(all_opt, "Optimisé Tawzia"),
     ])
 
     fixed_total = comparison.loc[0, "Total cost (DZD)"]

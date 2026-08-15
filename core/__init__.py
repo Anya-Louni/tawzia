@@ -1,5 +1,5 @@
 """
-WorkForce.dz core engine.
+Tawzia core engine.
 
 Every module here is built on real, citable Algerian inputs. Where a number
 is an assumption rather than a measurement, it is registered in `sources.py`

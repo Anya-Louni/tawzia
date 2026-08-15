@@ -35,80 +35,105 @@ SECTION_ICONS = {
     "Preuves & sources": ":material/fact_check:",
 }
 
-# Ce que chaque section promet, en une ligne.
+# Ce que chaque section promet, en une ligne. Écrit pour un responsable RH :
+# pas de vocabulaire technique, pas de nom de modèle, pas de méthode. Ce qui
+# compte est la décision que l'écran permet de prendre.
 SECTION_NOTES = {
     "Accueil": "Où en est l'activité aujourd'hui.",
     "Recrutement": "Faire venir les bons candidats, puis les trier.",
     "Équipe & présence": "Vos gens : droits, présence, compétences, départs.",
     "Planification": "Combien de personnes, quel jour, à quel coût.",
     "Paie & conformité": "Payer juste, et tenir devant un contrôle.",
-    "Décision IA": "Poser une question, obtenir une décision chiffrée.",
+    "Décision IA": "Poser une question, obtenir une réponse chiffrée.",
     "Preuves & sources": "De quoi répondre à « prouvez-le ».",
 }
 
-# Une phrase par page, orientée bénéfice. Clé = titre de la page (unique).
+# Une phrase par écran, en français simple. Règle : la phrase dit à quoi sert
+# l'écran et ce qu'on en retire, jamais comment il est fabriqué. Clé = titre de
+# la page (unique).
 PAGE_NOTES = {
     "Accueil": "Le tour d'horizon de la plateforme et par où commencer.",
-    "Tableau de bord": "La charge prévue, le planning recommandé et son coût, en une vue.",
+    "Tableau de bord":
+        "Votre matinée en un écran : qui est là, qui manque, quelles demandes "
+        "attendent une réponse, et la charge des jours qui viennent.",
 
+    "Rédiger une offre":
+        "Dites en une phrase ce que vous cherchez : l'annonce est écrite, avec "
+        "le salaire que vous pratiquez déjà et les conditions légales. Elle vous "
+        "dit aussi qui, en interne, pourrait tenir le poste.",
     "Sourcing & marque employeur":
-        "Par quels canaux algériens réels faire venir des candidats, à quel coût "
-        "et en combien de temps.",
+        "Où passer votre annonce pour recevoir de vraies candidatures, ce que "
+        "chaque canal coûte et en combien de temps il remplit un poste.",
     "Évaluation de CV":
-        "Déposez un CV : verdict d'adéquation, points forts, lacunes et questions "
-        "d'entretien.",
+        "Déposez un CV : ce qui colle avec le poste, ce qui manque, et les "
+        "questions à poser en entretien.",
+    "Vivier de candidats":
+        "Toutes vos candidatures classées du mieux au moins adapté au poste, "
+        "avec de quoi filtrer et ouvrir chaque profil.",
     "Appariement CV/poste":
-        "Classez un lot de candidats face à une offre, sans clé IA et hors ligne.",
+        "Vous avez reçu vingt CV pour une offre : ils sont classés du plus au "
+        "moins adapté, avec la raison du classement.",
 
-    "Employés": "Le registre du personnel et les droits à congé calculés par la loi.",
+    "Employés": "Le dossier de chaque salarié et ses jours de congé restants.",
     "Demandes & présence":
-        "Congés, absences et retards, arbitrés avec la charge prévue de la semaine.",
+        "Congés, absences et retards. Chaque demande reçoit une réponse tenant "
+        "compte de la loi et de la charge de la semaine.",
     "Compétences & mobilité":
-        "Qui, dans l'effectif, peut déjà tenir le poste à pourvoir , et ce que "
-        "coûterait de l'y former plutôt que de recruter.",
+        "Qui, dans votre équipe, peut déjà tenir le poste à pourvoir, et ce que "
+        "coûterait de le former plutôt que de recruter.",
     "Risque de départ":
-        "Qui risque de partir dans les six mois, pourquoi, et ce que coûte son "
-        "remplacement.",
+        "Qui risque de partir dans les six mois, pourquoi, et ce que son "
+        "remplacement vous coûterait.",
     "Négociateur de rétention":
-        "Ce qu'il faut proposer pour garder un salarié, chiffré contre le coût de "
-        "son départ.",
+        "Ce qu'il faut proposer pour garder un salarié, comparé au coût de son "
+        "départ.",
 
     "Prévision de la demande":
-        "La charge des prochains jours, calendrier algérien et météo réelle compris.",
+        "La charge de travail attendue jour par jour, Ramadan, fêtes, saison et "
+        "météo compris.",
     "Planning & coût":
         "Le planning le moins cher qui respecte le droit du travail algérien.",
     "Analyse sectorielle":
-        "Les indicateurs propres à votre activité, pas ceux d'un modèle importé.",
+        "Les indicateurs propres à votre métier, pas ceux d'un autre secteur.",
     "Aéroport":
-        "Flux passagers et cascades de retard sur le réseau réel d'Alger.",
+        "Flux de passagers heure par heure, et l'effet d'un vol en retard sur "
+        "toute la journée.",
 
-    "Paie": "Bulletins, CNAS et IRG calculés sur le barème algérien en vigueur.",
+    "Paie": "Bulletins, CNAS et IRG calculés sur le barème en vigueur.",
+    "Échéances & déclarations":
+        "Ce que votre comptable doit déposer à la CNAS et aux impôts, avant "
+        "quand, et le lien direct vers le portail. Avec rappel dans l'agenda.",
     "Détection d'anomalies":
-        "Les écarts de paie et de présence qu'un contrôle relèverait avant vous.",
+        "Les erreurs de paie et de présence qu'un contrôle relèverait avant vous.",
     "Contrôle de documents":
-        "Un modèle entraîné lit les montants d'un bulletin, et la plateforme "
-        "les confronte au SNMG et au taux CNAS.",
+        "Déposez un bulletin : les montants sont relus et comparés au salaire "
+        "minimum, au taux CNAS et aux heures légales.",
     "Simulateur d'inspection":
         "Ce que verrait un inspecteur du travail s'il passait aujourd'hui.",
     "Veille Journal Officiel":
-        "Les textes parus qui changent vos obligations.",
+        "Les textes parus qui changent vos obligations, et ce qu'ils coûtent.",
 
-    "Tableau de KPI": "Les indicateurs qui décident, suivis dans le temps.",
+    "Tableau de KPI": "Vos indicateurs RH, suivis dans le temps.",
     "Simulateur de scénarios":
-        "« Et si » : volume, effectif, salaires , l'effet chiffré avant de trancher.",
-    "Copilote décisionnel":
-        "Posez la question en français, obtenez la décision et son raisonnement.",
-    "Copilote RH": "Les questions RH et de droit du travail, répondues en clair.",
-    "Assistant opérations": "L'assistant qui lit vos données et répond en langage naturel.",
+        "« Et si » : plus de volume, moins d'effectif, une hausse de salaire. "
+        "L'effet chiffré avant de décider.",
+    "Assistant":
+        "Posez n'importe quelle question sur votre entreprise, en français : "
+        "planning, personnel, paie, ou une décision à prendre. Il répond avec "
+        "vos chiffres.",
     "Données de l'entreprise":
-        "Importez votre fichier : toute la plateforme bascule sur vos vrais chiffres.",
+        "Importez votre fichier : toute la plateforme bascule sur vos vrais "
+        "chiffres.",
 
-    "Preuves": "Le backtest hors échantillon qui prouve la méthode, pertes comprises.",
+    "Preuves": "La démonstration que la méthode fonctionne, y compris ses ratés.",
     "Calendrier algérien":
-        "Ramadan, les deux Aïd et les fériés, calculés et vérifiés.",
-    "Analyse économique": "Ce que la plateforme rapporte, poste par poste.",
+        "Ramadan, les deux Aïd et les jours fériés, calculés et vérifiés.",
+    "Analyse économique": "Ce que la plateforme vous rapporte, poste par poste.",
     "Sources & hypothèses":
-        "Chaque chiffre : sa source réelle, ou son statut d'hypothèse.",
+        "Chaque chiffre : d'où il vient, ou pourquoi c'est une hypothèse.",
+    "Confidentialité":
+        "Ce que la plateforme fait de vos données, ce qui sort vers un service "
+        "extérieur, et combien de temps c'est conservé.",
 }
 
 _OPEN_KEY = "_nav_open_section"
@@ -165,11 +190,21 @@ def _context_controls() -> None:
                      width="stretch"):
             st.session_state["_tour_replay"] = True
             st.rerun()
+        # N'apparaît que si un mot de passe protège l'accès.
+        from . import gate
+        gate.sign_out_button()
 
 
 @st.dialog("Choisir une fonctionnalité", width="large")
 def _section_picker(section: str, section_pages: list) -> None:
-    """Le sélecteur modal , le reste de l'écran s'assombrit tout seul."""
+    """
+    Le sélecteur modal , le reste de l'écran s'assombrit tout seul.
+
+    « Ouvrir » ne change pas de page ici : appeler `switch_page` depuis
+    l'intérieur d'une fenêtre modale change bien de page mais laisse la fenêtre
+    ouverte par-dessus. On mémorise donc la cible et on relance ; `render()`
+    ouvre la page au tour suivant, hors de la fenêtre, ce qui la referme.
+    """
     st.caption(SECTION_NOTES.get(section, ""))
 
     for page in section_pages:
@@ -181,17 +216,31 @@ def _section_picker(section: str, section_pages: list) -> None:
                 st.caption(note)
             if st.button("Ouvrir", key=f"pick_{title}", width="stretch",
                          type="primary", icon=":material/arrow_forward:"):
-                st.switch_page(page)
+                st.session_state["_nav_goto"] = title
+                st.rerun()
+
+
+def _goto_searched() -> None:
+    """
+    Rappel de la recherche : mémorise la cible et vide le champ.
+
+    Vider le champ doit se faire **ici**, dans le rappel : modifier l'état d'un
+    widget après son instanciation lève une exception. Le rappel s'exécute avant
+    le script, donc la remise à zéro est légale et le champ ne garde pas la
+    dernière page ouverte en mémoire.
+    """
+    st.session_state["_nav_goto"] = st.session_state.get("wf_search")
+    st.session_state["wf_search"] = None
 
 
 def render(pages: dict, current) -> None:
     """
-    Le bandeau : la marque, puis les sept sections en grand.
+    Le bandeau : le logo, une recherche, les réglages, puis les sept sections.
 
     Rendu une fois par `dashboard.py`, avant l'exécution de la page, donc il
     apparaît en haut de l'espace de travail.
     """
-    from . import industry
+    from . import brand as brand_mod, industry
 
     path = getattr(current, "url_path", None)
     active = next(
@@ -201,26 +250,54 @@ def render(pages: dict, current) -> None:
     )
     current_title = getattr(current, "title", "")
 
+    # Titre -> objet page, pour que la recherche puisse ouvrir la cible.
+    by_title = {getattr(p, "title", ""): p
+                for pgs in pages.values() for p in pgs}
+
+    # La recherche a pu être validée au rerun précédent : on ouvre la page ici,
+    # pendant l'exécution du script, seul endroit où `switch_page` est permis.
+    target = st.session_state.pop("_nav_goto", None)
+    if target and target in by_title:
+        st.switch_page(by_title[target])
+
     with st.container(key="wf_topbar"):
-        brand, crumb, controls = st.columns([2.6, 4.4, 3],
+        # Les trois réglages tiennent sur une ligne chacun : en dessous de
+        # ~150 px, « Réglages » se coupe en trois lignes et le bandeau devient
+        # illisible. D'où la part large donnée à la colonne de droite.
+        logo, search, controls = st.columns([2.2, 3.2, 4.6],
                                             vertical_alignment="center")
-        with brand:
-            st.markdown('<div class="wf-brand-light">WorkForce.dz</div>',
-                        unsafe_allow_html=True)
-        with crumb:
-            edition = (industry.label() if industry.is_tailored()
-                       else "Plateforme RH par l'IA, conçue pour l'Algérie")
+        with logo:
+            # Le logo seul. Une édition sectorielle (?industry=hotel) reste
+            # annoncée, mais sous forme de mention courte : le reste du temps il
+            # n'y a rien à ajouter sous la marque.
+            edition = (f'<span class="tz-topsub">{industry.label()}</span>'
+                       if industry.is_tailored() else "")
             st.markdown(
-                f'<div class="wf-crumb">{active}'
-                f'<span class="wf-crumb-sep">/</span>'
-                f'<strong>{current_title}</strong>'
-                f'<span class="wf-crumb-ed">{edition}</span></div>',
+                f'<div class="tz-topbrand">{brand_mod.lockup(23)}{edition}</div>',
                 unsafe_allow_html=True,
+            )
+        with search:
+            # Pas de conteneur nommé autour : un widget porte déjà sa propre
+            # classe `st-key-wf_search`, et réutiliser la clé sur un conteneur
+            # ferait deux éléments de même clé.
+            st.selectbox(
+                "Rechercher", options=list(by_title), index=None,
+                key="wf_search", on_change=_goto_searched,
+                # Le nombre d'écrans est compté, jamais écrit en dur : il a déjà
+                # menti d'un écran le jour où deux pages ont fusionné.
+                placeholder=f"Rechercher une fonctionnalité, {len(by_title)} écrans",
+                label_visibility="collapsed",
             )
         with controls:
             # Conteneur nommé : la visite guidée vise ce sélecteur.
             with st.container(key="wf_controls"):
                 _context_controls()
+
+        st.markdown(
+            f'<div class="tz-crumb"><span>{active}</span>'
+            f'<b>{current_title}</b></div>',
+            unsafe_allow_html=True,
+        )
 
         # Les sept sections, largeur égale : cliquer ouvre le sélecteur.
         with st.container(key="wf_sections"):

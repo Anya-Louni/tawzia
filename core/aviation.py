@@ -31,7 +31,7 @@ problems there are:
      happens is where the money is.
 
 This module models both. It extends the same forecast-and-optimise engine the
-rest of WorkForce.dz already uses, into the aviation vertical.
+rest of Tawzia already uses, into the aviation vertical.
 """
 
 from __future__ import annotations

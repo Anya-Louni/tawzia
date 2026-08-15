@@ -391,7 +391,7 @@ def walk_forward(
         rec = target[["date", "shift", "volume", "_was_shock"]].copy()
         rec["origin"] = origin
         rec["horizon"] = (rec["date"] - origin).dt.days
-        rec["WorkForce.dz"] = pred_dz
+        rec["Tawzia"] = pred_dz
         rec["Generic international model"] = pred_gen
         rec["Seasonal naive"] = pred_sn
         rec["Trailing mean"] = pred_tm
@@ -400,7 +400,7 @@ def walk_forward(
     preds = pd.concat(records, ignore_index=True)
 
     model_cols = [
-        "WorkForce.dz",
+        "Tawzia",
         "Generic international model",
         "Seasonal naive",
         "Trailing mean",
@@ -424,7 +424,7 @@ def walk_forward(
 
     # Empirical residual quantiles per horizon -> prediction intervals with no
     # distributional assumption baked in.
-    preds["ratio"] = preds["volume"] / preds["WorkForce.dz"].clip(lower=1.0)
+    preds["ratio"] = preds["volume"] / preds["Tawzia"].clip(lower=1.0)
     qrows = []
     for h, grp in preds.groupby("horizon"):
         qrows.append({
@@ -572,7 +572,7 @@ if __name__ == "__main__":
           f"{len(res.predictions):,} scored predictions\n")
     print(res.metrics.to_string(index=False, float_format=lambda v: f"{v:,.2f}"))
 
-    dz = res.metrics.loc[res.metrics["Model"] == "WorkForce.dz", "MAPE_%"].iloc[0]
+    dz = res.metrics.loc[res.metrics["Model"] == "Tawzia", "MAPE_%"].iloc[0]
     gen = res.metrics.loc[res.metrics["Model"] == "Generic international model", "MAPE_%"].iloc[0]
     sn = res.metrics.loc[res.metrics["Model"] == "Seasonal naive", "MAPE_%"].iloc[0]
     print(f"\n  vs generic international model : {(gen - dz) / gen * 100:+.1f}% error reduction")

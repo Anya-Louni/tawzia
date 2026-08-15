@@ -14,6 +14,6 @@ python-dotenv
 
 # Composant de conversation (assistant-ui + Custom Components v2). Installé
 # depuis le dépôt : les assets JS sont déjà construits dans
-# components/workforce-chat/workforce_chat/frontend/build/, car Streamlit Cloud
+# components/tawzia-chat/tawzia_chat/frontend/build/, car Streamlit Cloud
 # n'exécute pas npm.
-./components/workforce-chat
+./components/tawzia-chat

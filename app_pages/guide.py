@@ -6,7 +6,7 @@ from core import appdata
 
 appdata.sidebar_controls()
 
-st.title("WorkForce.dz")
+st.title("Tawzia")
 st.caption("La plateforme RH et de planification par l'IA, conçue pour toute "
            "entreprise algérienne : recruter, planifier, payer, se conformer, "
            "décider , sur le vrai calendrier et le droit du travail algériens.")

@@ -1,11 +1,11 @@
-# workforce-chat
+# tawzia-chat
 
-Interface de conversation IA pour WorkForce.dz (assistant-ui + CCv2)
+Interface de conversation IA pour Tawzia (assistant-ui + CCv2)
 
 ## Installation instructions
 
 ```sh
-uv pip install workforce-chat
+uv pip install tawzia-chat
 ```
 
 ### Development install (editable)
@@ -25,11 +25,11 @@ descend dans le navigateur**.
 ```python
 import streamlit as st
 
-from workforce_chat import workforce_chat
+from tawzia_chat import tawzia_chat
 
 st.session_state.setdefault("messages", [])
 
-result = workforce_chat(
+result = tawzia_chat(
     st.session_state["messages"],          # [{"role": "user"|"assistant", "content": str}]
     busy=False,                            # True pendant le calcul de la réponse
     placeholder="Posez une question…",
@@ -51,7 +51,7 @@ puis produire la réponse), qui est celle utilisée par l'application.
 
 To package this component for distribution:
 
-1. Build the frontend assets (from `workforce_chat/frontend`):
+1. Build the frontend assets (from `tawzia_chat/frontend`):
 
    ```sh
    npm i
@@ -63,7 +63,7 @@ To package this component for distribution:
    uv build
    ```
 
-This will create a `dist/` directory containing your wheel. The wheel includes the compiled frontend from `workforce_chat/frontend/build`.
+This will create a `dist/` directory containing your wheel. The wheel includes the compiled frontend from `tawzia_chat/frontend/build`.
 
 ### Requirements
 
@@ -72,5 +72,5 @@ This will create a `dist/` directory containing your wheel. The wheel includes t
 
 ### Expected output
 
-- `dist/workforce_chat-0.0.1-py3-none-any.whl`
-- If you run `uv run --with build python -m build` (without `--wheel`), you’ll also get an sdist: `dist/workforce-chat-0.0.1.tar.gz`
+- `dist/tawzia_chat-0.0.1-py3-none-any.whl`
+- If you run `uv run --with build python -m build` (without `--wheel`), you’ll also get an sdist: `dist/tawzia-chat-0.0.1.tar.gz`

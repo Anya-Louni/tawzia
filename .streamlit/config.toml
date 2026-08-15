@@ -1,22 +1,23 @@
-# WorkForce.dz , « le registre public algérien ».
-# Slate ground, white surfaces, one trusted blue, visible 1px rules everywhere.
-# No gradients: emphasis comes from weight, size and the navy. See DESIGN.md.
-# Single light theme , the app is used at a desk and shown on a projector.
+# Tawzia , la plateforme RH par l'IA, conçue pour l'Algérie.
+# Deux bleus (le bleu profond et le bleu clair du logo), des cartes de verre
+# dépoli posées sur un fond légèrement bleuté, et le chiffre comme objet
+# principal de chaque tuile. La palette vit dans core/brand.py ; ce fichier en
+# est le reflet côté thème natif. Voir DESIGN.md.
 
 [theme]
 base = "light"
-primaryColor = "#1355C4"              # bleu d'action , boutons, liens, actif
-backgroundColor = "#F1F5F9"           # fond ardoise : une carte blanche devient un objet
+primaryColor = "#0B57A8"              # bleu de marque , actions, liens, actif
+backgroundColor = "#EDF2FA"           # fond légèrement bleuté : le verre a de quoi flouter
 secondaryBackgroundColor = "#FFFFFF"  # surfaces , cartes, tableaux, champs
-textColor = "#0F172A"
-linkColor = "#0E42A0"
-codeBackgroundColor = "#EEF2F7"
-codeTextColor = "#0A2540"
-borderColor = "#CBD5E1"               # bordure toujours visible, jamais suggérée
+textColor = "#101A28"
+linkColor = "#0B57A8"
+codeBackgroundColor = "#EDF2FA"
+codeTextColor = "#0B3A6B"
+borderColor = "#E6EBF3"               # filet presque invisible : la profondeur vient de l'ombre
 showWidgetBorder = true
-showSidebarBorder = true
-baseRadius = "6px"                    # équerré : un registre, pas une carte de visite
-buttonRadius = "6px"
+showSidebarBorder = false
+baseRadius = "12px"                   # arrondi franc, dans l'esprit du modèle
+buttonRadius = "10px"
 linkUnderline = true
 
 font = "'Inter':https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
@@ -24,31 +25,31 @@ headingFont = "'Inter':https://fonts.googleapis.com/css2?family=Inter:wght@600;7
 codeFont = "'JetBrains Mono':https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
 baseFontSize = 15
 baseFontWeight = 400
-headingFontSizes = ["32px", "22px", "17px", "15px", "14px", "13px"]
+headingFontSizes = ["30px", "21px", "17px", "15px", "14px", "13px"]
 headingFontWeights = [800, 700, 700, 600, 600, 600]
 
-# Séries de graphique : une famille de bleus qui se distinguent à distance, puis
-# les couleurs sémantiques. Aucune ne signifie « marque » , elles signifient état.
-chartCategoricalColors = ["#1355C4", "#0A2540", "#0E7490", "#047857", "#B45309", "#B91C1C", "#6B21A8"]
-chartSequentialColors = ["#EEF4FD", "#D8E6FA", "#B6CFF4", "#8DB3EC", "#5F91E1", "#3B73D4", "#1355C4", "#0E42A0", "#0B3277", "#0A2540"]
+# Séries de graphique : la famille de bleus de la marque d'abord, puis les
+# couleurs sémantiques. Aucune ne signifie « marque » , elles signifient état.
+chartCategoricalColors = ["#0B57A8", "#4E98E0", "#6CBEF5", "#0F6E4C", "#E4A13B", "#DE5B4F", "#6B21A8"]
+chartSequentialColors = ["#F0F7FE", "#DDEDFC", "#C2DFFA", "#9FCDF6", "#6CBEF5", "#4E98E0", "#2A79C9", "#0B57A8", "#084684", "#062F58"]
 
 # Palette sémantique : contrastes vérifiés sur fond blanc (>= 4.5:1).
-blueColor = "#1355C4"
-greenColor = "#047857"
-greenBackgroundColor = "#DCFCE7"
-greenTextColor = "#065F46"
-orangeColor = "#B45309"
-orangeBackgroundColor = "#FEF3C7"
-orangeTextColor = "#92400E"
-redColor = "#B91C1C"
-redBackgroundColor = "#FEE2E2"
-redTextColor = "#991B1B"
+blueColor = "#0B57A8"
+greenColor = "#0F6E4C"
+greenBackgroundColor = "#DDF5EA"
+greenTextColor = "#0B5238"
+orangeColor = "#8A5200"
+orangeBackgroundColor = "#FDF0DA"
+orangeTextColor = "#7A4800"
+redColor = "#B3261E"
+redBackgroundColor = "#FDECEC"
+redTextColor = "#A32019"
 violetColor = "#6B21A8"
-yellowColor = "#A16207"
-grayColor = "#475569"
+yellowColor = "#8A6100"
+grayColor = "#5A6B80"
 
-dataframeBorderColor = "#CBD5E1"
-dataframeHeaderBackgroundColor = "#E7EDF5"
+dataframeBorderColor = "#E6EBF3"
+dataframeHeaderBackgroundColor = "#F2F6FC"
 
 [browser]
 gatherUsageStats = false

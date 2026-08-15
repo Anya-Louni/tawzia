@@ -10,15 +10,15 @@ réponse est ici une chaîne inversée plutôt qu'un appel au modèle.
 
 import streamlit as st
 
-from workforce_chat import workforce_chat
+from tawzia_chat import tawzia_chat
 
-st.set_page_config(page_title="workforce-chat", layout="wide")
+st.set_page_config(page_title="tawzia-chat", layout="wide")
 st.title("Composant de conversation , exemple")
 
 st.session_state.setdefault("messages", [])
 st.session_state.setdefault("pending", None)
 
-result = workforce_chat(
+result = tawzia_chat(
     st.session_state["messages"],
     busy=st.session_state["pending"] is not None,
     placeholder="Posez une question…",

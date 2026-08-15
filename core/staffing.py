@@ -371,7 +371,7 @@ def compare(
 
     table = pd.DataFrame([
         summarise(fix_eval, "Planning fixe (pratique actuelle)"),
-        summarise(opt_eval, "Optimisé WorkForce.dz"),
+        summarise(opt_eval, "Optimisé Tawzia"),
     ])
 
     fixed_total = table.loc[0, "Total cost (DZD)"]

@@ -155,7 +155,7 @@ const UserMessage: FC = () => (
 const AssistantMessage: FC = () => (
   <MessagePrimitive.Root className="wf-row assistant">
     <div className="wf-bubble">
-      <div className="wf-role">WorkForce.dz</div>
+      <div className="wf-role">Tawzia</div>
       <MessagePrimitive.Parts />
     </div>
   </MessagePrimitive.Root>

@@ -3,7 +3,7 @@ core/hr.py
 ----------
 The employee record and the Algerian leave-law brain.
 
-This is where WorkForce.dz stops being a scheduling tool and starts being an
+This is where Tawzia stops being a scheduling tool and starts being an
 HR system: it holds the people, not just the shifts. Everything here is bound
 to Algerian labour law, and it is wired to the demand forecast so that the
 single most contested HR decision - "can this person take leave then?" - is

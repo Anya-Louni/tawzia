@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 176" role="img" aria-label="Tawzia">
+  <!-- Three heads, one body: the W of Tawzia read as three people shoulder to
+       shoulder. The two gaps are cut out of the body with fill-rule="evenodd"
+       instead of being painted white, so the mark drops onto any background
+       (white card, navy bar, photo) without carrying a white halo with it. -->
+  <g fill="#6CBEF5">
+    <circle cx="48" cy="24" r="22"/>
+    <circle cx="100" cy="24" r="22"/>
+    <circle cx="152" cy="24" r="22"/>
+    <path fill-rule="evenodd" d="M4,58 L196,58 L100,170 Z M56,58 C54,92 66,118 88,132 Q92,134 94,128 C92,104 88,80 82,58 Z M144,58 C146,92 134,118 112,132 Q108,134 106,128 C108,104 112,80 118,58 Z"/>
+  </g>
+</svg>

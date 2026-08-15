@@ -1,4 +1,4 @@
-# WorkForce.dz
+# Tawzia
 
 **La plateforme RH et de planification conçue pour l'Algérie.**
 
@@ -41,6 +41,8 @@ cliquer sur une section assombrit l'écran et présente ses fonctionnalités.
 |---|---|
 | **Sourcing & marque employeur** | Par quels canaux algériens réels faire venir des candidats : universités, écoles nationales, réseau CFPA/INSFP, ANEM, sites d'emploi. Classés par adéquation métier, proximité, coût et délai, avec un plan chiffré et un message de prise de contact. |
 | **Évaluation de CV** | Déposez un CV, obtenez un verdict adapté au contexte algérien (formation LMD, service national, langues, permis, mobilité), les lacunes et des questions d'entretien. Détecte les CV qui tentent de manipuler le tri automatique. |
+| **Rédiger une offre** | Une phrase suffit : l'annonce est écrite, le salaire et les conditions sont calculés sur votre équipe et le droit algérien. |
+| **Vivier de candidats** | Toutes les candidatures classées du mieux au moins adapté, avec filtres et profil détaillé. Le classement est explicable critère par critère. |
 | **Appariement CV/poste** | Classe un lot de candidats face à une offre par embeddings locaux. Sans clé d'API, hors ligne, reproductible. |
 
 ### Équipe & présence
@@ -64,6 +66,7 @@ cliquer sur une section assombrit l'écran et présente ses fonctionnalités.
 | Écran | Ce qu'il fait |
 |---|---|
 | **Paie** | Bulletins, CNAS et IRG calculés sur le barème algérien. |
+| **Échéances & déclarations** | Ce que le comptable doit déposer à la CNAS et aux impôts, avant quand, avec le lien du portail officiel et un export agenda. |
 | **Détection d'anomalies** | Les écarts de paie et de présence qu'un contrôle relèverait avant vous. |
 | **Contrôle de documents** | Un modèle de vision entraîné lit les montants d'un bulletin, et la plateforme les confronte au SNMG, au taux CNAS et au volume horaire légal. |
 | **Simulateur d'inspection** | Ce que verrait un inspecteur du travail s'il passait aujourd'hui. |
@@ -74,9 +77,7 @@ cliquer sur une section assombrit l'écran et présente ses fonctionnalités.
 |---|---|
 | **Tableau de KPI** | Les indicateurs qui décident, suivis dans le temps. |
 | **Simulateur de scénarios** | Volume, effectif, salaires : l'effet chiffré avant de trancher. |
-| **Copilote décisionnel** | La question en français, la décision et son raisonnement. |
-| **Copilote RH** | Les questions RH et de droit du travail, répondues en clair. |
-| **Assistant opérations** | Conversation sur le plan en cours, bâtie sur assistant-ui. |
+| **Assistant** | Une seule conversation pour toute la plateforme : planning, personnel, paie, décisions. Un routeur choisit le domaine et ne donne au modèle que les chiffres concernés. Bâti sur assistant-ui. |
 | **Données de l'entreprise** | Importez votre fichier : toute la plateforme bascule sur vos vrais chiffres. |
 
 ### Preuves & sources
@@ -85,6 +86,7 @@ cliquer sur une section assombrit l'écran et présente ses fonctionnalités.
 | **Preuves** | Le backtest walk-forward contre un modèle international générique et des baselines naïves, la comparaison en argent hors échantillon, l'importance des variables. La page de crédibilité. |
 | **Calendrier algérien** | Pourquoi un outil étranger se trompe ici, avec une vérification en direct contre le calendrier de référence. |
 | **Analyse économique** | Dimensionnement du marché et économie unitaire, avec un prix dérivé de l'économie mesurée. |
+| **Confidentialité** | Ce qui est traité, ce qui sort vers un service tiers, et combien de temps c'est conservé. |
 | **Sources & hypothèses** | Chaque chiffre externe et chaque hypothèse, cités. |
 
 > **Les volumes opérationnels de la démonstration sont simulés.** Aucun registre
@@ -121,7 +123,7 @@ Si PowerShell bloque l'activation :
 recommencez.
 
 `requirements.txt` installe aussi le composant de conversation depuis
-`components/workforce-chat`. Ses fichiers JavaScript sont déjà construits et
+`components/tawzia-chat`. Ses fichiers JavaScript sont déjà construits et
 versionnés, donc aucune installation Node n'est nécessaire pour faire tourner
 l'application.
 
@@ -188,7 +190,7 @@ Tout tourne ensuite depuis `data/cache/`.
 │   ├── nav.py                    # Bandeau et sélecteur de fonctionnalités
 │   ├── tour.py                   # Visite guidée (driver.js embarqué)
 │   └── appdata.py                # Chargeurs mis en cache, thème, état partagé
-├── components/workforce-chat/    # Composant de conversation (assistant-ui, CCv2)
+├── components/tawzia-chat/    # Composant de conversation (assistant-ui, CCv2)
 ├── assets/vendor/                # driver.js embarqué, aucun CDN à l'exécution
 ├── DESIGN.md                     # Le système visuel et ses règles
 ├── DEMO_GUIDE.md                 # Comment dérouler une démonstration

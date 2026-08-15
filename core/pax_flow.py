@@ -4,7 +4,7 @@ core/pax_flow.py
 Turn a flight schedule into the passenger flow through the terminal, hour by
 hour, and then into the terminal staffing needed to serve it without queues.
 
-Why this is the airport-side of the WorkForce.dz engine
+Why this is the airport-side of the Tawzia engine
 =======================================================
 A flight is not a single lump of passengers at departure time. For a departure,
 travellers arrive at the terminal over a **window before** the flight — earlier

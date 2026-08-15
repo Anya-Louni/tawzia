@@ -1,7 +1,7 @@
 """
-workforce_chat
+tawzia_chat
 --------------
-L'interface de conversation de WorkForce.dz, bâtie sur assistant-ui.
+L'interface de conversation de Tawzia, bâtie sur assistant-ui.
 
 Le fil de discussion est piloté par un *external store* : **Python détient la
 vérité** (la liste des messages), le composant React l'affiche, et chaque envoi
@@ -18,13 +18,13 @@ from typing import Any, Callable, Optional
 import streamlit as st
 
 _COMPONENT = st.components.v2.component(
-    "workforce-chat.workforce_chat",
+    "tawzia-chat.tawzia_chat",
     js="index-*.js",
     html='<div class="react-root"></div>',
 )
 
 
-def workforce_chat(
+def tawzia_chat(
     messages: list,
     *,
     busy: bool = False,
@@ -32,7 +32,7 @@ def workforce_chat(
     suggestions: Optional[list] = None,
     empty_title: str = "Que voulez-vous savoir ?",
     empty_text: str = "",
-    key: str = "workforce_chat",
+    key: str = "tawzia_chat",
     on_sent: Optional[Callable[[], None]] = None,
 ) -> Any:
     """
