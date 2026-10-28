@@ -40,11 +40,11 @@ BLUE = "#0B57A8"       # le bleu profond du logo : action, titres, mot-repère
 BLUE_DARK = "#084684"  # état actif/survol de l'action
 BLUE_MID = "#4E98E0"   # ton intermédiaire des graphiques
 BLUE_WASH = "#E7F1FC"  # fond de pastille, surface sélectionnée
-INK = "#101A28"        # encre des chiffres et des titres
-MUTED = "#5A6B80"      # texte secondaire
-GROUND = "#F3F5F9"     # fond de page
-SURFACE = "#FFFFFF"    # carte
-LINE = "#E6EBF3"       # filet, presque invisible : la profondeur vient de l'ombre
+INK = "#0F1B2D"        # encre des chiffres et des titres
+MUTED = "#475870"      # texte secondaire
+GROUND = "#E6ECF5"     # fond de page
+SURFACE = "#EEF3F9"    # carte
+LINE = "#D5DEEA"       # filet, presque invisible : la profondeur vient de l'ombre
 
 # Les trois bleus d'un histogramme empilé, du plus foncé au plus clair.
 STACK = [BLUE, BLUE_MID, "#A5D4F7"]

@@ -21,3 +21,8 @@ python-dotenv
 # Serveur MCP (tawzia_mcp/) : outils publics de paie et de droit du travail.
 # SDK v2 : FastMCP y est devenu MCPServer.
 mcp>=2.3,<3
+
+# Planning de la semaine (core/scheduler.py) : solveur CP-SAT.
+ortools>=9.10,<10
+# Chiffrement par champ de la base du personnel (core/db.py, AES-256-GCM).
+cryptography>=42

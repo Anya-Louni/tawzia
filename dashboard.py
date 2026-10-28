@@ -34,6 +34,8 @@ _ind = industry.current()
 # edition (?industry=airport), so the default platform stays sector-neutral and
 # reads as built for any company, not for airports.
 _planification = [
+    st.Page("app_pages/schedule_view.py", title="Planning de la semaine",
+            icon=":material/calendar_view_week:"),
     st.Page("app_pages/forecast_view.py", title="Prévision de la demande",
             icon=":material/trending_up:"),
     st.Page("app_pages/roster_view.py", title="Planning & coût",
@@ -75,6 +77,8 @@ pages = {
                 icon=":material/travel_explore:"),
         st.Page("app_pages/talent_pool.py", title="Candidats",
                 icon=":material/groups_2:"),
+        st.Page("app_pages/onboarding_view.py", title="Intégration",
+                icon=":material/person_add:"),
     ],
     "Paie & déclarations": [
         st.Page("app_pages/payroll_view.py", title="Paie",

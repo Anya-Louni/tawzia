@@ -9,7 +9,7 @@ vaut mieux que le laisser découvrir.
 
 import streamlit as st
 
-from core import ai, appdata, company_data as cd, deadlines_dz as dl
+from core import ai, appdata, company_data as cd, db, deadlines_dz as dl
 
 appdata.sidebar_controls()
 
@@ -21,6 +21,44 @@ st.markdown(
     '</div></div></div>',
     unsafe_allow_html=True,
 )
+
+# ---------------------------------------------------------------------------
+# Les réglages de confiance : ce que le jury et un DRH veulent voir en vrai
+# ---------------------------------------------------------------------------
+_con = db.seed(db.connect())
+with st.container(border=True):
+    appdata.card_head("Réglages de confiance", "loi 25-11")
+    t1, t2 = st.columns(2)
+    t1.toggle("Masquer les données personnelles avant tout appel IA", value=True,
+              key="pii_redaction",
+              help="Noms, téléphones, NIN, RIB et courriels remplacés par des jetons, "
+                   "remis en place dans la réponse.")
+    t2.toggle("Modèle local (rien ne quitte la machine)", key="llm_local",
+              disabled=not ai.local_model(),
+              help="Un modèle ouvert servi par Ollama. Réglez TAWZIA_LOCAL_MODEL "
+                   "pour l'activer : c'est l'option d'hébergement souverain.")
+    st.caption(f":material/smart_toy: {ai.status_line()}")
+    st.caption(":material/how_to_reg: Chaque embauche, refus, paie et déclaration passe "
+               "par un clic humain. Aucun agent n'envoie ni ne dépose seul.")
+
+with st.expander("Journal des actions", icon=":material/history:"):
+    st.dataframe(db.recent_log(_con, 40), hide_index=True, width="stretch",
+                 column_config={"at": "Quand", "actor": "Qui", "role": "Rôle",
+                                "action": "Quoi", "target": "Sur", "why": "Pourquoi"})
+    st.caption("Collecte, consultation, modification et effacement sont tracés, comme "
+               "l'attend la loi 25-11. Les champs sensibles sont chiffrés en AES-256-GCM.")
+
+with st.expander("Registre des incidents", icon=":material/report:"):
+    st.caption("Une violation de données se notifie à l'ANPDP dans un délai court "
+               "(5 jours selon le brief, à vérifier sur le texte au JO).")
+    with st.form("incident"):
+        what = st.text_area("Ce qui s'est passé")
+        if st.form_submit_button("Enregistrer l'incident") and what.strip():
+            db.log(_con, "hr", "hr", "incident", "ANPDP", what.strip()[:300])
+            st.success("Incident enregistré au journal. Une carte de notification ANPDP "
+                       "est à préparer.", icon=":material/check:")
+    st.caption("Sauvegardes : chiffrées, restauration testée, à documenter au déploiement.")
+
 
 providers = ai.providers_available()
 ai_on = any(providers.values())

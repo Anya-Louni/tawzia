@@ -74,6 +74,8 @@ _SKILL_POOL = {
                    "opera pms", "encaissement"],
 }
 
+_WOMEN_FIRST = {"Lamia", "Sara", "Imene", "Nawel", "Meriem", "Hana", "Sabrina"}
+
 _SN_STATES = ["degage", "degage", "degage", "exempte", "en cours", "inconnu"]
 
 # Le verdict, en français. Défini ici et pas emprunté à un autre module : c'est
@@ -124,9 +126,10 @@ def sample_pool(role_key: str = "sorter", n: int = 28, seed: int = 11) -> list:
         picked = list(rng.choice(skills, size=k, replace=False)) if k else []
 
         held = int(np.clip(round(years / 2.5), 0, 3))
+        first = hr._FIRST[(i * 7 + 3) % len(hr._FIRST)]
         out.append(cv_screen.Candidate(
-            name=f"{hr._FIRST[(i * 7 + 3) % len(hr._FIRST)]} "
-                 f"{hr._LAST[(i * 5 + 1) % len(hr._LAST)]}",
+            name=f"{first} {hr._LAST[(i * 5 + 1) % len(hr._LAST)]}",
+            gender="F" if first in _WOMEN_FIRST else "M",
             wilaya=_WILAYA_MIX[i % len(_WILAYA_MIX)],
             education=edu_key,
             education_raw=edu_label,

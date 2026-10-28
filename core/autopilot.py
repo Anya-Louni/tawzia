@@ -154,6 +154,17 @@ def _payroll_agent(people, records, as_of) -> tuple[list, str]:
             continue
         seen.add(a.emp_id)
         issues.append(f"{a.name} : {a.detail.rstrip('.')}")
+    # Heures sup. du mois contre le plafond de 20 % de la durée légale (art. 31),
+    # ramené au mois : 8 h par semaine x 52 / 12.
+    from . import rules
+    h = rules.payroll()["hours"]
+    cap_month = h["legal_week"] * h["overtime_cap_fraction"] * 52 / 12
+    for e in people:
+        ot = getattr(e, "overtime_hours_month", 0) or 0
+        if ot > cap_month and e.emp_id not in seen:
+            seen.add(e.emp_id)
+            issues.insert(0, f"{e.name} : {ot:.0f} h sup. ce mois, au-delà du plafond "
+                             f"de {cap_month:.0f} h (loi 90-11, art. 31)")
     if pay.empty:
         return [], "aucun bulletin à calculer"
     net = float(pay["net"].sum()) if "net" in pay else 0.0
@@ -171,7 +182,7 @@ def _payroll_agent(people, records, as_of) -> tuple[list, str]:
         decision="Bulletins publiés, fichier de virement et écritures générés.",
         urgency=1 if issues else 2, minutes=MANUAL_MINUTES["payroll"],
         page="app_pages/payroll_view.py",
-        law="SNMG (décret 26-01), CNAS, IRG barème art. 104",
+        law="SNMG (décret 26-01), CNAS, IRG barème art. 104, heures sup. art. 31",
         payload={"issues": issues},
     )], f"{len(pay)} bulletins recalculés, {len(issues)} écarts de paie"
 

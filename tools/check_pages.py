@@ -44,6 +44,12 @@ TIMEOUT = 600
 
 
 def check(page: Path) -> tuple[bool, str]:
+    # AppTest avale les erreurs de syntaxe : la page s'affiche vide et passe
+    # pour saine. On compile donc d'abord.
+    try:
+        compile(page.read_text(encoding="utf-8"), str(page), "exec")
+    except SyntaxError as exc:
+        return False, f"SyntaxError ligne {exc.lineno}: {exc.msg}"
     try:
         at = AppTest.from_file(str(page), default_timeout=TIMEOUT)
         at.run()

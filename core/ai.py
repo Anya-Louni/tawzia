@@ -31,7 +31,8 @@ from dataclasses import dataclass
 from typing import Optional
 
 # Model id is read from env/secrets so it can be changed without a code edit.
-GROQ_MODEL = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
+# Llama 3.3 70B was retired on Groq in 2026 ; gpt-oss-120b is the strongest open model left.
+GROQ_MODEL = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
 
 
 @dataclass
@@ -81,19 +82,43 @@ def _secret(name: str):
     return None
 
 
+def _setting(name: str, default: bool) -> bool:
+    """A switch from the Réglages screen (session) or the environment."""
+    try:
+        import streamlit as st
+        if name in st.session_state:
+            return bool(st.session_state[name])
+    except Exception:
+        pass
+    v = os.environ.get(name.upper())
+    return default if v is None else v not in ("0", "false", "no")
+
+
+def local_model() -> Optional[str]:
+    """The open-weights model served by Ollama on this machine, if configured."""
+    return _secret("TAWZIA_LOCAL_MODEL")
+
+
 def providers_available() -> dict:
     """Which brains can actually answer right now."""
     return {
         "groq": bool(_secret("GROQ_API_KEY")) and _has_module("groq"),
+        "local": bool(local_model()),
     }
 
 
 def choose_provider(prefer: Optional[str] = None) -> Optional[str]:
-    return "groq" if providers_available().get("groq") else None
+    av = providers_available()
+    # Mode souverain : rien ne sort de la machine si le modèle local est choisi.
+    if av["local"] and _setting("llm_local", False):
+        return "local"
+    return "groq" if av["groq"] else ("local" if av["local"] else None)
 
 
 def status_line() -> str:
     """Human-readable summary for the UI."""
+    if choose_provider() == "local":
+        return f"Modèle local ({local_model()}) : rien ne quitte la machine."
     if providers_available()["groq"]:
         model = _secret("GROQ_MODEL") or GROQ_MODEL
         return f"Groq ({model}) actif. Le langage naturel tourne ; les modèles maison tournent sans clé."
@@ -105,6 +130,27 @@ def status_line() -> str:
 # ---------------------------------------------------------------------------
 # Provider call
 # ---------------------------------------------------------------------------
+
+def _call_local(system: str, user: str, max_tokens: int, temperature: float) -> AIResult:
+    import requests
+    url = (_secret("OLLAMA_URL") or "http://localhost:11434").rstrip("/") + "/api/chat"
+    model = local_model()
+    r = requests.post(url, timeout=120, json={
+        "model": model, "stream": False,
+        "options": {"temperature": temperature, "num_predict": max_tokens},
+        "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
+    })
+    r.raise_for_status()
+    return AIResult(text=r.json()["message"]["content"].strip(), provider="local",
+                    model=model, ok=True)
+
+
+def _known_names() -> list:
+    try:
+        from . import company_data
+        return [e.name for e in company_data.people()]
+    except Exception:  # noqa: BLE001 , hors Streamlit, pas de fichier du personnel
+        return []
 
 def _call_groq(system: str, user: str, max_tokens: int, temperature: float) -> AIResult:
     from groq import Groq  # lazy: only imported when the key is present
@@ -139,16 +185,43 @@ def chat(
     `prefer` is accepted for backward compatibility and ignored (Groq is the
     only provider now).
     """
-    if choose_provider() is None:
+    provider = choose_provider()
+    if provider is None:
         return AIResult(
             text="", provider="none", model="", ok=False,
             error="Aucune clé IA configurée. Ajoutez GROQ_API_KEY (clé gratuite "
                   "sur console.groq.com). Le reste de l'app fonctionne sans elle.",
         )
+    # Loi 25-11 : avant tout appel à un service extérieur, les données
+    # personnelles sont remplacées par des jetons, remis en place à la réponse.
+    table = {}
+    if provider != "local" and _setting("pii_redaction", True):
+        from . import pii
+        names = _known_names()
+        system, t1 = pii.redact(system, names)
+        user, t2 = pii.redact(user, names)
+        table = {**t1, **t2}
     try:
-        return _call_groq(system, user, max_tokens, temperature)
+        call = _call_local if provider == "local" else _call_groq
+        res = call(system, user, max_tokens, temperature)
     except Exception as exc:  # noqa: BLE001 - a provider error must not crash the app
-        return AIResult(text="", provider="groq", model="", ok=False, error=str(exc))
+        return AIResult(text="", provider=provider, model="", ok=False, error=str(exc))
+    if table:
+        from . import pii
+        res.text = pii.restore(res.text, table)
+    _log_call(provider, len(table))
+    return res
+
+
+def _log_call(provider: str, masked: int) -> None:
+    """Chaque appel au modèle entre au journal : qui, quoi, combien de masques."""
+    try:
+        from . import db
+        con = db.connect()
+        db.log(con, "agent", "system", f"appel_ia:{provider}", "-",
+               f"{masked} donnée(s) personnelle(s) masquée(s)")
+    except Exception:  # noqa: BLE001 , le journal ne doit jamais bloquer une réponse
+        pass
 
 
 if __name__ == "__main__":

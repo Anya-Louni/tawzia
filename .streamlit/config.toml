@@ -1,27 +1,26 @@
 # Tawzia , la plateforme RH par l'IA, conçue pour l'Algérie.
-# Deux bleus (le bleu profond et le bleu clair du logo), des cartes de verre
-# dépoli posées sur un fond légèrement bleuté, et le chiffre comme objet
-# principal de chaque tuile. La palette vit dans core/brand.py ; ce fichier en
+# Deux bleus (le bleu profond et le bleu clair du logo), de l'argile en relief
+# sur un fond néomorphique, et le chiffre comme objet principal de chaque tuile. La palette vit dans core/brand.py ; ce fichier en
 # est le reflet côté thème natif. Voir DESIGN.md.
 
 [theme]
 base = "light"
 primaryColor = "#0B57A8"              # bleu de marque , actions, liens, actif
-backgroundColor = "#EDF2FA"           # fond légèrement bleuté : le verre a de quoi flouter
-secondaryBackgroundColor = "#FFFFFF"  # surfaces , cartes, tableaux, champs
-textColor = "#101A28"
+backgroundColor = "#E6ECF5"           # argile : fond et surfaces d'une même teinte
+secondaryBackgroundColor = "#EEF3F9"  # surfaces d'argile
+textColor = "#0F1B2D"
 linkColor = "#0B57A8"
-codeBackgroundColor = "#EDF2FA"
+codeBackgroundColor = "#E6ECF5"
 codeTextColor = "#0B3A6B"
-borderColor = "#E6EBF3"               # filet presque invisible : la profondeur vient de l'ombre
+borderColor = "#D5DEEA"               # la profondeur vient de la lumière, le filet aide l'œil
 showWidgetBorder = true
 showSidebarBorder = false
-baseRadius = "12px"                   # arrondi franc, dans l'esprit du modèle
-buttonRadius = "10px"
+baseRadius = "16px"                   # argile : des formes douces
+buttonRadius = "16px"
 linkUnderline = true
 
-font = "'Inter':https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-headingFont = "'Inter':https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800&display=swap"
+font = "'Manrope':https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+headingFont = "'Manrope':https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&display=swap"
 codeFont = "'JetBrains Mono':https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
 baseFontSize = 15
 baseFontWeight = 400
@@ -48,8 +47,12 @@ violetColor = "#6B21A8"
 yellowColor = "#8A6100"
 grayColor = "#5A6B80"
 
-dataframeBorderColor = "#E6EBF3"
-dataframeHeaderBackgroundColor = "#F2F6FC"
+dataframeBorderColor = "#D5DEEA"
+dataframeHeaderBackgroundColor = "#E9EFF7"
 
 [browser]
 gatherUsageStats = false
+
+[client]
+# Le bouton « Deploy » ne doit pas couvrir la dalle du haut en démonstration.
+toolbarMode = "minimal"

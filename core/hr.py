@@ -72,6 +72,10 @@ class Employee:
     contract: str = "CDI"          # CDI (permanent) | CDD (fixed-term) | temp
     leave_taken_ytd: float = 0.0   # annual-leave days already used this year
     gross_override: Optional[float] = None  # actual gross from an imported file
+    gender: Optional[str] = None            # "F" | "M", for the night-work rules
+    birth_date: Optional[_dt.date] = None   # under-19 night ban (art. 28)
+    site: Optional[str] = None              # site code, see core/seed_company.py
+    overtime_hours_month: float = 0.0       # overtime worked this month
 
     # --- entitlements -------------------------------------------------------
     @property

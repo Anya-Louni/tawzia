@@ -45,10 +45,12 @@ PAGE_NOTES = {
     "Rédiger une offre": "Une phrase suffit : l'annonce est écrite, salaire et loi compris.",
     "Canaux de sourcing": "Où publier, ce que chaque canal coûte et en combien de temps il remplit.",
     "Candidats": "Toutes les candidatures classées, chaque rang expliqué.",
+    "Intégration": "Le nouvel embauché remplit son dossier, l'agent vérifie, vous signez une carte.",
     "Employés": "Le dossier de chaque salarié et ses jours de congé restants.",
     "Demandes & présence": "Congés, absences et retards, jugés sur la loi et la charge.",
     "Compétences & mobilité": "Qui en interne peut déjà tenir le poste, et le coût de le former.",
     "Rétention": "Qui risque de partir, et l'action la moins chère pour le garder.",
+    "Planning de la semaine": "Un bouton : le planning légal le plus stable et le moins cher.",
     "Prévision de la demande": "La charge attendue jour par jour, Ramadan, fêtes et météo compris.",
     "Planning & coût": "Le planning le moins cher qui respecte le droit du travail algérien.",
     "Analyse sectorielle": "Les indicateurs propres à votre métier.",
@@ -76,10 +78,10 @@ def _context_controls() -> None:
     le secteur et la wilaya changent les rôles, les chiffres et la météo réelle
     utilisée par le modèle.
     """
-    from . import demand as demand_mod, weather_dz
+    from . import demand as demand_mod, i18n, weather_dz
 
     profile_labels = {k: p.label for k, p in demand_mod.PROFILES.items()}
-    c1, c2, c3 = st.columns(3)
+    c1, c2, c3, c4 = st.columns([1, 1, 1, 1.2])
 
     with c1.popover("Activité", icon=":material/storefront:", width="stretch",
                     help=f"{profile_labels[st.session_state['profile_key']]} "
@@ -104,6 +106,11 @@ def _context_controls() -> None:
         st.number_input("Effectif permanent", 20, 400, key="regular_pool")
         st.number_input("Plafond d'intérimaires par shift", 0, 200,
                         key="temp_ceiling")
+
+    with c4:
+        st.segmented_control("Langue", options=list(i18n.LANGS), key="lang",
+                             format_func=i18n.LANGS.get, required=True,
+                             label_visibility="collapsed")
 
     with c3.popover("Données", icon=":material/cloud:", width="stretch"):
         st.toggle(
@@ -147,6 +154,14 @@ def _ask(titles: list) -> None:
         return
     plain = svc._plain(q)
 
+    # « Ramadan commence jeudi, refais le planning » : le planning se régénère.
+    if "ramadan" in plain or ("planning" in plain and any(
+            w in plain for w in ("refai", "refais", "genere", "redo", "regenere", "nouveau"))):
+        ss["sched_ramadan"] = "ramadan" in plain
+        ss["sched_autorun"] = True
+        ss["_nav_goto"] = "Planning de la semaine"
+        return
+
     # Le salarié nommé passe avant l'écran : « fiche de paie pour Amina » est
     # une demande, pas l'écran « Paie ».
     intent = svc.classify(q)
@@ -183,7 +198,8 @@ def render(pages: dict, current) -> None:
     Rendu une fois par `dashboard.py`, avant l'exécution de la page, donc il
     apparaît en haut de l'espace de travail.
     """
-    from . import brand as brand_mod, industry
+    from . import brand as brand_mod, i18n, industry
+    st.session_state.setdefault("lang", "fr")
 
     path = getattr(current, "url_path", None)
     active = next(
@@ -202,6 +218,9 @@ def render(pages: dict, current) -> None:
     target = st.session_state.pop("_nav_goto", None)
     if target and target in by_title:
         st.switch_page(by_title[target])
+    rtl = i18n.rtl_css()
+    if rtl:
+        st.markdown(rtl, unsafe_allow_html=True)
     toast = st.session_state.pop("_ask_toast", None)
     if toast:
         st.toast(toast, icon=":material/smart_toy:")
@@ -210,7 +229,7 @@ def render(pages: dict, current) -> None:
         # Les trois réglages tiennent sur une ligne chacun : en dessous de
         # ~150 px, « Réglages » se coupe en trois lignes et le bandeau devient
         # illisible. D'où la part large donnée à la colonne de droite.
-        logo, search, controls = st.columns([2.2, 3.2, 4.6],
+        logo, search, controls = st.columns([1.6, 3.4, 5.0],
                                             vertical_alignment="center")
         with logo:
             # Le logo seul. Une édition sectorielle (?industry=hotel) reste
@@ -229,8 +248,7 @@ def render(pages: dict, current) -> None:
             st.text_input(
                 "Demander à Tawzia", key="wf_ask", on_change=_ask,
                 args=(list(by_title),), icon=":material/auto_awesome:",
-                placeholder="Demander à Tawzia : « attestation de travail pour "
-                            "Amina Belkacem », « paie », une question…",
+                placeholder=i18n.t("ask_placeholder"),
                 label_visibility="collapsed",
             )
         with controls:
@@ -249,7 +267,7 @@ def render(pages: dict, current) -> None:
                     # `wf_sec_active`, que la visite guidée vise aussi.
                     wrapper = "wf_sec_active" if sec == active else f"wf_sec_{i}"
                     with st.container(key=wrapper):
-                        if st.button(sec, key=f"nav_{sec}", width="stretch",
+                        if st.button(i18n.t(sec), key=f"nav_{sec}", width="stretch",
                                      icon=SECTION_ICONS.get(sec),
                                      help=SECTION_NOTES.get(sec)):
                             st.session_state["_nav_goto"] = getattr(pgs[0], "title", "")
@@ -263,8 +281,8 @@ def render(pages: dict, current) -> None:
                 for p in sub:
                     title = getattr(p, "title", "")
                     if title == current_title:
-                        st.markdown(f'<span class="tz-sub-on">{title}</span>',
+                        st.markdown(f'<span class="tz-sub-on">{i18n.t(title)}</span>',
                                     unsafe_allow_html=True, width="content")
                     else:
-                        st.page_link(p, label=title, icon=getattr(p, "icon", None),
+                        st.page_link(p, label=i18n.t(title), icon=getattr(p, "icon", None),
                                      help=PAGE_NOTES.get(title))

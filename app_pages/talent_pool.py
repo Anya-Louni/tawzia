@@ -9,7 +9,7 @@ un profil pour comprendre pourquoi il est là.
 import pandas as pd
 import streamlit as st
 
-from core import appdata, brand, cv_screen, talent
+from core import appdata, bias, brand, cv_screen, talent
 
 appdata.sidebar_controls()
 
@@ -80,6 +80,19 @@ with k3, st.container(border=True, height="stretch"):
 with k4, st.container(border=True, height="stretch"):
     appdata.stat_card("Hors cible", f"{weak}", None, "flat",
                       "trop loin du poste demandé")
+
+audit = bias.four_fifths(ranked)
+with st.expander(("Audit d'équité : aucun écart" if audit["ok"] else
+                  "Audit d'équité : un écart à examiner"),
+                 icon=":material/balance:" if audit["ok"] else ":material/warning:"):
+    st.dataframe([{"Groupe": r["label"], "Candidatures": r["candidates"],
+                   "Retenues": r["selected"], "Taux": f"{r['rate']:.0%}",
+                   "Rapport au plus haut": f"{r['ratio_to_top']:.0%}",
+                   "Signal": ("sous 80 %" if r["flag"] else
+                              "échantillon trop petit" if r["small_sample"] else "ok")}
+                  for r in audit["rows"]], hide_index=True, width="stretch")
+    st.caption(audit["rule"] + " Le score ne lit ni le nom ni le genre ; l'audit "
+               "regarde le résultat. Référence : EEOC, loi locale 144 de New York.")
 
 # ---------------------------------------------------------------------------
 # Les filtres : tout ce sur quoi un recruteur veut restreindre

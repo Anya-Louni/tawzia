@@ -98,6 +98,7 @@ class Candidate:
     driving_licence: bool
     service_national: str     # "degage" | "exempte" | "en cours" | "n/a" | "inconnu"
     mobility: str
+    gender: str = ""          # pour l'audit d'équité seulement, jamais pour le score
 
 
 # ---------------------------------------------------------------------------
@@ -433,7 +434,9 @@ _AI_EVAL_SYSTEM = (
 
 def _cand_profile(c: Candidate) -> dict:
     return {
-        "name": c.name, "wilaya": c.wilaya, "education": c.education,
+        # Ni nom ni genre dans ce qui part au modèle : le score ne doit pas
+        # pouvoir s'appuyer dessus (brief §6.5).
+        "wilaya": c.wilaya, "education": c.education,
         "experience_years": c.experience_years, "positions": c.positions,
         "skills": c.skills, "languages": c.languages,
         "driving_licence": c.driving_licence,

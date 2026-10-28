@@ -9,7 +9,7 @@ demandes de congé passées au même contrôle légal que le reste de la platefo
 
 import streamlit as st
 
-from core import appdata, company_data as cd, self_service as svc
+from core import appdata, company_data as cd, i18n, self_service as svc
 
 appdata.sidebar_controls()
 
@@ -25,18 +25,15 @@ by_id = {e.emp_id: e for e in people}
 
 st.markdown(
     '<div class="tz-hero"><div>'
-    '<h1 class="tz-hero-h">Guichet salarié</h1>'
-    '<div class="tz-hero-s">Attestation de travail, solde de congés, bulletin, '
-    'demande de congé : le salarié écrit comme il parle, en français, en arabe '
-    'ou en darija, et reçoit sa réponse <b>sans passer par le bureau RH</b>.'
-    '</div></div></div>',
+    f'<h1 class="tz-hero-h">{i18n.t("desk_title")}</h1>'
+    f'<div class="tz-hero-s">{i18n.t("desk_sub")}</div></div></div>',
     unsafe_allow_html=True,
 )
 
 chat, side = st.columns([1.6, 1], gap="large")
 
 with chat:
-    emp_id = st.selectbox("Connecté en tant que", options=list(by_id),
+    emp_id = st.selectbox(i18n.t("logged_as"), options=list(by_id),
                           format_func=lambda k: f"{by_id[k].name} · {k}",
                           key="guichet_emp")
     emp = by_id[emp_id]
@@ -58,7 +55,7 @@ with chat:
              label_visibility="collapsed")
 
     box = st.container(height=460, border=True)
-    typed = st.chat_input("Écrivez votre demande…")
+    typed = st.chat_input(i18n.t("type_request"))
     message = typed or ss.pop("_guichet_pending", None)
 
     if message:

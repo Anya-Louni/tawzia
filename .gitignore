@@ -42,3 +42,6 @@ skills-lock.json
 
 # Ad-hoc data dumps
 supply_chain_dataset1*.csv
+
+# Base locale du personnel (chiffrée, mais une donnée, pas une source)
+data/*.db

@@ -108,3 +108,26 @@ label = "Indemnité de transport"
 label_ar = "تعويض النقل"
 cnas_subject = false               # [verify]
 irg_subject = true                 # [verify]
+
+[onboarding]
+# Default checklist [verify]: requirements vary by employer and sector. Never
+# treat one of these as legally required without checking the text.
+min_age = 16                       # law 90-11 art. 15 [verify]
+link_valid_days = 7
+documents = ["cni", "extrait_naissance", "photo", "rib", "diplome",
+             "certificat_travail", "aptitude_medicale", "service_national",
+             "reglement_interieur_signe", "charte_donnees_25_11", "contact_urgence"]
+sensitive_extra = ["references", "enquete", "revue_acces"]
+checkins_days = [30, 60, 90]
+trial_reminder_days_before = 15
+
+[scheduler]
+# Shift grid (start, hours). Ramadan hours are a company setting: public
+# administrations worked 08:30-15:00 in Ramadan 2026; private firms choose.
+shifts = [["M", "06:00", 8], ["A", "14:00", 8], ["N", "22:00", 8]]
+ramadan_shifts = [["M", "08:30", 6.5], ["A", "15:00", 6.5], ["N", "22:00", 6.5]]
+share_working = 0.68               # share of the site on duty on an average day
+shift_split = [0.40, 0.35, 0.25]   # M / A / N share of the day's need
+overtime_premium = 0.50            # company rate, never below hours.overtime_min_premium
+weights = { shortfall = 1000, overtime_per_hour = 1, stability = 40, fairness = 60, friday_work = 15 }
+solve_seconds = 10

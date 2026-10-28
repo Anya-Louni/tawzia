@@ -1,0 +1,48 @@
+<!--
+  Tawzia MCP evaluation (brief B5). Ten read-only questions against the fictional
+  seed company "Démo Handling & Logistique". Every answer was computed from the
+  seed data and the 2026 rules config on 2026-10-28, then checked by hand.
+  Answers change only if config/dz_payroll_2026.toml or core/seed_company.py change.
+-->
+<evaluation>
+  <qa_pair>
+    <question>Using the 2026 Algerian rules, what IRG in dinars is withheld from a standard employee whose monthly taxable income is exactly 35,000 DA?</question>
+    <answer>2070</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>A standard employee earns a base salary of 45,000 DA a month and nothing else. What is their monthly net pay in dinars after CNAS and IRG?</question>
+    <answer>37594</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>For October 2026 payroll, the G50 deadline is rolled to the next working day when it falls on the Friday-Saturday weekend. If today is 14 November 2026, how many working days remain until that deadline, counting the deadline day itself?</question>
+    <answer>6</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>In the demo company's October payroll preview, which employee worked the most overtime this month? Give their full name.</question>
+    <answer>Amine Zerrouki</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>The Ouargla site has no women night-work derogation under article 29. How many women work at that site, and therefore cannot be scheduled on a night shift there?</question>
+    <answer>9</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Which employee of the demo company is paid below the 2026 SNMG? Give their full name.</question>
+    <answer>Fares Saidi</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>How many ramp agents (agents de piste) work at the Ouargla site of the demo company?</question>
+    <answer>10</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Three employees of the demo company are under 19 and so may not work nights (article 28). List their full names in alphabetical order, separated by commas.</question>
+    <answer>Adel Cherif, Islam Ouali, Sara Khelifi</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>An employee paid 250 DA an hour works 9, 9, 9, 9, 9, 4 and 0 hours over one week. What is the minimum overtime premium due in dinars under article 32?</question>
+    <answer>1125</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>For a 100,000 DA monthly base salary, how many dinars does the employer pay to the pension branch of CNAS under the configured branch table?</question>
+    <answer>11000</answer>
+  </qa_pair>
+</evaluation>
