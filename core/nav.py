@@ -1,24 +1,16 @@
 """
 core/nav.py
 -----------
-La navigation : sept grands titres, et un sélecteur qui assombrit le reste.
+La navigation : cinq écrans et les réglages, un clic, les sous-écrans dessous.
 
 Le problème que ça règle
 ========================
-Vingt-six pages ne tiennent pas dans une barre. Une barre qui les comprime
-cache le produit : un visiteur qui ne voit pas les fonctionnalités croit
-qu'elles n'existent pas, et sur une démonstration commerciale c'est le seul
-défaut qui coûte vraiment de l'argent.
-
-Donc : les **sept sections restent visibles en permanence**, en grand. Cliquer
-sur l'une d'elles ouvre un sélecteur modal qui **assombrit le reste de l'écran**
-(`st.dialog` le fait nativement) pour qu'il ne reste qu'une décision à prendre :
-quelle fonctionnalité ouvrir. Chaque entrée porte une phrase qui dit ce qu'elle
-rapporte, pas ce qu'elle fait techniquement , c'est là que se vend le produit.
-
-Le sélecteur est refermé en retirant le drapeau de session dès qu'il est rendu :
-sans cela, la fermeture par l'utilisateur déclenche un rerun qui le rouvrirait
-aussitôt.
+L'ancienne barre ouvrait une fenêtre modale à chaque section : deux clics et une
+liste à lire avant d'arriver où que ce soit. Moins de choix, c'est moins
+d'hésitation. Un clic sur un espace ouvre donc directement son premier écran, et
+les autres écrans de l'espace s'alignent en pastilles sous la barre. Le premier
+espace, l'autopilote, rend la plupart des autres facultatifs : on y va pour
+signer, pas pour chercher.
 """
 
 from __future__ import annotations
@@ -26,118 +18,55 @@ from __future__ import annotations
 import streamlit as st
 
 SECTION_ICONS = {
-    "Accueil": ":material/home:",
+    "Décisions": ":material/inbox:",
+    "Personnel": ":material/badge:",
+    "Planning": ":material/calendar_view_week:",
     "Recrutement": ":material/person_search:",
-    "Équipe & présence": ":material/badge:",
-    "Planification": ":material/trending_up:",
-    "Paie & conformité": ":material/receipt_long:",
-    "Décision IA": ":material/neurology:",
-    "Preuves & sources": ":material/fact_check:",
+    "Paie & déclarations": ":material/receipt_long:",
+    "Réglages": ":material/settings:",
 }
 
-# Ce que chaque section promet, en une ligne. Écrit pour un responsable RH :
-# pas de vocabulaire technique, pas de nom de modèle, pas de méthode. Ce qui
-# compte est la décision que l'écran permet de prendre.
+# Ce que chaque espace promet, en une ligne, écrit pour un responsable RH.
 SECTION_NOTES = {
-    "Accueil": "Où en est l'activité aujourd'hui.",
-    "Recrutement": "Faire venir les bons candidats, puis les trier.",
-    "Équipe & présence": "Vos gens : droits, présence, compétences, départs.",
-    "Planification": "Combien de personnes, quel jour, à quel coût.",
-    "Paie & conformité": "Payer juste, et tenir devant un contrôle.",
-    "Décision IA": "Poser une question, obtenir une réponse chiffrée.",
-    "Preuves & sources": "De quoi répondre à « prouvez-le ».",
+    "Décisions": "Le travail est fait. Il reste à signer.",
+    "Personnel": "Dossiers, présence, compétences, rétention.",
+    "Planning": "Combien de personnes, quel jour, à quel coût.",
+    "Recrutement": "L'offre, l'ANEM, les candidats classés.",
+    "Paie & déclarations": "Payer juste, déclarer à temps, tenir devant un contrôle.",
+    "Réglages": "Vos données, la confidentialité, l'assistant et les preuves.",
 }
 
-# Une phrase par écran, en français simple. Règle : la phrase dit à quoi sert
-# l'écran et ce qu'on en retire, jamais comment il est fabriqué. Clé = titre de
-# la page (unique).
+# Une phrase par écran : à quoi il sert, jamais comment il est fabriqué. Elle
+# apparaît au survol de la pastille. Clé = titre de la page (unique).
 PAGE_NOTES = {
-    "Accueil": "Le tour d'horizon de la plateforme et par où commencer.",
-    "Tableau de bord":
-        "Votre matinée en un écran : qui est là, qui manque, quelles demandes "
-        "attendent une réponse, et la charge des jours qui viennent.",
-
-    "Rédiger une offre":
-        "Dites en une phrase ce que vous cherchez : l'annonce est écrite, avec "
-        "le salaire que vous pratiquez déjà et les conditions légales. Elle vous "
-        "dit aussi qui, en interne, pourrait tenir le poste.",
-    "Sourcing & marque employeur":
-        "Où passer votre annonce pour recevoir de vraies candidatures, ce que "
-        "chaque canal coûte et en combien de temps il remplit un poste.",
-    "Évaluation de CV":
-        "Déposez un CV : ce qui colle avec le poste, ce qui manque, et les "
-        "questions à poser en entretien.",
-    "Vivier de candidats":
-        "Toutes vos candidatures classées du mieux au moins adapté au poste, "
-        "avec de quoi filtrer et ouvrir chaque profil.",
-    "Appariement CV/poste":
-        "Vous avez reçu vingt CV pour une offre : ils sont classés du plus au "
-        "moins adapté, avec la raison du classement.",
-
+    "Boîte de décisions": "Les agents ont traité les dossiers du jour : il reste vos décisions.",
+    "Guichet salarié": "Attestations, soldes, bulletins et congés, répondus sans vous.",
+    "Tableau de bord": "Qui est là, qui manque, et la charge des jours qui viennent.",
+    "Rédiger une offre": "Une phrase suffit : l'annonce est écrite, salaire et loi compris.",
+    "Canaux de sourcing": "Où publier, ce que chaque canal coûte et en combien de temps il remplit.",
+    "Candidats": "Toutes les candidatures classées, chaque rang expliqué.",
     "Employés": "Le dossier de chaque salarié et ses jours de congé restants.",
-    "Demandes & présence":
-        "Congés, absences et retards. Chaque demande reçoit une réponse tenant "
-        "compte de la loi et de la charge de la semaine.",
-    "Compétences & mobilité":
-        "Qui, dans votre équipe, peut déjà tenir le poste à pourvoir, et ce que "
-        "coûterait de le former plutôt que de recruter.",
-    "Risque de départ":
-        "Qui risque de partir dans les six mois, pourquoi, et ce que son "
-        "remplacement vous coûterait.",
-    "Négociateur de rétention":
-        "Ce qu'il faut proposer pour garder un salarié, comparé au coût de son "
-        "départ.",
-
-    "Prévision de la demande":
-        "La charge de travail attendue jour par jour, Ramadan, fêtes, saison et "
-        "météo compris.",
-    "Planning & coût":
-        "Le planning le moins cher qui respecte le droit du travail algérien.",
-    "Analyse sectorielle":
-        "Les indicateurs propres à votre métier, pas ceux d'un autre secteur.",
-    "Aéroport":
-        "Flux de passagers heure par heure, et l'effet d'un vol en retard sur "
-        "toute la journée.",
-
+    "Demandes & présence": "Congés, absences et retards, jugés sur la loi et la charge.",
+    "Compétences & mobilité": "Qui en interne peut déjà tenir le poste, et le coût de le former.",
+    "Rétention": "Qui risque de partir, et l'action la moins chère pour le garder.",
+    "Prévision de la demande": "La charge attendue jour par jour, Ramadan, fêtes et météo compris.",
+    "Planning & coût": "Le planning le moins cher qui respecte le droit du travail algérien.",
+    "Analyse sectorielle": "Les indicateurs propres à votre métier.",
+    "Aéroport": "Flux de passagers heure par heure, et l'effet d'un vol en retard.",
     "Paie": "Bulletins, CNAS et IRG calculés sur le barème en vigueur.",
-    "Échéances & déclarations":
-        "Ce que votre comptable doit déposer à la CNAS et aux impôts, avant "
-        "quand, et le lien direct vers le portail. Avec rappel dans l'agenda.",
-    "Détection d'anomalies":
-        "Les erreurs de paie et de présence qu'un contrôle relèverait avant vous.",
-    "Contrôle de documents":
-        "Déposez un bulletin : les montants sont relus et comparés au salaire "
-        "minimum, au taux CNAS et aux heures légales.",
-    "Simulateur d'inspection":
-        "Ce que verrait un inspecteur du travail s'il passait aujourd'hui.",
-    "Veille Journal Officiel":
-        "Les textes parus qui changent vos obligations, et ce qu'ils coûtent.",
-
-    "Tableau de KPI": "Vos indicateurs RH, suivis dans le temps.",
-    "Simulateur de scénarios":
-        "« Et si » : plus de volume, moins d'effectif, une hausse de salaire. "
-        "L'effet chiffré avant de décider.",
-    "Assistant":
-        "Posez n'importe quelle question sur votre entreprise, en français : "
-        "planning, personnel, paie, ou une décision à prendre. Il répond avec "
-        "vos chiffres.",
-    "Données de l'entreprise":
-        "Importez votre fichier : toute la plateforme bascule sur vos vrais "
-        "chiffres.",
-
-    "Preuves": "La démonstration que la méthode fonctionne, y compris ses ratés.",
-    "Calendrier algérien":
-        "Ramadan, les deux Aïd et les jours fériés, calculés et vérifiés.",
-    "Analyse économique": "Ce que la plateforme vous rapporte, poste par poste.",
-    "Sources & hypothèses":
-        "Chaque chiffre : d'où il vient, ou pourquoi c'est une hypothèse.",
-    "Confidentialité":
-        "Ce que la plateforme fait de vos données, ce qui sort vers un service "
-        "extérieur, et combien de temps c'est conservé.",
+    "Échéances & déclarations": "Ce qu'il faut déposer à la CNAS et aux impôts, et avant quand.",
+    "Détection d'anomalies": "Les erreurs de paie et de présence qu'un contrôle relèverait.",
+    "Simulateur d'inspection": "Ce que verrait un inspecteur du travail aujourd'hui.",
+    "Veille Journal Officiel": "Les textes qui changent vos obligations, et ce qu'ils coûtent.",
+    "Demander à Tawzia": "Posez une question sur votre entreprise : il répond avec vos chiffres.",
+    "Simulateur de scénarios": "« Et si » : l'effet chiffré d'une décision avant de la prendre.",
+    "Données de l'entreprise": "Importez votre fichier : toute la plateforme passe sur vos chiffres.",
+    "Preuves": "La démonstration que la méthode fonctionne, ratés compris.",
+    "Calendrier algérien": "Ramadan, les deux Aïd et les jours fériés, calculés et vérifiés.",
+    "Analyse économique": "Ce que la plateforme rapporte, poste par poste.",
+    "Sources & hypothèses": "Chaque chiffre : d'où il vient, ou pourquoi c'est une hypothèse.",
+    "Confidentialité": "Ce que la plateforme fait de vos données, et combien de temps.",
 }
-
-_OPEN_KEY = "_nav_open_section"
-
 
 def _context_controls() -> None:
     """
@@ -164,7 +93,7 @@ def _context_controls() -> None:
             help="Détermine la série météo réelle utilisée par le modèle.",
         )
 
-    with c2.popover("Réglages", icon=":material/tune:", width="stretch"):
+    with c2.popover("Prévision", icon=":material/tune:", width="stretch"):
         st.slider("Horizon de prévision (jours)", 7, 21, key="horizon")
         st.select_slider(
             "Niveau de service", options=[0.50, 0.75, 0.80, 0.90],
@@ -195,47 +124,61 @@ def _context_controls() -> None:
         gate.sign_out_button()
 
 
-@st.dialog("Choisir une fonctionnalité", width="large")
-def _section_picker(section: str, section_pages: list) -> None:
+def _ask(titles: list) -> None:
     """
-    Le sélecteur modal , le reste de l'écran s'assombrit tout seul.
+    « Demander à Tawzia » : une phrase, et la plateforme agit.
 
-    « Ouvrir » ne change pas de page ici : appeler `switch_page` depuis
-    l'intérieur d'une fenêtre modale change bien de page mais laisse la fenêtre
-    ouverte par-dessus. On mémorise donc la cible et on relance ; `render()`
-    ouvre la page au tour suivant, hors de la fenêtre, ce qui la referme.
+    Trois issues, dans cet ordre :
+      1. la phrase nomme un écran : on l'ouvre ;
+      2. elle nomme un salarié et une demande connue (attestation, solde,
+         bulletin, congé) : le guichet la traite pour lui, la carte part dans
+         la boîte de décisions ;
+      3. sinon c'est une question : elle part à l'assistant, déjà posée.
+
+    Rappel de widget : il s'exécute avant le script, seul moment où vider le
+    champ est permis.
     """
-    st.caption(SECTION_NOTES.get(section, ""))
+    from . import company_data as cd, self_service as svc
 
-    for page in section_pages:
-        title = getattr(page, "title", "")
-        with st.container(border=True):
-            st.markdown(f"**{title}**")
-            note = PAGE_NOTES.get(title)
-            if note:
-                st.caption(note)
-            if st.button("Ouvrir", key=f"pick_{title}", width="stretch",
-                         type="primary", icon=":material/arrow_forward:"):
-                st.session_state["_nav_goto"] = title
-                st.rerun()
+    ss = st.session_state
+    q = (ss.get("wf_ask") or "").strip()
+    ss["wf_ask"] = ""
+    if not q:
+        return
+    plain = svc._plain(q)
 
+    # Le salarié nommé passe avant l'écran : « fiche de paie pour Amina » est
+    # une demande, pas l'écran « Paie ».
+    intent = svc.classify(q)
+    if intent != "autre":
+        for e in cd.people():
+            if svc._plain(e.name) in plain:
+                n = len(ss.setdefault("guichet_tickets", [])) + 100
+                r = svc.answer(q, e, company=ss.get("guichet_company", "Votre entreprise"),
+                               signatory=ss.get("guichet_signatory", "Le responsable RH"),
+                               ticket_id=f"ask{n}")
+                if r["ticket"]:
+                    ss["guichet_tickets"].append(r["ticket"])
+                if r["request"]:
+                    ss.setdefault("guichet_requests", []).append(r["request"])
+                ss["_ask_toast"] = f"{e.name} : {r['reply']}"
+                ss["_nav_goto"] = "Boîte de décisions"
+                return
 
-def _goto_searched() -> None:
-    """
-    Rappel de la recherche : mémorise la cible et vide le champ.
+    for t in titles:
+        if svc._plain(t) in plain:
+            ss["_nav_goto"] = t
+            return
 
-    Vider le champ doit se faire **ici**, dans le rappel : modifier l'état d'un
-    widget après son instanciation lève une exception. Le rappel s'exécute avant
-    le script, donc la remise à zéro est légale et le champ ne garde pas la
-    dernière page ouverte en mémoire.
-    """
-    st.session_state["_nav_goto"] = st.session_state.get("wf_search")
-    st.session_state["wf_search"] = None
+    ss.setdefault("assistant_messages", []).append({"role": "user", "content": q})
+    ss["assistant_pending"] = q
+    ss["_nav_goto"] = "Demander à Tawzia"
 
 
 def render(pages: dict, current) -> None:
     """
-    Le bandeau : le logo, une recherche, les réglages, puis les sept sections.
+    Le bandeau : le logo, une recherche, les réglages, les sept espaces, puis
+    les écrans de l'espace ouvert.
 
     Rendu une fois par `dashboard.py`, avant l'exécution de la page, donc il
     apparaît en haut de l'espace de travail.
@@ -259,6 +202,9 @@ def render(pages: dict, current) -> None:
     target = st.session_state.pop("_nav_goto", None)
     if target and target in by_title:
         st.switch_page(by_title[target])
+    toast = st.session_state.pop("_ask_toast", None)
+    if toast:
+        st.toast(toast, icon=":material/smart_toy:")
 
     with st.container(key="wf_topbar"):
         # Les trois réglages tiennent sur une ligne chacun : en dessous de
@@ -280,12 +226,11 @@ def render(pages: dict, current) -> None:
             # Pas de conteneur nommé autour : un widget porte déjà sa propre
             # classe `st-key-wf_search`, et réutiliser la clé sur un conteneur
             # ferait deux éléments de même clé.
-            st.selectbox(
-                "Rechercher", options=list(by_title), index=None,
-                key="wf_search", on_change=_goto_searched,
-                # Le nombre d'écrans est compté, jamais écrit en dur : il a déjà
-                # menti d'un écran le jour où deux pages ont fusionné.
-                placeholder=f"Rechercher une fonctionnalité, {len(by_title)} écrans",
+            st.text_input(
+                "Demander à Tawzia", key="wf_ask", on_change=_ask,
+                args=(list(by_title),), icon=":material/auto_awesome:",
+                placeholder="Demander à Tawzia : « attestation de travail pour "
+                            "Amina Belkacem », « paie », une question…",
                 label_visibility="collapsed",
             )
         with controls:
@@ -293,31 +238,33 @@ def render(pages: dict, current) -> None:
             with st.container(key="wf_controls"):
                 _context_controls()
 
-        st.markdown(
-            f'<div class="tz-crumb"><span>{active}</span>'
-            f'<b>{current_title}</b></div>',
-            unsafe_allow_html=True,
-        )
-
-        # Les sept sections, largeur égale : cliquer ouvre le sélecteur.
+        # Les cinq écrans et les réglages : un clic ouvre le premier sous-écran.
         with st.container(key="wf_sections"):
             cols = st.columns(len(pages), gap="small")
             for i, (col, (sec, pgs)) in enumerate(zip(cols, pages.items())):
                 if not pgs:
                     continue
                 with col:
-                    # Clé stable (l'index, pas un hash) : la section ouverte
-                    # porte `wf_sec_active`, que la visite guidée vise aussi.
+                    # Clé stable (l'index, pas un hash) : l'espace ouvert porte
+                    # `wf_sec_active`, que la visite guidée vise aussi.
                     wrapper = "wf_sec_active" if sec == active else f"wf_sec_{i}"
                     with st.container(key=wrapper):
                         if st.button(sec, key=f"nav_{sec}", width="stretch",
                                      icon=SECTION_ICONS.get(sec),
                                      help=SECTION_NOTES.get(sec)):
-                            st.session_state[_OPEN_KEY] = sec
+                            st.session_state["_nav_goto"] = getattr(pgs[0], "title", "")
                             st.rerun()
 
-    # Retiré dès l'ouverture : sinon une fermeture manuelle rouvrirait le
-    # sélecteur au rerun suivant.
-    opened = st.session_state.pop(_OPEN_KEY, None)
-    if opened and opened in pages:
-        _section_picker(opened, pages[opened])
+        # Les écrans de l'espace ouvert, en pastilles. L'écran courant n'est
+        # pas un lien : il n'y a nulle part où aller.
+        sub = pages.get(active, [])
+        if len(sub) > 1:
+            with st.container(key="wf_subnav", horizontal=True, gap="small"):
+                for p in sub:
+                    title = getattr(p, "title", "")
+                    if title == current_title:
+                        st.markdown(f'<span class="tz-sub-on">{title}</span>',
+                                    unsafe_allow_html=True, width="content")
+                    else:
+                        st.page_link(p, label=title, icon=getattr(p, "icon", None),
+                                     help=PAGE_NOTES.get(title))

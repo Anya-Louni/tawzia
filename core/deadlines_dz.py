@@ -44,6 +44,8 @@ from typing import Optional
 
 import pandas as pd
 
+from . import labour_dz, rules
+
 # Portails officiels où la démarche se fait réellement.
 PORTAL_CNAS = "https://teledeclaration.cnas.dz"
 PORTAL_CNAS_MAIN = "https://www.cnas.dz"
@@ -52,16 +54,16 @@ PORTAL_CASNOS = "https://www.casnos.com.dz"
 
 # Au-delà de ce seuil d'effectif, la déclaration des cotisations CNAS est
 # mensuelle ; en dessous elle est trimestrielle.
-CNAS_MONTHLY_THRESHOLD = 10
+CNAS_MONTHLY_THRESHOLD = rules.payroll()["filings"]["cnas_monthly_from_headcount"]
 
 # Délai de dépôt et de paiement après la fin de la période cotisée.
-CNAS_FILING_DAYS = 30
+CNAS_FILING_DAYS = rules.payroll()["filings"]["cnas_days_after_period"]  # [à vérifier]
 
 # Jour limite de dépôt de la déclaration mensuelle G50 (mois suivant).
-G50_DAY = 20
+G50_DAY = rules.payroll()["filings"]["g50_day"]
 
 # Date butoir de la déclaration annuelle des salaires (DAS) : 31 janvier.
-DAS_MONTH, DAS_DAY = 1, 31
+DAS_MONTH, DAS_DAY = rules.payroll()["filings"]["das_month"], rules.payroll()["filings"]["das_day"]
 
 _SEVERITY_ORDER = {"en_retard": 0, "urgent": 1, "a_venir": 2, "plus_tard": 3}
 
@@ -130,7 +132,7 @@ def _cnas_contributions(as_of: _dt.date, headcount: int,
     Déclaration et paiement des cotisations CNAS.
 
     Périodicité selon l'effectif : mensuelle à partir de 10 salariés,
-    trimestrielle en dessous. Dépôt et paiement dans les 30 jours suivant la
+    trimestrielle en dessous. Dépôt et paiement dans le délai fixé par la configuration suivant la
     fin de la période.
     """
     monthly = headcount >= CNAS_MONTHLY_THRESHOLD
@@ -150,13 +152,13 @@ def _cnas_contributions(as_of: _dt.date, headcount: int,
                     due=due,
                     period=f"mois de {_MONTHS_FR[cursor.month - 1]} {cursor.year}",
                     what="Déclarer et payer les cotisations sociales du mois "
-                         "(part salariale 9% + part patronale 26%).",
+                         f"(part salariale {labour_dz.CNAS_EMPLOYEE:.0%} + part patronale {labour_dz.CNAS_EMPLOYER:.1%}).",
                     portal=PORTAL_CNAS,
                     penalty="Majorations de retard sur les cotisations non "
                             "payées. Le taux a changé plusieurs fois : faites "
                             "confirmer le montant dû par votre agence.",
                     source="CNAS, périodicité mensuelle au-delà de 10 salariés, "
-                           "dépôt et paiement dans les 30 jours",
+                           f"dépôt et paiement dans les {CNAS_FILING_DAYS} jours [à vérifier]",
                     confidence="a_confirmer",
                     as_of="2026",
                 ))
@@ -173,13 +175,13 @@ def _cnas_contributions(as_of: _dt.date, headcount: int,
                     due=due,
                     period=f"trimestre clos le {q_end:%d/%m/%Y}",
                     what="Déclarer et payer les cotisations sociales du "
-                         "trimestre (part salariale 9% + part patronale 26%).",
+                         f"trimestre (part salariale {labour_dz.CNAS_EMPLOYEE:.0%} + part patronale {labour_dz.CNAS_EMPLOYER:.1%}).",
                     portal=PORTAL_CNAS,
                     penalty="Majorations de retard sur les cotisations non "
                             "payées. Faites confirmer le montant dû par votre "
                             "agence.",
                     source="CNAS, périodicité trimestrielle en dessous de 10 "
-                           "salariés, dépôt et paiement dans les 30 jours",
+                           f"salariés, dépôt et paiement dans les {CNAS_FILING_DAYS} jours [à vérifier]",
                     confidence="a_confirmer",
                     as_of="2026",
                 ))

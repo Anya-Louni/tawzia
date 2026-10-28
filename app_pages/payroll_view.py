@@ -2,7 +2,10 @@
 
 import streamlit as st
 
-from core import appdata, compliance, demand as demand_mod, payroll_dz
+import datetime as dt
+
+from core import (appdata, compliance, demand as demand_mod, documents,
+                  filings, payroll_dz)
 
 appdata.sidebar_controls()
 
@@ -22,50 +25,69 @@ roster = plan["roster"]
 people = appdata.hr_people()
 cons = appdata.current_constraints()
 
-register = payroll_dz.payroll_register(roster, profile.primary_role)
-tot = register["totals"]
-
 tab_pay, tab_law = st.tabs(["Paie", "Gardien des risques légaux"])
 
 # ---------------------------------------------------------------------------
 with tab_pay:
+    today = dt.date.today()
+    # La paie se clôture sur le mois écoulé tant que le 25 n'est pas passé.
+    y, m = (today.year, today.month) if today.day >= 25 else (
+        (today.year, today.month - 1) if today.month > 1 else (today.year - 1, 12))
+    g50 = filings.g50_draft(people, y, m)
+    cnas = filings.cnas_draft(people, y, m)
+    das = filings.das_draft(people, today.year)
+    nets = [payroll_dz.pay_breakdown({"base": round(e.monthly_gross())})["net"] for e in people]
+
     with st.container(horizontal=True):
-        st.metric("Effectif", f"{register['headcount']}", border=True)
-        st.metric("Brut total", appdata.dzd(tot["gross"], compact=True), border=True)
-        st.metric("Net versé", appdata.dzd(tot["net"], compact=True), border=True)
-        st.metric("Coût employeur", appdata.dzd(tot["employer_cost"], compact=True), border=True,
-                  help="Brut + charge patronale CNAS de 26%.")
+        st.metric("Bulletins du mois", f"{len(people)}", border=True)
+        st.metric("Net total", appdata.dzd(sum(nets), compact=True), border=True)
+        st.metric("Cotisations CNAS", appdata.dzd(cnas["total_due"], compact=True), border=True,
+                  help=f"Part salariale {payroll_dz.CNAS_EMPLOYEE:.0%} + patronale "
+                       f"{payroll_dz.CNAS_EMPLOYER:.1%}, barème par branche [à vérifier].")
+        st.metric("IRG retenu (G50)", appdata.dzd(g50["irg_total"], compact=True), border=True)
 
     with st.container(border=True):
-        st.subheader("Déclarations mensuelles à déposer")
-        st.caption("Ce que l'employeur verse à la CNAS et au fisc (G50) chaque mois.")
-        st.dataframe(
-            payroll_dz.declaration_lines(register), hide_index=True, width="stretch",
-            column_config={"Montant (DZD)": st.column_config.NumberColumn(format="%d")},
-        )
-        st.download_button(
-            "Télécharger la déclaration (CSV)",
-            payroll_dz.declaration_lines(register).to_csv(index=False).encode("utf-8"),
-            file_name=f"declaration_cnas_irg_{st.session_state['profile_key']}.csv",
-            mime="text/csv", icon=":material/download:",
-        )
+        st.subheader("Déclarations préparées")
+        st.caption("Brouillons chiffrés. L'agent ne dépose rien : vous déposez sur le "
+                   "portail officiel, il vous rappelle la date.")
+        for draft, label, rows in (
+            (g50, "G50, IRG salaires", g50["lines"]),
+            (cnas, "Cotisations CNAS", [{"branche": k, **v} for k, v in cnas["by_branch"].items()]),
+            (das, "DAS annuelle", das["lines"]),
+        ):
+            c1, c2, c3 = st.columns([2.2, 1.4, 1.2], vertical_alignment="center")
+            c1.markdown(f"**{label}** · {draft['period']}  \n"
+                        f":material/event: avant le {draft['due']:%d/%m/%Y} · "
+                        f"[portail officiel]({draft['portal']})")
+            c2.caption(f"{draft['employees']} salariés")
+            c3.download_button("Brouillon CSV", filings.to_csv(rows).encode("utf-8"),
+                               file_name=f"{draft['type']}_{draft['period'].replace('/', '-')}.csv",
+                               mime="text/csv", icon=":material/download:",
+                               key=f"dl_{draft['type']}", width="stretch")
+        st.download_button("Fichier de virement des salaires (CSV)",
+                           filings.bank_transfer_csv(people).encode("utf-8"),
+                           file_name=f"virement_{y}-{m:02d}.csv", mime="text/csv",
+                           icon=":material/account_balance:")
 
     with st.container(border=True):
-        st.subheader("Exemple de bulletin de paie")
-        st.caption(f"Un(e) {register['role']} à {register['gross_per_head']:,.0f} DZD brut/mois.")
-        slip = register["slips"][0]
-        st.dataframe(
-            [slip.as_dict()], hide_index=True, width="stretch",
-        )
-        if slip.exempt:
-            st.info("Cet employé est sous le seuil IRG de 30 000 DZD, il ne paie donc aucun impôt sur le revenu.",
-                    icon=":material/info:")
-        if register["dgi_check_flags"]:
-            st.warning(
-                f"{register['dgi_check_flags']} salaires tombent dans la bande de "
-                "lissage 30 000-35 000 DZD. À valider avec la calculette officielle de la DGI.",
-                icon=":material/rule:",
-            )
+        st.subheader("Bulletin d'un salarié")
+        by_id = {e.emp_id: e for e in people}
+        pick = st.selectbox("Salarié", list(by_id),
+                            format_func=lambda k: f"{by_id[k].name} · {k}")
+        emp = by_id[pick]
+        slip = payroll_dz.pay_breakdown({"base": round(emp.monthly_gross())})
+        st.dataframe([{"Brut": slip["gross"], "CNAS 9 %": slip["cnas_employee"],
+                       "Imposable": round(slip["taxable"]), "IRG": slip["irg"],
+                       "Net": slip["net"], "Coût employeur": slip["employer_cost"]}],
+                     hide_index=True, width="stretch")
+        if slip["irg_steps"]["exempt"]:
+            st.caption(":material/info: Base imposable sous 30 000 DA : aucun IRG.")
+        st.download_button("Bulletin bilingue FR/AR (à imprimer en PDF)",
+                           documents.payslip_html(emp, slip, y, m,
+                                                  st.session_state.get("guichet_company",
+                                                                       "SARL Démonstration")),
+                           file_name=f"bulletin_{emp.emp_id}_{y}-{m:02d}.html",
+                           mime="text/html", icon=":material/description:")
 
 # ---------------------------------------------------------------------------
 with tab_law:

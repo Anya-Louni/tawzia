@@ -159,17 +159,15 @@ STEPS = [
     {
         "element": ".st-key-wf_topbar",
         "title": "Bienvenue sur Tawzia",
-        "text": "La plateforme RH et de planification conçue pour l'Algérie : "
-                "le vrai calendrier, la vraie météo, le vrai droit du travail. "
-                "Tout se pilote depuis ce bandeau.",
+        "text": "La plateforme RH qui fait le travail à votre place, sur le "
+                "vrai calendrier et le vrai droit du travail algériens.",
         "side": "bottom",
     },
     {
         "element": ".st-key-wf_sections",
-        "title": "Sept sections, tout le métier",
-        "text": "Recruter, gérer l'équipe, planifier, payer, décider, prouver. "
-                "Cliquez sur une section : l'écran s'assombrit et vous choisissez "
-                "la fonctionnalité exacte.",
+        "title": "Cinq écrans, un seul indispensable",
+        "text": "La boîte de décisions suffit au quotidien. Les quatre autres "
+                "montrent le détail : personnel, planning, recrutement, paie.",
         "side": "bottom",
     },
     {
@@ -191,10 +189,11 @@ STEPS = [
     },
     {
         "element": ".st-key-wf_sec_active",
-        "title": "Commencez ici",
-        "text": "Importez vos données dans « Décision IA », puis ouvrez le "
-                "tableau de bord : la plateforme bascule sur vos vrais chiffres "
-                "et la méthode ne change pas.",
+        "title": "Votre matinée : signer",
+        "text": "Les agents ont déjà traité les demandes, la paie et les "
+                "échéances. Ce qui reste vous attend ici, la décision la plus "
+                "urgente en haut. Importez vos données dans « Réglages » pour "
+                "passer sur vos vrais chiffres.",
         "side": "bottom",
     },
 ]
@@ -231,7 +230,7 @@ def maybe_run(current) -> None:
 
     # Au premier lancement, la visite ne se déclenche que sur l'accueil : sur
     # une page interne elle commenterait un écran que l'utilisateur a choisi.
-    on_home = getattr(current, "url_path", "") in ("", "guide")
+    on_home = getattr(current, "url_path", "") in ("", "autopilot")
     run = replay or (first_time and on_home)
 
     if run:

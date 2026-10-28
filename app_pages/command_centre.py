@@ -298,7 +298,7 @@ with c2, st.container(border=True, height="stretch"):
          "meta": f"{r['Risk %']:.0f} %", "hot": r["Band"] == "high"}
         for _, r in risk.head(4).iterrows()
     ], empty="Aucun profil scoré.")
-    st.page_link("app_pages/attrition_view.py",
+    st.page_link("app_pages/retention_negotiator.py",
                  label="Voir les causes et le coût",
                  icon=":material/trending_down:")
 

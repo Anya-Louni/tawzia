@@ -58,11 +58,17 @@ class Fact:
 # LABOUR & COST — the inputs that decide whether our savings number is real
 # ---------------------------------------------------------------------------
 
+# Les taux légaux viennent du fichier daté config/dz_payroll_<année>.toml :
+# le registre en garde la provenance, jamais une seconde copie de la valeur.
+from . import rules as _rules  # noqa: E402
+_RULES = _rules.payroll()
+_CNAS = _rules.cnas_rates()
+
 _FACTS = [
     Fact(
         key="snmg_monthly_dzd",
         label="SNMG (salaire national minimum garanti)",
-        value=24000,
+        value=_RULES["snmg"]["monthly"],
         unit="DZD/mois",
         kind="measured",
         source="Conseil des ministres / APS — SNMG relevé de 20 000 à 24 000 DZD",
@@ -77,7 +83,7 @@ _FACTS = [
     Fact(
         key="legal_monthly_hours",
         label="Heures légales de travail mensuelles",
-        value=173.33,
+        value=_RULES["hours"]["legal_month"],
         unit="heures/mois",
         kind="measured",
         source="Code du travail algérien — semaine légale de 40h",
@@ -89,12 +95,13 @@ _FACTS = [
     Fact(
         key="cnas_employer_rate",
         label="Cotisation sociale patronale CNAS",
-        value=0.26,
+        value=_CNAS[0],
         unit="fraction du brut",
         kind="measured",
         source="Barème de cotisation patronale CNAS",
         as_of="2026",
-        note="Part patronale (~25% + versement œuvres sociales). La principale "
+        note="Somme du barème par branche du fichier de règles [à vérifier : "
+             "plusieurs sources donnent 26%]. La principale "
              "raison pour laquelle le salaire affiché ≠ le vrai coût d'une heure "
              "de travail.",
         tags=("labour", "cost"),
@@ -102,7 +109,7 @@ _FACTS = [
     Fact(
         key="cnas_employee_rate",
         label="Cotisation sociale salariale CNAS",
-        value=0.09,
+        value=_CNAS[1],
         unit="fraction du brut",
         kind="measured",
         source="Barème de cotisation CNAS",
@@ -204,7 +211,7 @@ _FACTS = [
     Fact(
         key="irg_exemption_monthly",
         label="Seuil d'exonération IRG (salaire mensuel)",
-        value=30000,
+        value=_RULES["irg"]["exempt_taxable_up_to"],
         unit="DZD/mois",
         kind="measured",
         source="DGI — IRG traitements et salaires (LF 2022 reform)",
@@ -219,7 +226,7 @@ _FACTS = [
     Fact(
         key="irg_abatement",
         label="Abattement proportionnel IRG sur l'impôt salarial",
-        value=0.40,
+        value=_RULES["irg"]["abatement_rate"],
         unit="fraction de l'IRG calculé",
         kind="measured",
         source="DGI — 40% abatement, floor 1,000 / cap 1,500 DZD per month",
@@ -232,7 +239,7 @@ _FACTS = [
     Fact(
         key="irg_family_reduction",
         label="Réduction IRG par personne à charge",
-        value=1500,
+        value=_RULES["irg"]["family_reduction"],
         unit="DZD/mois chacune",
         kind="measured",
         source="DGI — 1,500 DZD/month for a non-earning spouse and per child (max 5)",

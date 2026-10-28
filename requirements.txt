@@ -17,3 +17,7 @@ python-dotenv
 # components/tawzia-chat/tawzia_chat/frontend/build/, car Streamlit Cloud
 # n'exécute pas npm.
 ./components/tawzia-chat
+
+# Serveur MCP (tawzia_mcp/) : outils publics de paie et de droit du travail.
+# SDK v2 : FastMCP y est devenu MCPServer.
+mcp>=2.3,<3

@@ -124,7 +124,7 @@ def _hr_context(profile_key, wilaya_key, headcount, allow_network, horizon,
         ("RÉFÉRENCE LÉGALE ALGÉRIENNE : congé annuel 30 jours (40 dans les "
          "wilayas du Sud), acquis 2,5 jours par mois ; maternité 14 semaines ; "
          "maladie 50% les 15 premiers jours puis 100% ; SNMG "
-         f"{labour_dz.SNMG_MONTHLY:,.0f} DZD ; CNAS 9% salarié + 26% employeur ; "
+         f"{labour_dz.SNMG_MONTHLY:,.0f} DZD ; CNAS {labour_dz.CNAS_EMPLOYEE:.0%} salarié + {labour_dz.CNAS_EMPLOYER:.1%} employeur ; "
          "IRG exonéré à 30 000 DZD et en dessous ; heures supplémentaires "
          "plafonnées à 20% ; week-end vendredi-samedi."),
     ]
@@ -218,7 +218,7 @@ if not any(ai.providers_available().values()):
 SUGGESTIONS = [
     "Faut-il embaucher ce trimestre, et à quel poste ?",
     "Quels jours dépend-on le plus des intérimaires, et à quel coût ?",
-    "Quelle sera la facture CNAS de ce mois, et pourquoi 26% ?",
+    "Quelle sera la facture CNAS de ce mois, et comment est-elle calculée ?",
     "Qui risque de partir dans les six mois, et pourquoi ?",
 ]
 

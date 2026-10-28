@@ -107,7 +107,7 @@ def compute(people: list, records: list, as_of: Optional[_dt.date] = None) -> di
                     "Total des salaires bruts mensuels.", "neutre", "Coût"))
     kpis.append(KPI("employer_cost", "Coût employeur total", employer_cost,
                     _dzd(employer_cost), "DZD/mois",
-                    "Brut + charges patronales CNAS (26%). Le vrai coût mensuel.",
+                    f"Brut + charges patronales CNAS ({labour_dz.CNAS_EMPLOYER:.1%}). Le vrai coût mensuel.",
                     "neutre", "Coût"))
     kpis.append(KPI("charges_load", "Charges patronales", load_pct,
                     f"+{load_pct:.0f}%", "%",
@@ -115,7 +115,7 @@ def compute(people: list, records: list, as_of: Optional[_dt.date] = None) -> di
                     "neutre", "Coût"))
     kpis.append(KPI("cnas_due", "CNAS à verser (35%)", cnas_total,
                     _dzd(cnas_total), "DZD/mois",
-                    "Cotisations CNAS salarié 9% + employeur 26%.",
+                    f"Cotisations CNAS salarié {labour_dz.CNAS_EMPLOYEE:.0%} + employeur {labour_dz.CNAS_EMPLOYER:.1%}.",
                     "neutre", "Coût"))
     kpis.append(KPI("irg_due", "IRG retenu (G50)", irg_total,
                     _dzd(irg_total), "DZD/mois",

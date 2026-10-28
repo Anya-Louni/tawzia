@@ -21,22 +21,19 @@ For each worker, from gross salary:
                                   bounded 1,000-1,500 DZD/month; salaries
                                   <= 30,000 exempt; family reductions)
   4. Net pay                     (gross - CNAS employee - IRG)
-  5. Employer cost               (gross + 26% CNAS employer)
+  5. Employer cost               (gross + CNAS employer, see config/)
 
 Then it rolls those up into the monthly declarations an employer must file:
-  * CNAS: total base, employee 9% + employer 26% = 35% remitted.
+  * CNAS: total base, employee + employer shares (config/dz_payroll_*.toml).
   * IRG (G50 / retenue à la source): total income tax withheld and remitted.
 
 Accuracy & honesty
 ==================
-The IRG barème, the abatement, the family reductions and the CNAS split are the
-real published figures (see core/sources.py, cited to the DGI and CLEISS). The
-narrow 30,001-35,000 DZD smoothing band the LF 2022 defines is NOT re-derived
-here — salaries in that band are flagged for validation against the official DGI
-"calculette IRG" rather than guessed. A production deployment locks the tax
-logic to the DGI calculator; this module is correct for the vast majority of
-shift-labour salaries (which cluster at or just above the SNMG) and transparent
-about its one edge case.
+Every rate comes from the dated file config/dz_payroll_<year>.toml (cited in
+core/sources.py). IRG follows the 2026 spec: exemption on the taxable base up to
+30,000, 40% abatement bounded to [1,000, 1,500], and the two smoothing formulas
+(ordinary band 30,000-35,000; disabled workers and retirees to 42,500).
+tests/test_payroll.py holds the published test vectors.
 """
 
 from __future__ import annotations
@@ -46,32 +43,26 @@ from typing import Optional
 
 import pandas as pd
 
-from . import labour_dz, sources
+from . import labour_dz, rules, sources
 
 
 # ---------------------------------------------------------------------------
 # Tax constants (real, cited)
 # ---------------------------------------------------------------------------
 
-# Monthly IRG barème: (upper_bound_or_None, marginal_rate)
-IRG_BRACKETS = [
-    (20_000, 0.00),
-    (40_000, 0.23),
-    (80_000, 0.27),
-    (160_000, 0.30),
-    (320_000, 0.33),
-    (None, 0.35),
-]
+# Toutes les valeurs viennent du fichier daté config/dz_payroll_<année>.toml.
+_IRG = rules.payroll()["irg"]
 
-IRG_EXEMPT_BELOW = sources.value("irg_exemption_monthly")   # 30,000
-IRG_ABATEMENT = sources.value("irg_abatement")              # 0.40
-IRG_ABATEMENT_MIN = 1_000
-IRG_ABATEMENT_MAX = 1_500
-IRG_FAMILY_REDUCTION = sources.value("irg_family_reduction")  # 1,500 each
-IRG_SMOOTHING_BAND = (30_000, 35_000)
+IRG_BRACKETS = [(u or None, r) for u, r in _IRG["brackets"]]
+IRG_EXEMPT_BELOW = _IRG["exempt_taxable_up_to"]
+IRG_ABATEMENT = _IRG["abatement_rate"]
+IRG_ABATEMENT_MIN = _IRG["abatement_min"]
+IRG_ABATEMENT_MAX = _IRG["abatement_max"]
+IRG_FAMILY_REDUCTION = _IRG["family_reduction"]
+IRG_SMOOTHING_BAND = tuple(_IRG["smoothing_band"])
 
-CNAS_EMPLOYEE = labour_dz.CNAS_EMPLOYEE   # 0.09
-CNAS_EMPLOYER = labour_dz.CNAS_EMPLOYER   # 0.26
+CNAS_EMPLOYEE = labour_dz.CNAS_EMPLOYEE
+CNAS_EMPLOYER = labour_dz.CNAS_EMPLOYER
 
 
 def irg_bareme(taxable_monthly: float) -> float:
@@ -88,31 +79,110 @@ def irg_bareme(taxable_monthly: float) -> float:
     return tax
 
 
-def irg_monthly(gross_monthly: float, dependants: int = 0, spouse: bool = False) -> dict:
+def irg_from_taxable(taxable: float, special: bool = False) -> float:
     """
-    Monthly IRG for a salary, following the published DGI rules.
+    IRG on a monthly taxable base, exactly as the 2026 spec writes it.
 
-    Returns a breakdown so a payslip can show its working (auditors and workers
-    both ask "why this number?").
+    taxable <= 30,000 -> 0. Otherwise barème, minus the 40% abatement bounded
+    to [1,000, 1,500], then the smoothing formula of the band. `special` is the
+    regime of disabled workers and general-regime retirees (band to 42,500); it
+    replaces the ordinary band, it does not add to it.
     """
-    if gross_monthly <= IRG_EXEMPT_BELOW:
-        return {
-            "taxable": max(gross_monthly * (1 - CNAS_EMPLOYEE), 0.0),
-            "bareme": 0.0, "abatement": 0.0, "family_reduction": 0.0,
-            "irg": 0.0, "exempt": True, "needs_dgi_check": False,
-        }
+    if taxable <= IRG_EXEMPT_BELOW:
+        return 0.0
+    irg = irg_bareme(taxable)
+    irg -= min(max(IRG_ABATEMENT * irg, IRG_ABATEMENT_MIN), IRG_ABATEMENT_MAX)
+    lo, hi = _IRG["smoothing_band_special"] if special else _IRG["smoothing_band"]
+    a, b, c, d = _IRG["smoothing_special"] if special else _IRG["smoothing"]
+    if lo < taxable <= hi:
+        irg = irg * a / b - c / d
+    return max(irg, 0.0)
 
-    taxable = gross_monthly * (1 - CNAS_EMPLOYEE)
-    base = irg_bareme(taxable)
-    abatement = min(max(IRG_ABATEMENT * base, IRG_ABATEMENT_MIN), IRG_ABATEMENT_MAX)
+
+def irg_monthly(gross_monthly: float, dependants: int = 0, spouse: bool = False,
+                special: bool = False) -> dict:
+    """
+    Monthly IRG for a salary. Returns the working, so a payslip can show it.
+
+    taxable = gross subject to IRG - CNAS employee share.
+    """
+    taxable = max(gross_monthly * (1 - CNAS_EMPLOYEE), 0.0)
+    exempt = taxable <= IRG_EXEMPT_BELOW
+    base = 0.0 if exempt else irg_bareme(taxable)
+    irg = irg_from_taxable(taxable, special)
     family = IRG_FAMILY_REDUCTION * ((1 if spouse else 0) + min(max(dependants, 0), 5))
-    irg = max(base - abatement - family, 0.0)
-
-    needs_check = IRG_SMOOTHING_BAND[0] < gross_monthly <= IRG_SMOOTHING_BAND[1]
+    irg = round(max(irg - family, 0.0))
     return {
-        "taxable": taxable, "bareme": base, "abatement": abatement,
-        "family_reduction": family, "irg": irg, "exempt": False,
-        "needs_dgi_check": needs_check,
+        "taxable": taxable, "bareme": base,
+        "abatement": 0.0 if exempt else min(max(IRG_ABATEMENT * base, IRG_ABATEMENT_MIN),
+                                             IRG_ABATEMENT_MAX),
+        "family_reduction": family, "irg": irg, "exempt": exempt,
+        # Le lissage est maintenant calculé ; plus rien à renvoyer à la DGI.
+        "needs_dgi_check": False,
+    }
+
+
+WORKER_STATUSES = ("standard", "disabled", "retired")
+PAY_ITEMS = {i["code"]: i for i in rules.payroll()["pay_items"]}
+CONFIG_VERSION = f"dz_payroll_{rules.payroll()['valid_from'].year}@{rules.payroll()['valid_from']}"
+
+
+def pay_breakdown(items: dict, worker_status: str = "standard") -> dict:
+    """
+    A full monthly pay calculation from pay lines, with every step shown.
+
+    `items` maps a pay-item code (config/dz_payroll_*.toml [[pay_items]]) to an
+    amount. Each line carries its own `cnas_subject` / `irg_subject` flag, so a
+    prime outside the CNAS base never enters the 9 %. `worker_status` "disabled"
+    or "retired" switches the IRG smoothing to the special band.
+    """
+    if worker_status not in WORKER_STATUSES:
+        raise ValueError(f"worker_status must be one of {WORKER_STATUSES}")
+    unknown = set(items) - set(PAY_ITEMS)
+    if unknown:
+        raise ValueError(f"Unknown pay item(s) {sorted(unknown)}; known: {sorted(PAY_ITEMS)}")
+    if any(v < 0 for v in items.values()):
+        raise ValueError("Pay amounts cannot be negative.")
+
+    gross = sum(items.values())
+    cnas_base = sum(v for k, v in items.items() if PAY_ITEMS[k]["cnas_subject"])
+    irg_gross = sum(v for k, v in items.items() if PAY_ITEMS[k]["irg_subject"])
+    cnas_emp = round(cnas_base * CNAS_EMPLOYEE)
+    taxable = max(irg_gross - cnas_emp, 0.0)
+    special = worker_status != "standard"
+
+    bareme = 0.0 if taxable <= IRG_EXEMPT_BELOW else irg_bareme(taxable)
+    abatt = (0.0 if taxable <= IRG_EXEMPT_BELOW else
+             min(max(IRG_ABATEMENT * bareme, IRG_ABATEMENT_MIN), IRG_ABATEMENT_MAX))
+    irg = round(irg_from_taxable(taxable, special))
+
+    branches = rules.payroll()["cnas"]
+    employer_by_branch = {k: round(cnas_base * v[0]) for k, v in branches.items()}
+    employee_by_branch = {k: round(cnas_base * v[1]) for k, v in branches.items()}
+    employer = sum(employer_by_branch.values())
+    return {
+        "lines": [{"code": k, "label": PAY_ITEMS[k]["label"],
+                   "label_ar": PAY_ITEMS[k]["label_ar"], "amount": v,
+                   "cnas_subject": PAY_ITEMS[k]["cnas_subject"],
+                   "irg_subject": PAY_ITEMS[k]["irg_subject"]}
+                  for k, v in items.items()],
+        "gross": gross, "cnas_base": cnas_base, "cnas_employee": cnas_emp,
+        "irg_gross": irg_gross, "taxable": taxable,
+        "irg_steps": {"bareme": round(bareme, 2), "abatement": round(abatt, 2),
+                      "smoothing": ("special" if special else "ordinary")
+                      if IRG_EXEMPT_BELOW < taxable <= (
+                          _IRG["smoothing_band_special"][1] if special
+                          else _IRG["smoothing_band"][1]) else "none",
+                      "exempt": taxable <= IRG_EXEMPT_BELOW},
+        "irg": irg, "net": gross - cnas_emp - irg,
+        "employer_cnas": employer, "employer_by_branch": employer_by_branch,
+        "employee_by_branch": employee_by_branch,
+        "employer_cost": gross + employer,
+        "config_version": CONFIG_VERSION,
+        "sources": ["IRG barème : CIDTA art. 104 (barème mensuel = annuel / 12)",
+                    "Abattement 40 % borné 1 000 à 1 500 DA, lissage LF 2022",
+                    "CNAS : barème par branche (config) [à vérifier]",
+                    CONFIG_VERSION],
     }
 
 
@@ -142,7 +212,7 @@ class Payslip:
             "Base imposable (DZD)": round(self.taxable),
             "IRG (DZD)": round(self.irg),
             "Net à payer (DZD)": round(self.net),
-            "CNAS 26% employeur (DZD)": round(self.cnas_employer),
+            f"CNAS {CNAS_EMPLOYER:.1%} employeur (DZD)": round(self.cnas_employer),
             "Coût total employeur (DZD)": round(self.employer_cost),
         }
 
@@ -226,8 +296,8 @@ def payroll_register(
             # Ce qui est effectivement déclaré et versé chaque mois.
             "CNAS (salaires de base)": total_gross,
             "CNAS salarié 9%": total_cnas_emp,
-            "CNAS employeur 26%": total_cnas_er,
-            "CNAS total versé (35%)": total_cnas_emp + total_cnas_er,
+            f"CNAS employeur {CNAS_EMPLOYER:.1%}": total_cnas_er,
+            f"CNAS total versé ({CNAS_EMPLOYER + CNAS_EMPLOYEE:.1%})": total_cnas_emp + total_cnas_er,
             "IRG retenu (G50)": total_irg,
         },
         "dgi_check_flags": flagged,

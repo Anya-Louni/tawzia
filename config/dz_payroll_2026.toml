@@ -1,0 +1,110 @@
+# Algerian payroll rules, valid from the date below.
+# A new finance law = a new file (dz_payroll_<year>.toml) with its own
+# valid_from. core/rules.py loads the latest file already in force.
+# Values marked [verify] come from a single private source or conflict between
+# sources: confirm them before a live payroll run.
+
+valid_from = 2026-01-01
+
+[snmg]
+monthly = 24000                    # presidential decree 26-01, from 1 Jan 2026
+
+[hours]
+legal_week = 40                    # ordinance 97-03
+legal_month = 173.33               # 40 x 52 / 12
+overtime_cap_fraction = 0.20       # law 90-11 art. 31
+overtime_min_premium = 0.50        # law 90-11 art. 32, legal floor
+
+[cnas]
+# Branch table, employer / employee share of the contributable base. [verify]
+# Several sources state 26% employer / 35% total instead of 25.5 / 34.5.
+social_insurance = [0.115, 0.015]
+work_accidents = [0.0125, 0.0]
+pension = [0.11, 0.0675]
+unemployment = [0.01, 0.005]
+early_retirement = [0.0025, 0.0025]
+social_works = [0.005, 0.0]
+
+[irg]
+# Monthly barème = annual art. 104 brackets / 12. [upper bound, rate]; 0 = no cap.
+brackets = [[20000, 0.0], [40000, 0.23], [80000, 0.27],
+            [160000, 0.30], [320000, 0.33], [0, 0.35]]
+exempt_taxable_up_to = 30000
+abatement_rate = 0.40
+abatement_min = 1000
+abatement_max = 1500
+# Smoothing band (LF 2022): irg = irg x a/b - c/d
+smoothing_band = [30000, 35000]
+smoothing = [137, 51, 27925, 8]
+# Disabled workers and general-regime retirees.
+smoothing_band_special = [30000, 42500]
+smoothing_special = [93, 61, 81213, 41]
+# [verify] The DGI page cites 1,500 DZD per dependant; the rebuild spec omits
+# it. Left at 0 until confirmed.
+family_reduction = 0
+
+[work_time]
+max_hours_per_day = 12             # [verify] includes breaks
+min_days_per_week = 5              # [verify] spread of the legal week
+night_start = "21:00"              # law 90-11 art. 27
+night_end = "05:00"
+night_min_age = 19                 # art. 28
+women_night_needs_derogation = true  # art. 29, per-site flag lifts it
+weekly_rest_day = "vendredi"       # art. 33, may move for production (art. 37)
+trial_max_months = 10              # art. 18
+trial_max_months_highly_qualified = 12
+
+[cdd]
+# Law 90-11 art. 12: the only cases where a fixed-term contract is allowed.
+allowed_cases = ["remplacement", "surcroit_temporaire", "saisonnier", "travaux_temporaires"]
+
+[filings]
+g50_day = 20                       # [verify on mfdgi.gov.dz] 1st to 20th of next month
+g50_late_base = 0.10               # [verify] 10% then 3% per month, capped 25%
+g50_late_per_month = 0.03
+g50_late_cap = 0.25
+cnas_monthly_from_headcount = 10   # monthly from 10 workers, quarterly below
+cnas_days_after_period = 15        # [verify] brief: 15 days; older sources: 30
+das_month = 1
+das_day = 31
+cnas_affiliation_days = 10
+anem_window_working_days = 5       # law 04-19 amended by law 20-03
+work_accident_hours = 48           # [verify]
+roll_to_next_working_day = true    # [verify] due date on Fri/Sat or holiday
+
+# Pay items: two flags each. [verify] every non-base line with your accountant;
+# the defaults below are placeholders, not legal advice.
+[[pay_items]]
+code = "base"
+label = "Salaire de base"
+label_ar = "الأجر القاعدي"
+cnas_subject = true
+irg_subject = true
+
+[[pay_items]]
+code = "anciennete"
+label = "Prime d'ancienneté"
+label_ar = "منحة الأقدمية"
+cnas_subject = true
+irg_subject = true
+
+[[pay_items]]
+code = "heures_sup"
+label = "Heures supplémentaires"
+label_ar = "الساعات الإضافية"
+cnas_subject = true
+irg_subject = true
+
+[[pay_items]]
+code = "panier"
+label = "Prime de panier"
+label_ar = "تعويض الوجبة"
+cnas_subject = false               # [verify]
+irg_subject = true                 # [verify]
+
+[[pay_items]]
+code = "transport"
+label = "Indemnité de transport"
+label_ar = "تعويض النقل"
+cnas_subject = false               # [verify]
+irg_subject = true                 # [verify]

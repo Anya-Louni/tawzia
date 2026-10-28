@@ -15,7 +15,7 @@ The stack
     SNMG (24,000 DZD/month, in force January 2026)
       / 173.33 legal hours per month        -> base hourly, 138.46 DZD
       x role coefficient                     -> role gross hourly
-      x (1 + CNAS employer 26%)              -> LOADED hourly, the real cost
+      x (1 + CNAS employer, see config/)              -> LOADED hourly, the real cost
       x premium (overtime / night / holiday) -> cost of that specific hour
 
 The number that matters is the **loaded** hourly cost. Algerian employers
@@ -35,7 +35,7 @@ from typing import Optional
 
 import pandas as pd
 
-from . import sources
+from . import rules, sources
 
 
 # ---------------------------------------------------------------------------
@@ -58,7 +58,7 @@ HOLIDAY_PREMIUM = 1.00     # gazetted public holiday: double time
 
 # Overtime is capped at 20% of legal working time. Exceeding it is not a
 # costlier option - it is unlawful, so the optimiser treats it as infeasible.
-MAX_OVERTIME_FRACTION = 0.20
+MAX_OVERTIME_FRACTION = rules.payroll()["hours"]["overtime_cap_fraction"]  # art. 31
 
 TEMP_AGENCY_MARKUP = sources.value("temp_agency_markup")   # +35%
 

@@ -606,19 +606,36 @@ def inject_theme() -> None:
         .tz-crumb span::after { content:"/"; margin-left:9px; opacity:.5; }
         .tz-crumb b { color:var(--tz-ink); font-weight:700; }
 
-        /* La recherche : une pastille avec sa loupe, pas un champ de formulaire. */
-        .st-key-wf_search [data-baseweb="select"] > div {
-            background:var(--tz-ground) !important;
-            border-color:transparent !important;
-            border-radius:var(--tz-r-ctrl) !important; min-height:44px !important;
-            padding-left:34px !important;
-            background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235A6B80' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M16.5 16.5 21 21'/%3E%3C/svg%3E") !important;
-            background-repeat:no-repeat !important;
-            background-position:12px center !important;
-            background-size:16px 16px !important;
+        /* Les écrans de l'espace ouvert : des pastilles discrètes, la courante
+           en bleu clair. Sous les sept espaces, elles ne doivent pas leur
+           voler l'attention. */
+        .st-key-wf_subnav { margin-top:10px; flex-wrap:wrap; }
+        .st-key-wf_subnav [data-testid="stPageLink"] a {
+            border-radius:999px; padding:5px 13px; background:transparent;
+            border:1px solid transparent;
         }
-        .st-key-wf_search [data-baseweb="select"] > div:focus-within {
-            background-color:var(--tz-surface) !important;
+        .st-key-wf_subnav [data-testid="stPageLink"] a:hover {
+            background:var(--tz-ground); border-color:rgba(11,87,168,.15);
+        }
+        .st-key-wf_subnav [data-testid="stPageLink"] p {
+            font-size:13.5px; font-weight:600; color:var(--tz-muted);
+        }
+        .tz-sub-on {
+            display:inline-block; border-radius:999px; padding:6px 14px;
+            background:rgba(11,87,168,.09); color:var(--tz-blue);
+            font-size:13.5px; font-weight:700; line-height:1.6;
+        }
+
+        /* « Demander à Tawzia » : la barre de commande, la seule entrée de
+           texte du bandeau. Elle porte la couleur d'action au focus. */
+        .st-key-wf_ask [data-baseweb="input"] {
+            background:var(--tz-ground) !important;
+            border-color:rgba(11,87,168,.18) !important;
+            border-radius:var(--tz-r-ctrl) !important; min-height:44px !important;
+        }
+        .st-key-wf_ask [data-baseweb="input"] input { background:transparent !important; }
+        .st-key-wf_ask [data-baseweb="input"]:focus-within {
+            background:var(--tz-surface) !important;
             border-color:var(--tz-blue) !important;
         }
 

@@ -50,13 +50,14 @@ VIEWPORT = {"width": 1440, "height": 900}
 # étape est (chemin, titre, secondes de pause). La pause laisse le temps de lire
 # à l'image, et laisse Streamlit finir son rendu avant la capture.
 SCENARIO = [
-    ("command_centre", "Le tableau de bord du matin", 4.0),
+    ("autopilot", "Le travail RH déjà fait, il reste à signer", 4.0),
+    ("self_service", "Le salarié demande, le guichet répond", 3.5),
     ("job_post_view", "Dicter une offre, la plateforme la rédige", 3.5),
     ("talent_pool", "Le vivier, classé du mieux au moins adapté", 4.0),
     ("deadlines_view", "Les échéances CNAS et impôts", 3.5),
     ("requests_view", "Congés et présence, arbitrés avec la charge", 3.0),
     ("roster_view", "Le planning le moins cher qui respecte la loi", 3.5),
-    ("attrition_view", "Qui risque de partir, et ce que ça coûte", 3.0),
+    ("retention_negotiator", "Qui risque de partir, et comment le garder", 3.0),
     ("assistant", "Une seule conversation pour toute la plateforme", 3.5),
     ("evidence", "La preuve : le backtest, pertes comprises", 3.5),
     ("privacy_view", "Ce que la plateforme fait de vos données", 3.0),
