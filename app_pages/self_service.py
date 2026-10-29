@@ -89,7 +89,7 @@ with chat:
                                  else ":material/support_agent:"):
                 st.markdown(m["text"])
                 if m.get("doc"):
-                    with st.expander("Voir l'attestation", icon=":material/description:"):
+                    with st.expander("View the certificate", icon=":material/description:"):
                         st.text(m["doc"])
                     st.download_button("Download", m["doc"], key=f"dl_{i}",
                                        file_name="attestation_de_travail.txt",

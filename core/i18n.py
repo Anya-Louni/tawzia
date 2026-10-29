@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-LANGS = {"en": "EN", "fr": "FR", "ar": "ع"}
+LANGS = {"en": "EN", "fr": "FR", "ar": "AR"}
 DEFAULT = "en"
 
 # key -> (English, French, Arabic). Page titles are the internal ids (French)

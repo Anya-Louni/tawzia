@@ -166,6 +166,10 @@ def _fold(s: str) -> str:
         "ascii", "ignore").decode("ascii")
 
 
+# Words that describe working conditions, not a trade ("available for shifts").
+_GENERIC = {"shift", "shifts", "night", "team", "equipe", "agent", "staff"}
+
+
 def guess_role(brief: str, role_options: dict) -> Optional[str]:
     """
     The role inferred from the manager's sentence, or None.
@@ -181,7 +185,7 @@ def guess_role(brief: str, role_options: dict) -> Optional[str]:
     for key, label in role_options.items():
         # English label and French title both count: briefs come in either.
         label = f"{label} {labour_dz.LABEL_FR.get(key, '')}"
-        words = [w for w in re.split(r"[^a-z]+", _fold(label)) if len(w) > 3]
+        words = [w for w in re.split(r"[^a-z]+", _fold(label)) if len(w) > 3 and w not in _GENERIC]
         score = sum(1 for w in words if w in text)
         if score > best_score:
             best, best_score = key, score

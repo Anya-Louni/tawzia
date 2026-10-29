@@ -516,7 +516,9 @@ def inject_theme() -> None:
         [data-testid="stApp"] { background:var(--tz-ground); color:var(--tz-ink); }
         [data-testid="stHeader"] { background:transparent; }
         [data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"] { display:none !important; }
-        [data-testid="stMainBlockContainer"] { padding-top:1.1rem; max-width:1360px; }
+        [data-testid="stMainBlockContainer"] { padding:.6rem 2.5rem 4rem; max-width:1440px; }
+        [data-testid="stMain"] h1 { padding:.35rem 0 .15rem !important; font-size:2.15rem !important; letter-spacing:-.025em; }
+        [data-testid="stMain"] [data-testid="stCaptionContainer"] { font-size:14px; color:var(--tz-muted); }
 
         ::selection { background:rgba(108,190,245,.5); color:var(--tz-ink); }
         input, textarea { caret-color:var(--tz-blue); }
@@ -532,7 +534,7 @@ def inject_theme() -> None:
             position:sticky; top:.5rem; z-index:60;
             background:var(--tz-navy) !important; color:#FFFFFF;
             border:1px solid var(--tz-navy); border-radius:var(--tz-r-card);
-            padding:14px 18px 12px; margin-bottom:24px;
+            padding:14px 18px 12px; margin-bottom:12px;
             box-shadow:0 14px 34px -18px rgba(10,37,64,.7);
         }
         .tz-topbrand { display:flex; flex-direction:column; gap:2px; padding-left:2px; }
@@ -578,7 +580,9 @@ def inject_theme() -> None:
         }
         .st-key-wf_controls [data-testid="stButtonGroup"] button[aria-checked="true"] p,
         .st-key-wf_controls [data-testid="stButtonGroup"] button[kind*="Active"] p { color:var(--tz-navy) !important; }
-        .st-key-wf_controls [data-testid="stButtonGroup"] button { padding:0 9px !important; }
+        .st-key-wf_controls [data-testid="stButtonGroup"] button { padding:0 12px !important; min-height:40px !important; min-width:38px !important; }
+        .st-key-wf_controls [data-testid="stHorizontalBlock"] { align-items:center !important; }
+        .st-key-wf_controls [data-testid="stButtonGroup"] { display:flex; align-items:center; }
 
         /* The six spaces: tabs on the band, the open one is a white slab. */
         .st-key-wf_sections { margin-top:14px; border-top:1px solid var(--tz-navy-line); padding-top:12px; }
@@ -632,7 +636,7 @@ def inject_theme() -> None:
         /* ---- Worksheets: white, edged, lifted ---------------------------- */
         [data-testid="stLayoutWrapper"] > [data-testid="stVerticalBlock"]:not([class*="st-key-"]) {
             background:var(--tz-surface); border:1px solid var(--tz-line) !important;
-            border-radius:var(--tz-r-card); padding:18px 20px !important; box-shadow:var(--tz-shadow);
+            border-radius:var(--tz-r-card); padding:22px 24px !important; box-shadow:var(--tz-shadow);
             transition:box-shadow .2s ease, border-color .2s ease;
         }
         [data-testid="stMain"] [data-testid="stLayoutWrapper"] > [data-testid="stVerticalBlock"]:not([class*="st-key-"]):hover {
@@ -643,17 +647,39 @@ def inject_theme() -> None:
             background:var(--tz-surface-2); box-shadow:none; border-radius:6px;
         }
 
+        /* Stat tiles: one accent per position, a tinted wash and a soft disc, so a
+           row of numbers reads as four distinct facts rather than four white boxes. */
         [data-testid="stMetric"], .tz-stat {
-            background:var(--tz-surface); border:1px solid var(--tz-line);
-            border-radius:var(--tz-r-card); padding:16px 18px 14px; box-shadow:var(--tz-shadow);
+            --acc:var(--tz-a-presence);
+            position:relative; overflow:hidden; height:100%;
+            background:linear-gradient(155deg, color-mix(in srgb, var(--acc) 10%, #FFFFFF) 0%, #FFFFFF 58%);
+            border:1px solid var(--tz-line); border-top:4px solid var(--acc) !important;
+            border-radius:var(--tz-r-card); padding:20px 22px 18px !important; box-shadow:var(--tz-shadow);
         }
-        [data-testid="stMetric"] { min-height:104px; }
-        [data-testid="stMetricValue"] { font-weight:800; letter-spacing:-.03em; color:var(--tz-ink); }
-        [data-testid="stMetricLabel"] p { color:var(--tz-muted) !important; font-weight:700; font-size:13px; }
-        .tz-stat { display:flex; flex-direction:column; gap:7px; min-height:112px; }
-        .tz-stat-l { font-size:13px; font-weight:800; color:var(--tz-muted); text-transform:uppercase; letter-spacing:.04em; }
+        [data-testid="stMetric"]::after, .tz-stat::after {
+            content:""; position:absolute; right:-34px; top:-34px; width:110px; height:110px;
+            border-radius:50%; background:color-mix(in srgb, var(--acc) 13%, transparent); pointer-events:none;
+        }
+        [data-testid="stElementContainer"]:nth-child(4n+2) > [data-testid="stMetric"],
+        [data-testid="stColumn"]:nth-child(4n+2) [data-testid="stMetric"],
+        [data-testid="stColumn"]:nth-child(4n+2) .tz-stat { --acc:var(--tz-a-rec); }
+        [data-testid="stElementContainer"]:nth-child(4n+3) > [data-testid="stMetric"],
+        [data-testid="stColumn"]:nth-child(4n+3) [data-testid="stMetric"],
+        [data-testid="stColumn"]:nth-child(4n+3) .tz-stat { --acc:var(--tz-a-decl); }
+        [data-testid="stElementContainer"]:nth-child(4n) > [data-testid="stMetric"],
+        [data-testid="stColumn"]:nth-child(4n) [data-testid="stMetric"],
+        [data-testid="stColumn"]:nth-child(4n) .tz-stat { --acc:var(--tz-a-paie); }
+        /* In a horizontal row every tile takes an equal share. */
+        [data-testid="stElementContainer"]:has(> [data-testid="stMetric"]) { flex:1 1 0 !important; min-width:170px; width:auto !important; }
+        [data-testid="stMetric"] { min-height:118px; }
+        [data-testid="stMetricValue"] { font-weight:800; letter-spacing:-.035em; color:var(--tz-navy); }
+        [data-testid="stMetricValue"] > div { font-size:2.35rem !important; line-height:1.1; }
+        [data-testid="stMetricLabel"] p { color:color-mix(in srgb, var(--acc) 70%, var(--tz-ink)) !important; font-weight:800; font-size:12px;
+                                          text-transform:uppercase; letter-spacing:.06em; }
+        .tz-stat { display:flex; flex-direction:column; gap:8px; min-height:124px; }
+        .tz-stat-l { font-size:12px; font-weight:800; color:color-mix(in srgb, var(--acc) 70%, var(--tz-ink)); text-transform:uppercase; letter-spacing:.06em; }
         .tz-stat-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-        .tz-stat-v { font-size:34px; font-weight:800; letter-spacing:-.035em; color:var(--tz-ink); line-height:1.05; }
+        .tz-stat-v { font-size:38px; font-weight:800; letter-spacing:-.035em; color:var(--tz-navy); line-height:1.05; }
         .tz-stat-c { font-size:12.5px; color:var(--tz-muted); line-height:1.35; }
         .tz-chip { font-size:11.5px; font-weight:800; padding:3px 8px; border-radius:var(--tz-r-chip); white-space:nowrap; }
         .tz-chip.up { background:var(--tz-wash); color:var(--tz-blue-d); }
@@ -755,7 +781,11 @@ def inject_theme() -> None:
             background:var(--tz-ink) !important; color:#FFFFFF !important; box-shadow:none !important;
         }
         [data-testid="stButtonGroup"] button[aria-checked="true"] p, .stTabs [aria-selected="true"] p { color:#FFFFFF !important; }
-        .stTabs [data-baseweb="tab"] { border-radius:2px; padding:8px 16px; font-weight:800; color:var(--tz-muted); background:transparent; }
+        .stTabs [data-baseweb="tab"], [data-testid="stTabs"] [role="tab"] { border-radius:2px !important; padding:8px 18px !important; font-weight:800; color:var(--tz-muted); background:transparent; height:auto !important; }
+        [data-testid="stTabs"] [role="tablist"] { background:var(--tz-surface); border:1.5px solid var(--tz-line-strong); border-radius:var(--tz-r-ctrl);
+            padding:3px; gap:3px; width:fit-content; max-width:100%; margin-bottom:14px; }
+        [data-testid="stTabs"] [role="tab"][aria-selected="true"] { background:var(--tz-ink) !important; }
+        [data-testid="stTabs"] [role="tab"][aria-selected="true"] p { color:#FFFFFF !important; }
         .stTabs [data-baseweb="tab-highlight"], .stTabs [data-baseweb="tab-border"] { display:none; }
 
         /* ---- Alerts, expanders, tables, chat -------------------------------- */
@@ -780,7 +810,7 @@ def inject_theme() -> None:
         .tz-today { display:grid; grid-template-columns:minmax(0,1.25fr) minmax(0,1fr); gap:0;
                     background:var(--tz-surface); border:1px solid var(--tz-line); border-radius:var(--tz-r-card);
                     box-shadow:var(--tz-shadow); overflow:hidden; margin-bottom:18px; }
-        .tz-today-main { padding:24px 26px 22px; }
+        .tz-today-main { padding:28px 30px 26px; display:flex; flex-direction:column; justify-content:center; gap:4px; }
         .tz-today-k { font-size:13px; font-weight:800; color:var(--tz-blue-d); }
         .tz-today-h { font-size:34px; line-height:1.08; font-weight:800; letter-spacing:-.035em; color:var(--tz-ink); margin:6px 0 8px; }
         .tz-today-h em { font-style:normal; color:var(--tz-blue); }
