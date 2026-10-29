@@ -18,9 +18,9 @@ importing anything. Open it, read a card, click **Approve**.
 |---|---|
 | ![Payroll agent card](docs/images/payroll-agent.png) | ![Onboarding agent](docs/images/onboarding-agent.png) |
 
-> The business case is in [`PITCH.md`](PITCH.md), the provenance of every figure in
-> [`SOURCES.md`](SOURCES.md), a demo walkthrough in [`DEMO_GUIDE.md`](DEMO_GUIDE.md), and
-> the architecture in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+> A demo walkthrough is in [`DEMO_GUIDE.md`](DEMO_GUIDE.md), the architecture in
+> [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), the provenance of every figure in
+> [`SOURCES.md`](SOURCES.md), and the plan in [`ROADMAP.md`](ROADMAP.md).
 
 ---
 
