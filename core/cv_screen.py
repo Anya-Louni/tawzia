@@ -50,6 +50,9 @@ EDUCATION_RANK = {
 }
 
 LANGUAGES = ["arabe", "francais", "anglais", "tamazight"]
+# Language codes are internal ids; these are their display names.
+LANG_LABEL = {"arabe": "Arabic", "francais": "French", "anglais": "English",
+              "tamazight": "Tamazight"}
 
 
 @dataclass
@@ -70,15 +73,15 @@ class Job:
 
 
 JOBS = {
-    "sorter": Job("sorter", "Agent de tri / magasinier", min_education="bac",
+    "sorter": Job("sorter", "Sorter / warehouse clerk", min_education="bac",
                   min_experience_years=1, skills=("logistique", "manutention", "scan", "stock")),
-    "courier": Job("courier", "Chauffeur-livreur", min_education="bac",
+    "courier": Job("courier", "Delivery driver", min_education="bac",
                    min_experience_years=1, needs_driving_licence=True,
                    skills=("livraison", "conduite", "relation client")),
-    "checkin_agent": Job("checkin_agent", "Agent d'escale / check-in", min_education="licence",
+    "checkin_agent": Job("checkin_agent", "Ground agent / check-in", min_education="licence",
                          min_experience_years=1, required_languages=("arabe", "francais", "anglais"),
                          skills=("accueil", "aeroport", "billetterie", "relation client")),
-    "front_desk": Job("front_desk", "Receptionniste", min_education="licence",
+    "front_desk": Job("front_desk", "Receptionist", min_education="licence",
                       required_languages=("arabe", "francais", "anglais"),
                       skills=("accueil", "reservation", "hotellerie")),
 }
@@ -98,7 +101,7 @@ class Candidate:
     driving_licence: bool
     service_national: str     # "degage" | "exempte" | "en cours" | "n/a" | "inconnu"
     mobility: str
-    gender: str = ""          # pour l'audit d'équité seulement, jamais pour le score
+    gender: str = ""          # for the fairness audit only, never for the score
 
 
 # ---------------------------------------------------------------------------
@@ -199,9 +202,9 @@ MAX_CV_CHARS = 20_000
 
 def detect_injection(cv_text: str) -> list:
     """
-    Repérer les tentatives de manipulation du trieur automatique dans un CV.
+    Spot attempts in a CV to manipulate the automatic screener.
 
-    Retourne la liste des extraits suspects (au plus 3), vide si le CV est sain.
+    Returns the suspicious excerpts (at most 3), empty when the CV is clean.
     """
     found = []
     for match in _INJECTION_RE.finditer(cv_text or ""):
@@ -214,7 +217,7 @@ def detect_injection(cv_text: str) -> list:
 
 
 def _wrap_untrusted(cv_text: str) -> str:
-    """Encadrer le CV pour qu'il ne puisse pas se faire passer pour une consigne."""
+    """Wrap the CV so it cannot pass itself off as an instruction."""
     text = (cv_text or "")[:MAX_CV_CHARS]
     # On neutralise les délimiteurs que le candidat pourrait imiter pour
     # « refermer » le bloc et écrire hors de la zone de données.
@@ -315,9 +318,9 @@ def score(candidate: Candidate, job: Job, method: str = "rules") -> Screening:
     have = EDUCATION_RANK.get(candidate.education, 0)
     parts["education"] = 1.0 if have >= need else max(0.0, have / max(need, 1) * 0.7)
     if have >= need:
-        pluses.append(f"Formation OK ({candidate.education})")
+        pluses.append(f"Education OK ({candidate.education})")
     else:
-        flags.append(f"Formation sous le niveau requis ({job.min_education})")
+        flags.append(f"Education below the required level ({job.min_education})")
 
     # Experience
     if job.min_experience_years <= 0:
@@ -325,10 +328,10 @@ def score(candidate: Candidate, job: Job, method: str = "rules") -> Screening:
     else:
         parts["experience"] = min(candidate.experience_years / job.min_experience_years, 1.0)
         if candidate.experience_years >= job.min_experience_years:
-            pluses.append(f"{candidate.experience_years:.0f} ans d'expérience")
+            pluses.append(f"{candidate.experience_years:.0f} years of experience")
         else:
-            flags.append(f"Seulement {candidate.experience_years:.0f} an(s) "
-                         f"(requis {job.min_experience_years:.0f})")
+            flags.append(f"Only {candidate.experience_years:.0f} year(s) "
+                         f"(required {job.min_experience_years:.0f})")
 
     # Languages
     req = set(job.required_languages)
@@ -336,16 +339,16 @@ def score(candidate: Candidate, job: Job, method: str = "rules") -> Screening:
     missing = req - have_lang
     parts["languages"] = 1.0 - (len(missing) / max(len(req), 1))
     if not missing:
-        pluses.append("Toutes les langues requises")
+        pluses.append("All required languages")
     else:
-        flags.append("Langue(s) manquante(s) : " + ", ".join(sorted(missing)))
+        flags.append("Missing language(s): " + ", ".join(LANG_LABEL.get(x, x) for x in sorted(missing)))
 
     # Skills
     if job.skills:
         overlap = len(set(candidate.skills) & set(job.skills))
         parts["skills"] = min(overlap / len(job.skills), 1.0)
         if overlap:
-            pluses.append(f"{overlap}/{len(job.skills)} compétences ciblées")
+            pluses.append(f"{overlap}/{len(job.skills)} target skills")
     else:
         parts["skills"] = 1.0
 
@@ -353,7 +356,7 @@ def score(candidate: Candidate, job: Job, method: str = "rules") -> Screening:
     if job.needs_driving_licence:
         parts["licence"] = 1.0 if candidate.driving_licence else 0.0
         (pluses if candidate.driving_licence else flags).append(
-            "Permis de conduire" + ("" if candidate.driving_licence else " manquant (requis)"))
+            "Driving licence" + ("" if candidate.driving_licence else " missing (required)"))
     else:
         parts["licence"] = 1.0
 
@@ -362,11 +365,11 @@ def score(candidate: Candidate, job: Job, method: str = "rules") -> Screening:
         cleared = candidate.service_national in ("degage", "exempte", "n/a")
         parts["service_national"] = 1.0 if cleared else (0.4 if candidate.service_national == "en cours" else 0.5)
         if cleared:
-            pluses.append(f"Service national : {candidate.service_national}")
+            pluses.append(f"National service: {candidate.service_national}")
         elif candidate.service_national == "en cours":
-            flags.append("Service national en cours")
+            flags.append("National service in progress")
         else:
-            flags.append("Service national à clarifier")
+            flags.append("National service to clarify")
     else:
         parts["service_national"] = 1.0
 
@@ -427,7 +430,7 @@ _AI_EVAL_SYSTEM = (
     "interview_questions (list of 3 to 5 sharp questions tailored to this "
     "candidate and role), recommendation (one short sentence). "
     "Write ALL text fields (summary, strengths, gaps, red_flags, "
-    "interview_questions, recommendation) in FRENCH."
+    "interview_questions, recommendation) in ENGLISH."
     + _UNTRUSTED_RULE
 )
 
@@ -484,32 +487,32 @@ def _fallback_eval(cand: Candidate, job_text: str) -> dict:
     verdict = "strong" if sc >= 70 else ("possible" if sc >= 45 else "weak")
     strengths, gaps = [], []
     if cand.experience_years >= 1:
-        strengths.append(f"{cand.experience_years:.0f} ans d'experience")
+        strengths.append(f"{cand.experience_years:.0f} years of experience")
     else:
-        gaps.append("Peu ou pas d'experience indiquee")
+        gaps.append("Little or no experience stated")
     if cand.languages:
-        strengths.append("Langues : " + ", ".join(cand.languages))
+        strengths.append("Languages: " + ", ".join(LANG_LABEL.get(x, x) for x in cand.languages))
     if cand.driving_licence:
-        strengths.append("Permis de conduire")
+        strengths.append("Driving licence")
     if cand.service_national not in ("degage", "exempte", "n/a"):
-        gaps.append(f"Service national : {cand.service_national}")
+        gaps.append(f"National service: {cand.service_national}")
     jt = _normalise(job_text)
     if "permis" in jt and not cand.driving_licence:
-        gaps.append("Permis requis par le poste, non indique sur le CV")
+        gaps.append("Licence required by the job, not stated on the CV")
     questions = [
-        "Parlez-moi de votre experience la plus proche de ce poste.",
-        "Quelle est votre disponibilite (shifts, week-end, debut tot) ?",
-        "Comment gerez-vous une journee de forte charge ?",
+        "Tell me about your experience closest to this job.",
+        "What is your availability (shifts, weekends, early starts)?",
+        "How do you handle a very busy day?",
     ]
     return {
         "score": sc, "verdict": verdict,
-        "summary": f"Profil {verdict} sur la base des elements extraits du CV "
-                   f"(formation {cand.education}, {cand.experience_years:.0f} ans, "
-                   f"{len(cand.languages)} langue(s)).",
+        "summary": f"{verdict.capitalize()} profile based on what was extracted from the CV "
+                   f"(education {cand.education}, {cand.experience_years:.0f} years, "
+                   f"{len(cand.languages)} language(s)).",
         "strengths": strengths, "gaps": gaps, "red_flags": [],
         "interview_questions": questions,
-        "recommendation": "Ajoutez une cle AI pour une evaluation plus fine et "
-                          "des questions sur mesure.",
+        "recommendation": "Add an AI key for a finer evaluation and tailored "
+                          "questions.",
         "candidate": cand, "method": "rules",
     }
 
@@ -532,13 +535,13 @@ def evaluate_freeform(cv_text: str, job_text: str, use_ai: bool = True) -> dict:
     if out is None:
         out = _fallback_eval(cand, job_text)
 
-    # Une tentative de manipulation est un signal d'alerte sur le candidat, pas
-    # un détail technique : elle remonte en tête des red flags.
+    # A manipulation attempt is a warning about the candidate, not a technical
+    # detail: it goes to the top of the red flags.
     if injection:
         out["injection"] = injection
         out["red_flags"] = [
-            "Ce CV contient du texte visant à manipuler le tri automatique , "
-            "à vérifier manuellement."
+            "This CV contains text aimed at manipulating the automatic screening: "
+            "check it by hand."
         ] + list(out.get("red_flags") or [])
     return out
 

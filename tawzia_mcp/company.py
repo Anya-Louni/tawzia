@@ -1,31 +1,31 @@
 """
 tawzia_mcp/company.py
 ---------------------
-Le serveur MCP « société » : lire les données d'une entreprise et préparer des
-brouillons, depuis the AI model ou tout client MCP (brief, partie B4).
+The "company" MCP server: read a company's data and prepare drafts, from any
+MCP client (brief, part B4).
 
-Règle de sécurité
-=================
-Les outils lisent, calculent, ou **créent une carte** dans la boîte de décisions.
-Aucun n'approuve, ne dépose, n'envoie, ne paie, ne supprime ni ne refuse : la
-décision reste dans l'application, par un humain.
+Safety rule
+===========
+Tools read, calculate, or **create a card** in the decision inbox. None
+approves, files, sends, pays, deletes or rejects: the decision stays in the
+app, with a human.
 
-Accès
-=====
-En HTTP, chaque requête porte un jeton Bearer, vérifié par `DemoTokenVerifier`.
-Les jetons de démonstration viennent de TAWZIA_MCP_TOKENS (JSON
-{"jeton": {"client": "...", "scopes": ["company:DEMO", "role:hr"]}}). Sans cette
-variable, aucun jeton n'est valable : le serveur est fermé par défaut.
+Access
+======
+Over HTTP every request carries a Bearer token, checked by `DemoTokenVerifier`.
+Demo tokens come from TAWZIA_MCP_TOKENS (JSON
+{"token": {"client": "...", "scopes": ["company:DEMO", "role:hr"]}}). Without
+that variable no token is valid: the server is closed by default.
 shortcut: this is the resource-server half of OAuth 2.1 (token check, scopes);
 the authorization server that issues tokens is not built yet; plug a real issuer
 (Keycloak, Auth0, Entra) into `token_verifier` before any client data goes live.
 
-En stdio (machine locale), l'appelant est l'utilisateur de la machine : le rôle
-vient de TAWZIA_MCP_LOCAL_ROLE (« hr » par défaut).
+Over stdio (local machine) the caller is the machine's user: the role comes
+from TAWZIA_MCP_LOCAL_ROLE ("hr" by default).
 
-Chaque appel est écrit dans le journal (qui, outil, empreinte des arguments).
+Every call is written to the log (who, tool, argument fingerprint).
 
-Lancer :
+Run:
     venv/Scripts/python.exe -m tawzia_mcp.company            # stdio
     venv/Scripts/python.exe -m tawzia_mcp.company --http     # HTTP, port 8766
 """
@@ -59,7 +59,7 @@ COMPANY = "DEMO"
 
 
 class DemoTokenVerifier:
-    """Vérifie un jeton Bearer contre la table TAWZIA_MCP_TOKENS."""
+    """Check a Bearer token against the TAWZIA_MCP_TOKENS table."""
 
     async def verify_token(self, token: str) -> AccessToken | None:
         table = json.loads(os.environ.get("TAWZIA_MCP_TOKENS", "{}") or "{}")
@@ -72,8 +72,8 @@ class DemoTokenVerifier:
 
 mcp = MCPServer(
     "tawzia_company_mcp",
-    instructions=("Données d'une entreprise Tawzia, en lecture, et brouillons qui "
-                  "attendent une approbation humaine dans l'application."),
+    instructions=("A Tawzia company's data, read-only, and drafts that wait "
+                  "for human approval in the app."),
     token_verifier=DemoTokenVerifier(),
     auth=AuthSettings(issuer_url="http://localhost:8766",
                       resource_server_url=f"http://localhost:{PORT}/mcp",
@@ -88,11 +88,11 @@ DRAFT = ToolAnnotations(readOnlyHint=False, destructiveHint=False, idempotentHin
 
 
 # ---------------------------------------------------------------------------
-# Accès, journal, mise en forme
+# Access, log, formatting
 # ---------------------------------------------------------------------------
 
 def _caller() -> tuple[str, str, set]:
-    """(client, rôle, scopes). En stdio, l'utilisateur local."""
+    """(client, role, scopes). Over stdio, the local user."""
     tok = get_access_token()
     if tok is None:
         role = os.environ.get("TAWZIA_MCP_LOCAL_ROLE", "hr")
@@ -105,9 +105,9 @@ def _caller() -> tuple[str, str, set]:
 def _guard(tool: str, args: dict, roles: tuple = ("hr", "payroll", "auditor")) -> tuple:
     client, role, scopes = _caller()
     if f"company:{COMPANY}" not in scopes:
-        raise PermissionError("Ce jeton ne donne pas accès à cette société.")
+        raise PermissionError("This token does not give access to this company.")
     if role not in roles:
-        raise PermissionError(f"Le rôle « {role} » ne peut pas utiliser {tool}.")
+        raise PermissionError(f"The role \"{role}\" cannot use {tool}.")
     digest = hashlib.sha256(json.dumps(args, sort_keys=True, default=str).encode()).hexdigest()[:12]
     con = db.seed(db.connect())
     db.log(con, client, role, f"mcp:{tool}", COMPANY, f"args {digest}")
@@ -156,7 +156,7 @@ class ListEmployeesIn(_Page):
 
 @mcp.tool(name="tawzia_list_employees", annotations=READ)
 def list_employees(params: ListEmployeesIn) -> str:
-    """Liste paginée des salariés : matricule, nom, poste, site, contrat. Sans champ sensible."""
+    """Paginated employee list: staff number, name, role, site, contract. No sensitive field."""
     try:
         _guard("list_employees", params.model_dump())
     except PermissionError as e:
@@ -167,7 +167,7 @@ def list_employees(params: ListEmployeesIn) -> str:
             if (not params.site or e.site == params.site)
             and (not params.contract or e.contract == params.contract)]
     pg = _page(rows, params)
-    md = (f"**{pg['total_count']} salariés** (affichés {pg['offset'] + 1} à "
+    md = (f"**{pg['total_count']} employees** (showing {pg['offset'] + 1} to "
           f"{pg['offset'] + pg['count']})\n\n"
           + "".join(f"- {r['id']} · {r['name']} · {r['role']} · {r['site']} · {r['contract']}\n"
                     for r in pg["items"])
@@ -181,8 +181,8 @@ class GetEmployeeIn(_In):
 
 @mcp.tool(name="tawzia_get_employee", annotations=READ)
 def get_employee(params: GetEmployeeIn) -> str:
-    """Le dossier d'un salarié, réduit à ce que le rôle du jeton peut voir, avec son
-    solde de congés. Les champs sensibles masqués valent « masqué »."""
+    """An employee's record, cut to what the token's role may see, with their
+    leave balance. Masked sensitive fields read "masked"."""
     try:
         con, client, role = _guard("get_employee", params.model_dump())
         rec = db.get_employee(con, params.employee_id, actor=client, role=role, why="outil MCP")
@@ -202,7 +202,7 @@ class CardsIn(_Page):
 
 @mcp.tool(name="tawzia_list_inbox_cards", annotations=READ)
 def list_inbox_cards(params: CardsIn) -> str:
-    """Les cartes de la boîte de décisions créées par les outils et l'intégration."""
+    """Decision-inbox cards created by the tools and onboarding."""
     try:
         con, *_ = _guard("list_inbox_cards", params.model_dump())
     except PermissionError as e:
@@ -238,7 +238,7 @@ def _payroll_lines() -> list:
 
 @mcp.tool(name="tawzia_preview_payroll", annotations=READ)
 def preview_payroll(params: MonthIn) -> str:
-    """Prévisualise la paie d'un mois : totaux, anomalies, lignes. Calcule, n'enregistre rien."""
+    """Preview a month's payroll: totals, anomalies, lines. Calculates, saves nothing."""
     try:
         _guard("preview_payroll", params.model_dump(), roles=("hr", "payroll"))
     except PermissionError as e:
@@ -250,7 +250,7 @@ def preview_payroll(params: MonthIn) -> str:
             "net_total": sum(l["net"] for l in lines),
             "irg_total": sum(l["irg"] for l in lines), "anomalies": issues,
             "config_version": payroll_dz.CONFIG_VERSION, "lines": lines}
-    md = (f"**Paie {params.month}** : {len(lines)} salariés, net {data['net_total']:,.0f} DA, "
+    md = (f"**Payroll {params.month}**: {len(lines)} employees, net {data['net_total']:,.0f} DA, "
           f"IRG {data['irg_total']:,.0f} DA, {len(issues)} anomalie(s)\n\n"
           + "".join(f"- {i['name']} : {', '.join(i['flags'])}\n" for i in issues))
     return _out(data, params.response_format, md)
@@ -263,8 +263,8 @@ class FilingIn(_In):
 
 @mcp.tool(name="tawzia_get_filing_draft", annotations=READ)
 def get_filing_draft(params: FilingIn) -> str:
-    """Le brouillon chiffré d'une déclaration (G50, CNAS, DAS) avec date limite et portail.
-    Brouillon seulement : le dépôt se fait sur le portail, par un humain."""
+    """The costed draft of a filing (G50, CNAS, DAS) with deadline and portal.
+    Draft only: filing happens on the portal, by a human."""
     try:
         _guard("get_filing_draft", params.model_dump(), roles=("hr", "payroll", "auditor"))
         ppl = _people()
@@ -282,13 +282,13 @@ def get_filing_draft(params: FilingIn) -> str:
 
 class ScheduleIn(_In):
     site: str = Field(..., description="Code de site : " + ", ".join(sc.SITES))
-    week_start: Optional[_dt.date] = Field(None, description="Samedi de début. Défaut : la semaine prochaine.")
+    week_start: Optional[_dt.date] = Field(None, description="Starting Saturday. Default: next week.")
     ramadan: bool = False
 
 
 @mcp.tool(name="tawzia_get_schedule", annotations=READ)
 def get_schedule(params: ScheduleIn) -> str:
-    """Le planning légal d'une semaine pour un site (calculé par CP-SAT, quelques secondes)."""
+    """A legal weekly schedule for a site (solved by CP-SAT, a few seconds)."""
     try:
         _guard("get_schedule", params.model_dump())
     except PermissionError as e:
@@ -300,9 +300,9 @@ def get_schedule(params: ScheduleIn) -> str:
     data = {"status": r.status, "violations": r.violations, "overtime_hours": r.overtime_hours,
             "shortfall": sum(r.shortfall.values()), "blocked_nights": r.blocked_nights,
             "grid": scheduler.grid(r)}
-    md = (f"**{r.status}** · {len(r.violations)} infraction · heures sup. {r.overtime_hours:.0f} h · "
-          f"{data['shortfall']} poste(s) non couvert(s) · {len(r.blocked_nights)} nuit(s) bloquée(s) "
-          f"par la loi")
+    md = (f"**{r.status}** · {len(r.violations)} violation(s) · overtime {r.overtime_hours:.0f} h · "
+          f"{data['shortfall']} uncovered shift(s) · {len(r.blocked_nights)} night(s) blocked "
+          f"by law")
     return _out(data, params.response_format, md)
 
 
@@ -326,8 +326,8 @@ class RankingIn(_Page):
 
 @mcp.tool(name="tawzia_get_candidate_ranking", annotations=READ)
 def get_candidate_ranking(params: RankingIn) -> str:
-    """Le classement des candidatures d'un poste, avec l'explication de chaque rang et
-    l'audit d'équité (règle des quatre cinquièmes)."""
+    """The applicant ranking for a role, with the reason for each rank and the
+    fairness audit (four-fifths rule)."""
     try:
         _guard("get_candidate_ranking", params.model_dump(), roles=("hr",))
     except PermissionError as e:
@@ -340,14 +340,14 @@ def get_candidate_ranking(params: RankingIn) -> str:
              "why": s.pluses[:2], "gaps": s.flags[:2]} for i, s in enumerate(ranked)]
     data = _page(rows, params) | {"bias_audit": bias.four_fifths(ranked)}
     md = ("".join(f"{r['rank']}. {r['name']} · {r['score']} % · {r['band']}\n" for r in data["items"])
-          + f"\nAudit d'équité : {'aucun écart' if data['bias_audit']['ok'] else 'écart à examiner'}")
+          + f"\nFairness audit: {'no gap' if data['bias_audit']['ok'] else 'gap to review'}")
     return _out(data, params.response_format, md)
 
 
 @mcp.tool(name="tawzia_get_onboarding_status", annotations=READ)
 def get_onboarding_status(params: GetEmployeeIn) -> str:
-    """Avancement de l'intégration d'un salarié : tâches, pièces (présente / vérifiée /
-    manquante), fin d'essai. Jamais le contenu d'une pièce."""
+    """Progress of an employee's onboarding: tasks, documents (present / verified /
+    missing), probation end. Never a document's content."""
     try:
         con, *_ = _guard("get_onboarding_status", params.model_dump(), roles=("hr",))
     except PermissionError as e:
@@ -358,9 +358,9 @@ def get_onboarding_status(params: GetEmployeeIn) -> str:
     docs = [dict(r) for r in con.execute(
         "SELECT kind, status FROM documents WHERE employee_id = ?", (params.employee_id,))]
     data = {"employee_id": params.employee_id, "tasks": tasks, "documents": docs,
-            "open_tasks": sum(1 for t in tasks if t["status"] != "fait")}
-    md = (f"{len(tasks)} tâche(s), {data['open_tasks']} ouverte(s) ; {len(docs)} pièce(s)."
-          if tasks or docs else "Aucune intégration en cours pour ce matricule.")
+            "open_tasks": sum(1 for t in tasks if t["status"] != "done")}
+    md = (f"{len(tasks)} task(s), {data['open_tasks']} open; {len(docs)} document(s)."
+          if tasks or docs else "No onboarding in progress for this staff number.")
     return _out(data, params.response_format, md)
 
 
@@ -370,7 +370,7 @@ class TrialIn(_Page):
 
 @mcp.tool(name="tawzia_list_upcoming_trial_ends", annotations=READ)
 def list_upcoming_trial_ends(params: TrialIn) -> str:
-    """Les fins de période d'essai dans les N prochains jours (art. 18)."""
+    """Probation periods ending in the next N days (art. 18)."""
     try:
         _guard("list_upcoming_trial_ends", params.model_dump(), roles=("hr",))
     except PermissionError as e:
@@ -389,11 +389,11 @@ def list_upcoming_trial_ends(params: TrialIn) -> str:
 
 @mcp.tool(name="tawzia_list_client_companies", annotations=READ)
 def list_client_companies(params: _Page) -> str:
-    """Pour un cabinet comptable : ses sociétés clientes, la prochaine échéance et les
-    cartes ouvertes de chacune."""
+    """For an accounting firm: its client companies, the next deadline and the
+    open cards for each."""
     client, role, scopes = _caller()
     if "cabinet" not in scopes:
-        return _err(PermissionError("Réservé aux jetons de cabinet (scope 'cabinet')."))
+        return _err(PermissionError("Reserved for accounting-firm tokens (scope 'cabinet')."))
     con = db.seed(db.connect())
     db.log(con, client, role, "mcp:list_client_companies", "cabinet", "")
     nxt = deadlines_dz.next_critical(headcount=len(_people()))
@@ -402,12 +402,12 @@ def list_client_companies(params: _Page) -> str:
              "open_cards": len(db.pending_cards(con))}]
     pg = _page(rows, params)
     return _out(pg, params.response_format,
-                "".join(f"- {r['name']} · {r['employees']} salariés · {r['next_deadline']} · "
+                "".join(f"- {r['name']} · {r['employees']} employees · {r['next_deadline']} · "
                         f"{r['open_cards']} carte(s)\n" for r in pg["items"]))
 
 
 # ---------------------------------------------------------------------------
-# Brouillons : chacun crée une carte, rien de plus
+# Drafts: each creates a card, nothing more
 # ---------------------------------------------------------------------------
 
 def _card(con, client, agent, title, detail, law, decision, payload=None) -> str:
@@ -426,7 +426,7 @@ class DocIn(_In):
 
 @mcp.tool(name="tawzia_draft_document", annotations=DRAFT)
 def draft_document(params: DocIn) -> str:
-    """Rédige une attestation ou un certificat et la met en carte « à signer »."""
+    """Draft an attestation or certificate and put it on a "to sign" card."""
     try:
         con, client, _ = _guard("draft_document", params.model_dump(), roles=("hr",))
     except PermissionError as e:
@@ -435,9 +435,9 @@ def draft_document(params: DocIn) -> str:
     if emp is None:
         return _err(ValueError("Matricule inconnu."))
     doc = self_service.attestation_text(emp, sc.COMPANY["name"], "Le responsable RH", _dt.date.today())
-    return _card(con, client, "Guichet", f"{params.doc_type.replace('_', ' ').capitalize()} pour {emp.name} : prête à signer",
-                 "Rédigée sur le dossier du salarié.", "Faits du dossier salarié",
-                 "Document signé et remis au salarié.", {"document": doc})
+    return _card(con, client, "Guichet", f"{params.doc_type.replace('_', ' ').capitalize()} for {emp.name}: ready to sign",
+                 "Drafted from the employee record.", "Facts from the employee record",
+                 "Document signed and handed to the employee.", {"document": doc})
 
 
 class ScheduleDraftIn(ScheduleIn):
@@ -453,10 +453,10 @@ def draft_schedule(params: ScheduleDraftIn) -> str:
         return _err(e)
     ws = params.week_start or scheduler.next_week_start()
     r = scheduler.solve(params.site, ws, ramadan=params.ramadan)
-    return _card(con, client, "Planning", f"Planning du {ws:%d/%m}, site {params.site} : prêt",
-                 f"{len(r.violations)} infraction, heures sup. {r.overtime_hours:.0f} h, "
-                 f"{sum(r.shortfall.values())} poste(s) non couvert(s).",
-                 "Ord. 97-03 · loi 90-11 art. 27 à 33", "Planning publié aux équipes.")
+    return _card(con, client, "Planning", f"Schedule for week of {ws:%d/%m}, site {params.site}: ready",
+                 f"{len(r.violations)} violation(s), overtime {r.overtime_hours:.0f} h, "
+                 f"{sum(r.shortfall.values())} uncovered shift(s).",
+                 "Ord. 97-03 · Law 90-11 art. 27 to 33", "Schedule published to the teams.")
 
 
 class LeaveIn(_In):
@@ -466,7 +466,7 @@ class LeaveIn(_In):
 
 @mcp.tool(name="tawzia_draft_leave_decision", annotations=DRAFT)
 def draft_leave_decision(params: LeaveIn) -> str:
-    """Prépare la réponse à une demande de congé, avec le contrôle légal, en carte."""
+    """Prepare the answer to a leave request, with the legal check, as a card."""
     try:
         con, client, _ = _guard("draft_leave_decision", params.model_dump(), roles=("hr",))
     except PermissionError as e:
@@ -477,10 +477,10 @@ def draft_leave_decision(params: LeaveIn) -> str:
         return _err(ValueError("Demande inconnue."))
     emp = next(e for e in ppl if e.emp_id == req.emp_id)
     d = attendance.decide_request(req, emp)
-    return _card(con, client, "Présence", f"{req.kind_label} de {req.emp_name} : "
-                 f"{'accord' if params.suggestion == 'approve' else 'refus'} proposé",
-                 " ".join(d["reasons"] + d["warnings"]), "Loi 90-11, art. 39 à 54",
-                 "Réponse envoyée au salarié.")
+    return _card(con, client, "Présence", f"{req.kind_label} for {req.emp_name}: "
+                 f"{'approval' if params.suggestion == 'approve' else 'refusal'} proposed",
+                 " ".join(d["reasons"] + d["warnings"]), "Law 90-11, art. 39 to 54",
+                 "Answer sent to the employee.")
 
 
 class JobIn(_In):
@@ -491,32 +491,32 @@ class JobIn(_In):
 
 @mcp.tool(name="tawzia_draft_job_post", annotations=DRAFT)
 def draft_job_post(params: JobIn) -> str:
-    """Rédige une offre d'emploi calée sur l'effectif et le droit algérien, en carte."""
+    """Draft a job post fitted to the workforce and Algerian law, as a card."""
     from core import job_post
     try:
         con, client, _ = _guard("draft_job_post", params.model_dump(), roles=("hr",))
     except PermissionError as e:
         return _err(e)
     post = job_post.draft(params.brief, job_post.pool_facts(_people(), params.role_key), use_ai=False)
-    return _card(con, client, "Recrutement", f"Offre « {post.title} » prête à publier",
-                 post.summary, "Loi 04-19 modifiée par la loi 20-03 (dépôt ANEM)",
-                 "Offre déposée à l'ANEM et publiée.", {"markdown": post.as_markdown()})
+    return _card(con, client, "Recrutement", f"Job post \"{post.title}\" ready to publish",
+                 post.summary, "Law 04-19 as amended by Law 20-03 (ANEM filing)",
+                 "Post filed with ANEM and published.", {"markdown": post.as_markdown()})
 
 
 @mcp.tool(name="tawzia_draft_payroll_run", annotations=DRAFT)
 def draft_payroll_run(params: MonthIn) -> str:
-    """Prépare la paie d'un mois et la met en carte de validation."""
+    """Prepare a month's payroll and put it on an approval card."""
     try:
         con, client, _ = _guard("draft_payroll_run", params.model_dump(), roles=("hr", "payroll"))
     except PermissionError as e:
         return _err(e)
     lines = _payroll_lines()
     issues = [l for l in lines if l["flags"]]
-    return _card(con, client, "Paie", f"Paie {params.month} prête : {len(lines)} salariés, "
-                 f"{len(issues)} point(s) à vérifier",
-                 "; ".join(f"{i['name']} : {', '.join(i['flags'])}" for i in issues) or "Aucun écart.",
-                 "SNMG, CNAS, IRG art. 104, heures sup. art. 31",
-                 "Bulletins publiés, virement et écritures générés.")
+    return _card(con, client, "Paie", f"Payroll {params.month} ready: {len(lines)} employees, "
+                 f"{len(issues)} item(s) to check",
+                 "; ".join(f"{i['name']} : {', '.join(i['flags'])}" for i in issues) or "No discrepancy.",
+                 "SNMG, CNAS, IRG art. 104, overtime art. 31",
+                 "Payslips published, transfer and entries generated.")
 
 
 class InviteIn(_In):
@@ -529,16 +529,16 @@ class InviteIn(_In):
 
 @mcp.tool(name="tawzia_draft_registration_invite", annotations=DRAFT)
 def draft_registration_invite(params: InviteIn) -> str:
-    """Prépare le lien d'inscription d'un nouvel embauché ; le RH l'approuve avant envoi."""
+    """Prepare a new hire's sign-up link; HR approves it before it is sent."""
     try:
         con, client, _ = _guard("draft_registration_invite", params.model_dump(), roles=("hr",))
     except PermissionError as e:
         return _err(e)
     docs = [d for d in onboarding.checklist(params.role_key, params.gender)]
-    return _card(con, client, "Intégration", f"Lien d'inscription pour {params.candidate_name}",
-                 f"{len(docs)} pièces demandées. Lien unique, {rules.payroll()['onboarding']['link_valid_days']} jours, code SMS.",
-                 "Loi 25-11 (notice données) · affiliation CNAS sous 10 jours",
-                 "Lien envoyé au candidat.")
+    return _card(con, client, "Intégration", f"Sign-up link for {params.candidate_name}",
+                 f"{len(docs)} documents requested. Single-use link, {rules.payroll()['onboarding']['link_valid_days']} days, SMS code.",
+                 "Law 25-11 (data notice) · CNAS registration within 10 days",
+                 "Link sent to the candidate.")
 
 
 class OffboardIn(_In):
@@ -549,7 +549,7 @@ class OffboardIn(_In):
 
 @mcp.tool(name="tawzia_draft_offboarding", annotations=DRAFT)
 def draft_offboarding(params: OffboardIn) -> str:
-    """Prépare le départ d'un salarié (certificat, solde, accès, CNAS, ANEM) en carte."""
+    """Prepare an employee's exit (certificate, final pay, access, CNAS, ANEM) as a card."""
     try:
         con, client, _ = _guard("draft_offboarding", params.model_dump(), roles=("hr",))
     except PermissionError as e:
@@ -558,9 +558,9 @@ def draft_offboarding(params: OffboardIn) -> str:
     if emp is None:
         return _err(ValueError("Matricule inconnu."))
     tasks = onboarding.offboarding(emp, params.last_day)
-    return _card(con, client, "Intégration", f"Départ de {emp.name} le {params.last_day:%d/%m}",
-                 f"{params.reason}. {len(tasks)} tâches : " + ", ".join(t["task"] for t in tasks),
-                 "Loi 90-11 (certificat de travail)", "Parcours de départ lancé.")
+    return _card(con, client, "Intégration", f"Exit of {emp.name} on {params.last_day:%d/%m}",
+                 f"{params.reason}. {len(tasks)} tasks: " + ", ".join(t["task"] for t in tasks),
+                 "Law 90-11 (work certificate)", "Exit process started.")
 
 
 if __name__ == "__main__":

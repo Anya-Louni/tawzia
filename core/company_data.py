@@ -101,14 +101,15 @@ def _role_key_from_text(text: str, default_key: str) -> str:
         return t
     # direct label containment
     for k, r in labour_dz.ROLES.items():
-        rl = _norm(r.label)
-        if t in rl or rl in t:
-            return k
+        for lab in (r.label, labour_dz.LABEL_FR.get(k, "")):
+            rl = _norm(lab)
+            if rl and (t in rl or rl in t):
+                return k
     # token overlap
     t_tokens = set(t.split("_"))
     best, best_score = default_key, 0
     for k, r in labour_dz.ROLES.items():
-        score = len(t_tokens & set(_norm(r.label).split("_")))
+        score = len(t_tokens & set(_norm(labour_dz.role_aliases(k)).split("_")))
         if score > best_score:
             best, best_score = k, score
     return best
@@ -249,7 +250,7 @@ def source_label() -> str:
     """Human-readable provenance, always shown next to any figure."""
     if is_uploaded():
         return _ss().get(_LABEL_KEY, "Données importées")
-    return "Données de démonstration (simulées)"
+    return "Demo data (simulated)"
 
 
 def is_real() -> bool:

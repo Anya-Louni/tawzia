@@ -1,7 +1,7 @@
 """
 core/scenarios.py
 -----------------
-Simulateur de scénarios — le "et si ?" chiffré.
+Scenario simulator: the costed "what if?".
 
 A manager's real questions are conditional: *what if we raise pay 8%? hire five
 more? cut absenteeism to 4%? if the SNMG rises again? if we lean on overtime
@@ -66,15 +66,15 @@ class Outcome:
 
     def row(self) -> dict:
         return {
-            "Scénario": self.label,
-            "Effectif": self.headcount,
-            "Masse salariale": self.wage_bill,
-            "Coût employeur": self.employer_cost,
-            "CNAS (35%)": self.cnas_due,
+            "Scenario": self.label,
+            "Headcount": self.headcount,
+            "Wage bill": self.wage_bill,
+            "Employer cost": self.employer_cost,
+            "CNAS": self.cnas_due,
             "IRG (G50)": self.irg_due,
-            "Coût absentéisme": self.absence_cost,
-            "Risque départ %": round(self.attrition_risk, 1),
-            "Coût total/mois": self.total_monthly,
+            "Absence cost": self.absence_cost,
+            "Leaving risk %": round(self.attrition_risk, 1),
+            "Total cost/month": self.total_monthly,
         }
 
 
@@ -101,7 +101,7 @@ def _added_people(people: list, levers: Levers) -> list:
     for i in range(levers.headcount_change):
         e = copy.copy(template)
         e.emp_id = f"NEW{i+1}"
-        e.name = f"Nouveau {i+1}"
+        e.name = f"New hire {i+1}"
         e.hire_date = _dt.date.today()
         e.leave_taken_ytd = 0.0
         e.role_key = levers.new_role_key
@@ -206,8 +206,8 @@ def simulate(people: list, records: list, levers: Levers,
              as_of: Optional[_dt.date] = None) -> dict:
     """Baseline vs scenario, with the delta on every line."""
     as_of = as_of or _dt.date.today()
-    base = _evaluate(people, records, Levers(), "Référence", as_of)
-    scen = _evaluate(people, records, levers, "Scénario", as_of)
+    base = _evaluate(people, records, Levers(), "Baseline", as_of)
+    scen = _evaluate(people, records, levers, "Scenario", as_of)
 
     deltas = {}
     for k in ("headcount", "wage_bill", "employer_cost", "cnas_due", "irg_due",
@@ -225,19 +225,19 @@ def compare_frame(result: dict) -> pd.DataFrame:
 
 
 PRESETS = {
-    "Hausse de salaire +8%": Levers(wage_increase_pct=8.0),
-    "Hausse du SNMG +10%": Levers(snmg_change_pct=10.0),
-    "Embaucher 5 permanents": Levers(headcount_change=5),
-    "Réduire l'absentéisme à 4%": Levers(absenteeism_target_pct=4.0),
-    "Heures sup. au lieu d'intérim": Levers(overtime_share=0.7),
-    "Croissance : +10 agents, +5% paie": Levers(headcount_change=10, wage_increase_pct=5.0),
+    "Pay rise +8%": Levers(wage_increase_pct=8.0),
+    "SNMG rise +10%": Levers(snmg_change_pct=10.0),
+    "Hire 5 permanent staff": Levers(headcount_change=5),
+    "Cut absenteeism to 4%": Levers(absenteeism_target_pct=4.0),
+    "Overtime instead of temps": Levers(overtime_share=0.7),
+    "Growth: +10 staff, +5% pay": Levers(headcount_change=10, wage_increase_pct=5.0),
 }
 
 
 if __name__ == "__main__":
     from . import hr
 
-    print("Simulateur de scénarios — self check\n")
+    print("Scenario simulator, self check\n")
     people = hr.sample_workforce("sorter", 60, "Alger")
     records = att_mod.sample_attendance(people, days=20)
 
@@ -245,7 +245,7 @@ if __name__ == "__main__":
         r = simulate(people, records, lev)
         d = r["deltas"]
         print(f"— {name}")
-        print(f"    coût employeur {d['employer_cost']:+,.0f} DZD/mois | "
-              f"absentéisme {d['absence_cost']:+,.0f} | "
-              f"risque départ {d['attrition_risk']:+.1f} pts | "
-              f"coût total {d['total_monthly']:+,.0f} DZD/mois")
+        print(f"    employer cost {d['employer_cost']:+,.0f} DZD/month | "
+              f"absence {d['absence_cost']:+,.0f} | "
+              f"leaving risk {d['attrition_risk']:+.1f} pts | "
+              f"total {d['total_monthly']:+,.0f} DZD/month")

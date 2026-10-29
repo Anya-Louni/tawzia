@@ -1,30 +1,22 @@
 """
 core/job_post.py
 ----------------
-Rédiger une offre d'emploi à partir de ce que le responsable dit, et la caler sur
-l'équipe qui existe déjà.
+Write a job post from what the manager says, and fit it to the existing team.
 
-Le problème que ça règle
-========================
-Un responsable sait ce qu'il cherche mais n'a pas le temps d'écrire une offre
-publiable. Résultat : des annonces de trois lignes qui attirent des
-candidatures hors sujet, ou des annonces recopiées d'un modèle étranger qui
-promettent des conditions que l'entreprise ne pratique pas.
+A manager knows what they want but has no time to write a publishable post.
+The result is three-line ads that attract off-target applicants, or ads copied
+from a foreign template that promise conditions the company does not offer.
 
-Ici le responsable dicte en une phrase. Le module écrit l'offre, et surtout il la
-**confronte à l'effectif réel** : ce que l'entreprise paie déjà pour ce poste, le
-type de contrat qu'elle utilise, les compétences que l'équipe possède, et les
-personnes en interne qui couvrent déjà le poste. Une offre incohérente avec
-l'équipe est un problème de recrutement avant d'être un problème d'écriture.
+Here the manager dictates one sentence. The module writes the post and, above
+all, checks it against the actual workforce: what the company already pays for
+the role, the contract type it uses, the skills the team has, and the people in
+house who already cover the role.
 
-Partage du travail
-==================
-**Le moteur détient les faits, la couche langage ne fait que rédiger.** Le
-salaire indicatif, le contrat, les horaires, les congés et le week-end sont
-calculés ici, à partir du SNMG, du coefficient du poste et du droit algérien,
-puis **réécrits par-dessus** ce que le modèle a produit. Le modèle ne peut donc
-pas promettre un salaire ou un avantage que l'entreprise ne pratique pas. Sans
-clé IA, un gabarit déterministe produit une offre publiable quand même.
+Division of labour: the engine owns the facts, the language layer only writes.
+Indicative salary, contract, hours, leave and weekend are calculated here from
+the SNMG, the role coefficient and Algerian law, then written over whatever the
+model produced. Without an AI key, a deterministic template still produces a
+publishable post.
 """
 
 from __future__ import annotations
@@ -38,18 +30,17 @@ from typing import Optional
 
 from . import ai, cv_screen, hr, labour_dz, skills
 
-# Au-delà de cette durée cumulée, un CDD n'est plus renouvelable.
+# Beyond this cumulative length a CDD can no longer be renewed.
 CDD_MAX_MONTHS = 24
 
-# Écart de salaire au-delà duquel on alerte sur l'équité interne : proposer
-# beaucoup plus que ce que gagne l'équipe en place pour le même poste crée un
-# problème le jour où l'information circule.
+# Pay gap above which we warn about internal equity: offering far more than the
+# current team earns for the same role is a problem the day it gets out.
 EQUITY_TOLERANCE = 0.40
 
 
 @dataclass
 class PoolFacts:
-    """Ce que l'équipe actuelle dit du poste à pourvoir."""
+    """What the current team says about the role to fill."""
     role_key: str
     role_label: str
     wilaya: str
@@ -67,54 +58,38 @@ class PoolFacts:
 
     @property
     def weekend(self) -> str:
-        return "vendredi et samedi"
+        return "Friday and Saturday"
 
     @property
     def skill_labels(self) -> list:
-        """
-        Les compétences en français lisible, pas les clés du référentiel.
-
-        « scan_wms » n'a rien à faire dans une annonce publiée. Les libellés du
-        référentiel utilisent la virgule comme séparateur (« Arabe , usage
-        professionnel ») ; on la transforme en parenthèse, sinon le rédacteur la
-        lit comme une énumération et écrit « maîtrise de l'arabe et de l'usage
-        professionnel ».
-        """
-        out = []
-        for key in self.required_skills:
-            label = skills.SKILLS.get(key, key)
-            if " , " in label:
-                head, tail = label.split(" , ", 1)
-                label = f"{head} ({tail})"
-            out.append(label)
-        return out
+        """Readable skill labels, never framework keys like 'scan_wms'."""
+        return [skills.SKILLS.get(key, key) for key in self.required_skills]
 
     def as_text(self) -> str:
-        """Les faits, en clair, tels qu'ils sont donnés au rédacteur."""
-        skills_txt = ", ".join(self.skill_labels) or "non précisées"
+        """The facts, in plain text, as given to the writer."""
+        skills_txt = ", ".join(self.skill_labels) or "not specified"
         return (
-            f"Poste : {self.role_label} ({self.role_key}), à {self.wilaya}.\n"
-            f"Effectif de l'entreprise : {self.headcount_total} salariés, dont "
-            f"{self.headcount_role} sur ce poste.\n"
-            f"Contrats : {self.cdi_share * 100:.0f}% de CDI dans l'équipe.\n"
-            f"Ancienneté moyenne : {self.avg_tenure_years:.1f} ans.\n"
-            f"Salaire brut mensuel pratiqué pour ce poste : "
-            f"{self.gross_monthly:,.0f} DZD pour "
-            f"{labour_dz.LEGAL_MONTHLY_HOURS} heures légales "
-            f"(coût chargé employeur {self.loaded_monthly:,.0f} DZD).\n"
-            f"SNMG en vigueur : {labour_dz.SNMG_MONTHLY:,.0f} DZD.\n"
-            f"Congé annuel : {self.leave_days} jours ouvrables.\n"
-            f"Week-end : {self.weekend}.\n"
-            f"Compétences attendues sur ce poste : {skills_txt}.\n"
-            f"Recours à l'intérim possible : {'oui' if self.can_be_temp else 'non'}.\n"
-            f"Candidats internes déjà prêts : {len(self.internal_ready)} ; "
-            f"formables : {len(self.internal_trainable)}."
+            f"Role: {self.role_label} ({self.role_key}), in {self.wilaya}.\n"
+            f"Company headcount: {self.headcount_total} employees, "
+            f"{self.headcount_role} in this role.\n"
+            f"Contracts: {self.cdi_share * 100:.0f}% CDI in the team.\n"
+            f"Average tenure: {self.avg_tenure_years:.1f} years.\n"
+            f"Monthly gross paid for this role: {self.gross_monthly:,.0f} DZD for "
+            f"{labour_dz.LEGAL_MONTHLY_HOURS} legal hours "
+            f"(loaded employer cost {self.loaded_monthly:,.0f} DZD).\n"
+            f"SNMG in force: {labour_dz.SNMG_MONTHLY:,.0f} DZD.\n"
+            f"Annual leave: {self.leave_days} working days.\n"
+            f"Weekend: {self.weekend}.\n"
+            f"Skills expected in this role: {skills_txt}.\n"
+            f"Temps allowed: {'yes' if self.can_be_temp else 'no'}.\n"
+            f"Internal candidates ready: {len(self.internal_ready)}; "
+            f"trainable: {len(self.internal_trainable)}."
         )
 
 
 def pool_facts(people: list, role_key: str, wilaya: str = "Alger",
                as_of: Optional[_dt.date] = None) -> PoolFacts:
-    """Les faits du poste, dérivés de l'effectif réel et du droit algérien."""
+    """The role's facts, derived from the actual workforce and Algerian law."""
     as_of = as_of or _dt.date.today()
     role = labour_dz.ROLES.get(role_key) or labour_dz.ROLES["sorter"]
 
@@ -123,8 +98,8 @@ def pool_facts(people: list, role_key: str, wilaya: str = "Alger",
     tenures = [(as_of - e.hire_date).days / 365.25 for e in people]
 
     fits = skills.mobility_candidates(people, role_key, top=50) if people else []
-    ready = [f for f in fits if f.verdict == "prêt"]
-    trainable = [f for f in fits if f.verdict == "formable"]
+    ready = [f for f in fits if f.verdict == "ready"]
+    trainable = [f for f in fits if f.verdict == "trainable"]
 
     leave = hr.ANNUAL_LEAVE_DAYS + (
         hr.SOUTH_BONUS_DAYS if wilaya in hr.SOUTHERN_WILAYAS else 0)
@@ -147,74 +122,65 @@ def pool_facts(people: list, role_key: str, wilaya: str = "Alger",
     )
 
 
-# ---------------------------------------------------------------------------
-# Ce que le responsable a dit : on en extrait ce qui est vérifiable
-# ---------------------------------------------------------------------------
-
 def read_brief(brief: str) -> dict:
     """
-    Les intentions chiffrées repérées dans la phrase du responsable.
+    The figures stated in the manager's sentence (English or French).
 
-    On ne devine pas : on ne relève que ce qui est écrit noir sur blanc (un
-    montant, un type de contrat, un nombre de mois, un nombre de postes). Tout le
-    reste part au rédacteur comme contexte libre.
+    No guessing: only what is written in black and white (an amount, a contract
+    type, a number of months, a number of openings).
     """
     text = (brief or "").lower()
     out = {"salary": None, "contract": None, "cdd_months": None, "openings": None}
 
-    # Un salaire : « 45000 », « 45 000 DZD », « 45k »
-    m = re.search(r"(\d[\d\s.]{2,})\s*(?:da|dzd|dinars?)\b", text)
+    m = re.search(r"(\d[\d\s.,]{2,})\s*(?:da|dzd|dinars?)\b", text)
     if not m:
         m = re.search(r"(\d+)\s*k\b", text)
         if m:
             out["salary"] = float(m.group(1)) * 1000
     if m and out["salary"] is None:
-        out["salary"] = float(re.sub(r"[\s.]", "", m.group(1)))
+        out["salary"] = float(re.sub(r"[\s.,]", "", m.group(1)))
 
-    if "cdd" in text:
+    if "cdd" in text or "fixed-term" in text or "fixed term" in text:
         out["contract"] = "CDD"
-    elif "cdi" in text:
+    elif "cdi" in text or "permanent" in text:
         out["contract"] = "CDI"
-    elif "interim" in text or "intérim" in text:
-        out["contract"] = "intérim"
+    elif "interim" in text or "intérim" in text or "temp " in text:
+        out["contract"] = "temp"
 
-    m = re.search(r"(\d+)\s*mois", text)
+    m = re.search(r"(\d+)\s*(?:-\s*)?(?:months?|mois)", text)
     if m:
         out["cdd_months"] = int(m.group(1))
 
-    # Le nombre de postes s'écrit de deux façons : « 3 postes » (le nom porte le
-    # sens) ou « il me faut 3 agents de tri » (le verbe le porte, et le nom est
-    # le métier, qu'on ne peut pas énumérer d'avance).
-    m = re.search(r"(\d+)\s*(?:postes?|personnes?|recrues?|candidats?)", text)
+    m = re.search(r"(\d+)\s*(?:openings?|positions?|people|hires?|postes?|personnes?)", text)
     if not m:
-        m = re.search(r"(?:faut|cherche|recrute[rz]?|besoin\s+de|embaucher|"
-                      r"recrutement\s+de)\s+(\d+)", text)
+        m = re.search(r"(?:need|hire|hiring|recruit|looking\s+for|faut|cherche|"
+                      r"recrute[rz]?|besoin\s+de|embaucher)\s+(\d+)", text)
     if m:
         out["openings"] = int(m.group(1))
     return out
 
 
 def _fold(s: str) -> str:
-    """Minuscules sans accents : « Réceptionniste » doit répondre à « receptionniste »."""
+    """Lowercase without accents."""
     return unicodedata.normalize("NFKD", s.lower()).encode(
         "ascii", "ignore").decode("ascii")
 
 
 def guess_role(brief: str, role_options: dict) -> Optional[str]:
     """
-    Le poste déduit de la phrase du responsable, ou None.
+    The role inferred from the manager's sentence, or None.
 
-    On compare les mots de la demande aux libellés du référentiel, mot à mot :
-    « il me faut 3 agents de tri » contient « agent » et « tri », donc le poste
-    « Agent de tri (hub) » gagne. Renvoyer None plutôt que de deviner au hasard
-    est important : l'écran dit alors qu'il n'a pas reconnu le poste, au lieu
-    d'afficher le salaire d'un autre métier sans le signaler.
+    Words in the request are matched against role labels. Returning None rather
+    than guessing lets the screen say it did not recognise the role instead of
+    quietly showing another trade's salary.
     """
     text = _fold(brief or "")
     if not text.strip():
         return None
     best, best_score = None, 0
     for key, label in role_options.items():
+        # English label and French title both count: briefs come in either.
+        label = f"{label} {labour_dz.LABEL_FR.get(key, '')}"
         words = [w for w in re.split(r"[^a-z]+", _fold(label)) if len(w) > 3]
         score = sum(1 for w in words if w in text)
         if score > best_score:
@@ -224,11 +190,10 @@ def guess_role(brief: str, role_options: dict) -> Optional[str]:
 
 def checks(brief: str, facts: PoolFacts) -> list:
     """
-    Ce qui ne colle pas entre la demande, la loi et l'équipe en place.
+    What does not fit between the request, the law and the current team.
 
-    Chaque entrée : (gravité, message). « bloquant » veut dire que publier
-    l'offre en l'état exposerait l'entreprise ; « attention » veut dire que
-    l'offre est légale mais incohérente avec l'équipe.
+    Each entry is (level, message). "bloquant" means publishing as is would
+    expose the company; "attention" means legal but inconsistent with the team.
     """
     asked = read_brief(brief)
     out = []
@@ -236,57 +201,49 @@ def checks(brief: str, facts: PoolFacts) -> list:
     if asked["salary"] is not None:
         if asked["salary"] < labour_dz.SNMG_MONTHLY:
             out.append(("bloquant",
-                        f"Le salaire évoqué ({asked['salary']:,.0f} DZD) est "
-                        f"sous le SNMG ({labour_dz.SNMG_MONTHLY:,.0f} DZD). "
-                        f"Une offre à ce niveau est illégale."))
+                        f"The salary mentioned ({asked['salary']:,.0f} DZD) is "
+                        f"below the SNMG ({labour_dz.SNMG_MONTHLY:,.0f} DZD). "
+                        f"An offer at that level is illegal."))
         elif asked["salary"] > facts.gross_monthly * (1 + EQUITY_TOLERANCE):
             out.append(("attention",
-                        f"Le salaire évoqué ({asked['salary']:,.0f} DZD) dépasse "
-                        f"de plus de {EQUITY_TOLERANCE:.0%} ce que l'entreprise "
-                        f"paie déjà sur ce poste "
-                        f"({facts.gross_monthly:,.0f} DZD). L'écart se saura : "
-                        f"soit vous l'assumez pour tout le monde, soit vous le "
-                        f"justifiez par le contenu du poste."))
+                        f"The salary mentioned ({asked['salary']:,.0f} DZD) exceeds "
+                        f"what the company already pays for this role "
+                        f"({facts.gross_monthly:,.0f} DZD) by more than "
+                        f"{EQUITY_TOLERANCE:.0%}. The gap will get out: either "
+                        f"apply it to everyone or justify it by the job content."))
 
     if asked["contract"] == "CDD" and asked["cdd_months"]:
         if asked["cdd_months"] > CDD_MAX_MONTHS:
             out.append(("bloquant",
-                        f"Un CDD de {asked['cdd_months']} mois dépasse la durée "
-                        f"maximale de {CDD_MAX_MONTHS} mois. Au-delà, la "
-                        f"relation devient un CDI."))
+                        f"A {asked['cdd_months']}-month CDD exceeds the "
+                        f"{CDD_MAX_MONTHS}-month maximum. Beyond that, the "
+                        f"relationship becomes a CDI."))
 
-    if asked["contract"] == "intérim" and not facts.can_be_temp:
+    if asked["contract"] == "temp" and not facts.can_be_temp:
         out.append(("attention",
-                    f"Ce poste ({facts.role_label}) n'est pas prévu pour de "
-                    f"l'intérim dans votre organisation. Vérifiez avant de "
-                    f"l'annoncer comme tel."))
+                    f"This role ({facts.role_label}) is not set up for temps in "
+                    f"your organisation. Check before advertising it as such."))
 
     if facts.internal_ready:
         names = ", ".join(f.name for f in facts.internal_ready[:3])
         out.append(("attention",
-                    f"{len(facts.internal_ready)} personne(s) de votre équipe "
-                    f"couvrent déjà ce poste ({names}). Un recrutement externe "
-                    f"coûte plus cher qu'une mobilité interne : regardez-les "
-                    f"avant de publier."))
+                    f"{len(facts.internal_ready)} person(s) on your team already "
+                    f"cover this role ({names}). External hiring costs more than "
+                    f"internal mobility: look at them before publishing."))
     elif facts.internal_trainable:
         f0 = facts.internal_trainable[0]
         out.append(("attention",
-                    f"{len(facts.internal_trainable)} personne(s) de votre "
-                    f"équipe sont formables sur ce poste, la plus proche est "
-                    f"{f0.name} ({f0.coverage}% des exigences déjà couvertes, "
-                    f"{f0.training_days} jours de formation estimés)."))
+                    f"{len(facts.internal_trainable)} person(s) on your team are "
+                    f"trainable for this role; the closest is {f0.name} "
+                    f"({f0.coverage}% of requirements covered, about "
+                    f"{f0.training_days} training days)."))
 
     if facts.headcount_role == 0:
         out.append(("attention",
-                    f"Personne n'occupe ce poste aujourd'hui : le salaire "
-                    f"indicatif vient du barème du poste, pas d'un salaire "
-                    f"réellement pratiqué chez vous."))
+                    "Nobody holds this role today: the indicative salary comes "
+                    "from the role scale, not from a salary you actually pay."))
     return out
 
-
-# ---------------------------------------------------------------------------
-# La rédaction
-# ---------------------------------------------------------------------------
 
 @dataclass
 class JobPost:
@@ -298,7 +255,7 @@ class JobPost:
     conditions: list
     apply_line: str
     warnings: list = field(default_factory=list)
-    method: str = "règles"
+    method: str = "rules"
 
     def as_markdown(self) -> str:
         def block(head, items):
@@ -309,52 +266,39 @@ class JobPost:
 
         return (
             f"# {self.title}\n\n{self.summary}\n"
-            + block("Missions", self.missions)
-            + block("Profil recherché", self.required)
-            + block("Atouts appréciés", self.nice)
+            + block("Responsibilities", self.missions)
+            + block("Profile", self.required)
+            + block("Nice to have", self.nice)
             + block("Conditions", self.conditions)
             + f"\n{self.apply_line}\n"
         )
 
 
 _AI_SYSTEM = (
-    "Tu es un recruteur algérien expérimenté. À partir de la demande du "
-    "responsable et des FAITS de l'entreprise, rédige une offre d'emploi "
-    "publiable, en français, pour le marché algérien.\n\n"
-    "Règles absolues :\n"
-    "- Ne parle JAMAIS de salaire, de rémunération, de congés, d'horaires "
-    "légales, de CNAS ni de week-end : un autre bloc s'en charge et le tien "
-    "serait supprimé. Écris seulement le titre, le résumé, les missions et le "
-    "profil.\n"
-    "- N'invente AUCUN chiffre. Si une information manque, ne la mentionne pas.\n"
-    "- Ne promets aucun avantage qui ne figure pas dans les FAITS.\n"
-    "- Le week-end algérien est vendredi et samedi ; dimanche est un jour "
-    "ouvré. Ne transpose jamais une semaine étrangère.\n"
-    "- Ne réinterprète pas la demande du responsable : s'il demande une "
-    "disponibilité un jour donné, reprends ce jour-là tel quel.\n"
-    "- Écris simplement, sans anglicismes ni formules creuses du type "
-    "« environnement dynamique » ou « rejoignez une équipe passionnée ».\n"
-    "- Les missions doivent être concrètes et vérifiables.\n"
-    "- Pas de discrimination : ni âge, ni sexe, ni situation familiale, ni "
-    "origine.\n\n"
-    "Réponds UNIQUEMENT en JSON, sans texte autour :\n"
-    '{"titre": "...", "resume": "2 phrases", "missions": ["..."], '
-    '"profil_requis": ["..."], "atouts": ["..."], "candidature": "1 phrase"}'
+    "You are an experienced Algerian recruiter. From the manager's request and "
+    "the company FACTS, write a publishable job post in English for the "
+    "Algerian market.\n\n"
+    "Absolute rules:\n"
+    "- NEVER mention salary, pay, leave, legal hours, CNAS or the weekend: "
+    "another block handles them and yours would be removed. Write only the "
+    "title, summary, responsibilities and profile.\n"
+    "- Invent NO figure. If information is missing, leave it out.\n"
+    "- Promise no benefit that is not in the FACTS.\n"
+    "- The Algerian weekend is Friday and Saturday; Sunday is a working day.\n"
+    "- Do not reinterpret the request: if a given day is asked, keep it.\n"
+    "- Write plainly, without empty phrases like 'dynamic environment'.\n"
+    "- Responsibilities must be concrete and checkable.\n"
+    "- No discrimination: no age, sex, family status or origin.\n\n"
+    "Answer ONLY in JSON, with no surrounding text:\n"
+    '{"title": "...", "summary": "2 sentences", "missions": ["..."], '
+    '"required": ["..."], "nice": ["..."], "apply": "1 sentence"}'
 )
 
 
 def _repair_truncated_json(fragment: str) -> Optional[dict]:
-    """
-    Récupérer un JSON coupé net par la limite de jetons.
-
-    Une offre en français est longue : si la réponse s'arrête au milieu d'une
-    liste, l'accolade finale manque et tout le travail est perdu. Plutôt que de
-    jeter la réponse, on coupe après le dernier élément complet et on referme les
-    crochets ouverts. Purement mécanique, et borné : si ça ne donne pas un objet
-    valide, l'appelant retombe sur le gabarit.
-    """
+    """Recover JSON cut off by the token limit: cut after the last complete item."""
     frag = fragment
-    if frag.count('"') % 2:                      # une chaîne restée ouverte
+    if frag.count('"') % 2:
         frag = frag[:frag.rfind('"')]
     cut = max(frag.rfind('"'), frag.rfind("]"), frag.rfind("}"))
     if cut <= 0:
@@ -370,7 +314,7 @@ def _repair_truncated_json(fragment: str) -> Optional[dict]:
 
 
 def _parse_json(text: str) -> Optional[dict]:
-    """Le JSON du modèle, même entouré de texte, d'un bloc de code, ou tronqué."""
+    """The model's JSON, even wrapped in text, a code block, or truncated."""
     if not text:
         return None
     m = re.search(r"\{.*\}", text, re.S)
@@ -384,15 +328,12 @@ def _parse_json(text: str) -> Optional[dict]:
     return _repair_truncated_json(text[start:]) if start >= 0 else None
 
 
-# Les mots qui n'ont rien à faire dans une mission ou un profil : ils désignent
-# des conditions, et les conditions sont calculées par le moteur. Un modèle
-# obéit au prompt la plupart du temps, pas toujours ; ce filtre-là ne dépend pas
-# de sa bonne volonté. Il a rattrapé un « Salaire brut mensuel » glissé dans les
-# atouts, et une phrase qui remplaçait le vendredi par le dimanche.
-_CONDITION_WORDS = ("salaire", "rémunération", "remuneration", "dzd", " da ",
-                    "snmg", "congé", "conge", "week-end", "weekend",
-                    "heures légales", "heures legales", "cnas", "dimanche",
-                    "brut mensuel", "prime de", "avantage")
+# Words that belong to conditions, which the engine calculates. This filter does
+# not depend on the model obeying the prompt.
+_CONDITION_WORDS = ("salary", "pay ", "wage", "dzd", " da ", "snmg", "leave",
+                    "weekend", "week-end", "legal hours", "cnas", "sunday",
+                    "gross monthly", "bonus", "benefit",
+                    "salaire", "rémunération", "congé", "dimanche")
 
 
 def _looks_like_condition(s: str) -> bool:
@@ -412,75 +353,61 @@ def _clean_list(value, limit: int = 8) -> list:
 
 
 def _conditions(facts: PoolFacts, asked: dict) -> list:
-    """
-    Les conditions, calculées et non rédigées.
-
-    C'est le bloc que le modèle n'écrit jamais : il porte le salaire, le contrat,
-    les horaires légales, les congés et le week-end. Le reformuler côté langage
-    reviendrait à autoriser une promesse inexacte.
-    """
+    """The conditions, calculated not written: the block the model never writes."""
     contract = asked.get("contract") or (
         "CDI" if facts.cdi_share >= 0.5 else "CDD")
     salary = asked.get("salary") or facts.gross_monthly
     cond = [
-        f"Contrat : {contract}"
-        + (f" de {asked['cdd_months']} mois" if asked.get("cdd_months")
+        f"Contract: {contract}"
+        + (f", {asked['cdd_months']} months" if asked.get("cdd_months")
            and contract == "CDD" else ""),
-        f"Rémunération indicative : {salary:,.0f} DZD brut par mois pour "
-        f"{labour_dz.LEGAL_MONTHLY_HOURS} heures légales "
-        f"(SNMG en vigueur : {labour_dz.SNMG_MONTHLY:,.0f} DZD)",
-        f"Lieu de travail : {facts.wilaya}",
-        f"Congé annuel : {facts.leave_days} jours ouvrables",
-        f"Repos hebdomadaire : {facts.weekend}",
-        "Déclaration CNAS dès l'embauche",
+        f"Indicative pay: {salary:,.0f} DZD gross per month for "
+        f"{labour_dz.LEGAL_MONTHLY_HOURS} legal hours "
+        f"(SNMG in force: {labour_dz.SNMG_MONTHLY:,.0f} DZD)",
+        f"Place of work: {facts.wilaya}",
+        f"Annual leave: {facts.leave_days} working days",
+        f"Weekly rest: {facts.weekend}",
+        "CNAS registration from day one",
     ]
     if asked.get("openings"):
-        cond.insert(0, f"Postes à pourvoir : {asked['openings']}")
+        cond.insert(0, f"Openings: {asked['openings']}")
     return cond
 
 
-def _elide(word: str) -> str:
-    """« de agent » ne se publie pas : devant une voyelle, on élide."""
-    return ("d'" if word[:1].lower() in "aeiouyéèêà" else "de ") + word
-
-
 def _rule_draft(brief: str, facts: PoolFacts, asked: dict) -> JobPost:
-    """Le gabarit déterministe : ce qui part quand il n'y a pas de clé IA."""
+    """The deterministic template, used when there is no AI key."""
     seed = cv_screen.JOB_TEMPLATES_TEXT.get(facts.role_key, "")
     labels = facts.skill_labels
     role_lower = facts.role_label.lower()
-    missions = [
-        f"Assurer les tâches courantes du poste {_elide(role_lower)}",
-        # Le libellé garde sa casse : « (HSE) » ne se met pas en minuscules.
-    ] + [f"{label} : tenir le niveau attendu au quotidien"
-         for label in labels[:4]]
+    missions = [f"Carry out the day-to-day work of a {role_lower}"] + [
+        f"{label}: hold the expected level every day" for label in labels[:4]]
     required = [
-        "Expérience du poste ou d'un poste proche",
-        "Arabe et français",
-        "Service national réglé pour les candidats concernés",
+        "Experience in the role or a close one",
+        "Arabic and French",
+        "National service settled, for candidates concerned",
     ]
     if labels:
-        required.append("Maîtrise de : " + ", ".join(labels[:5]))
+        required.append("Command of: " + ", ".join(labels[:5]))
     return JobPost(
-        title=f"{facts.role_label} , {facts.wilaya}",
-        summary=(f"Nous recrutons un {role_lower} à "
-                 f"{facts.wilaya}. " + (brief.strip() or seed))[:500],
+        title=f"{facts.role_label}, {facts.wilaya}",
+        summary=(f"We are hiring a {role_lower} in {facts.wilaya}. "
+                 + (brief.strip() or seed))[:500],
         missions=missions,
         required=required,
-        nice=["Connaissance du secteur", "Disponibilité en shifts"],
+        nice=["Knowledge of the sector", "Available for shift work"],
         conditions=_conditions(facts, asked),
-        apply_line="Pour candidater, envoyez votre CV en précisant le poste.",
-        method="règles",
+        apply_line="To apply, send your CV and name the role.",
+        method="rules",
     )
 
 
 def draft(brief: str, facts: PoolFacts, use_ai: bool = True) -> JobPost:
     """
-    L'offre rédigée depuis la phrase du responsable, calée sur les faits.
+    The post written from the manager's sentence, fitted to the facts.
 
-    La couche langage écrit le titre, le résumé, les missions et le profil. Les
-    conditions sont recalculées par-dessus, et les alertes de cohérence sont
-    ajoutées. En cas d'absence de clé ou d'échec, on retombe sur le gabarit.
+    The language layer writes title, summary, responsibilities and profile.
+    Conditions are recalculated on top, and consistency warnings are added.
+    Without a key, or on failure, the template is used.
     """
     asked = read_brief(brief)
     warnings = checks(brief, facts)
@@ -490,32 +417,33 @@ def draft(brief: str, facts: PoolFacts, use_ai: bool = True) -> JobPost:
         post.warnings = warnings
         return post
 
-    user = (f"FAITS DE L'ENTREPRISE (source de vérité) :\n{facts.as_text()}\n\n"
-            f"DEMANDE DU RESPONSABLE, dans ses mots :\n{brief.strip()}")
-    # 1400 jetons : une offre complète en français (titre, résumé, quatre listes)
-    # dépasse régulièrement 900, et une réponse coupée perd son accolade finale.
+    user = (f"COMPANY FACTS (source of truth):\n{facts.as_text()}\n\n"
+            f"MANAGER'S REQUEST, in their words:\n{brief.strip()}")
     res = ai.chat(_AI_SYSTEM, user, max_tokens=1400, temperature=0.35)
     data = _parse_json(res.text) if res.ok else None
     if not data:
         post = _rule_draft(brief, facts, asked)
         post.warnings = warnings
-        post.method = "règles (le modèle n'a pas répondu en JSON)"
+        post.method = "rules (the model did not answer in JSON)"
         return post
 
-    title = str(data.get("titre") or facts.role_label).strip()[:120]
-    summary = str(data.get("resume") or "").strip()[:600]
+    def pick(*keys):
+        for k in keys:
+            if data.get(k):
+                return data[k]
+        return None
+
     post = JobPost(
-        title=title,
-        summary=summary,
-        missions=_clean_list(data.get("missions")),
-        required=_clean_list(data.get("profil_requis")),
-        nice=_clean_list(data.get("atouts"), limit=5),
-        # Les conditions ne viennent jamais du modèle.
-        conditions=_conditions(facts, asked),
-        apply_line=str(data.get("candidature")
-                       or "Envoyez votre CV en précisant le poste.").strip()[:240],
+        title=str(pick("title", "titre") or facts.role_label).strip()[:120],
+        summary=str(pick("summary", "resume") or "").strip()[:600],
+        missions=_clean_list(pick("missions")),
+        required=_clean_list(pick("required", "profil_requis")),
+        nice=_clean_list(pick("nice", "atouts"), limit=5),
+        conditions=_conditions(facts, asked),   # never from the model
+        apply_line=str(pick("apply", "candidature")
+                       or "Send your CV and name the role.").strip()[:240],
         warnings=warnings,
-        method=f"rédigé par {res.model}, faits et conditions calculés",
+        method=f"written by {res.model}, facts and conditions calculated",
     )
     if not post.missions or not post.required:
         fallback = _rule_draft(brief, facts, asked)
@@ -526,17 +454,15 @@ def draft(brief: str, facts: PoolFacts, use_ai: bool = True) -> JobPost:
 
 def to_screening_job(post: JobPost, facts: PoolFacts) -> cv_screen.Job:
     """
-    L'offre convertie en critères de tri, pour classer le vivier dessus.
+    The post turned into screening criteria, to rank the pool against it.
 
-    On part du poste type quand il existe déjà dans le référentiel de tri, et on
-    ne remplace que le titre : les seuils (formation, expérience, langues) sont
-    ceux du référentiel, pas une invention du texte de l'annonce.
+    Thresholds (education, experience, languages) stay those of the framework;
+    only the title comes from the post.
     """
     base = cv_screen.JOBS.get(facts.role_key)
     if base is None:
-        base = cv_screen.Job(role_key=facts.role_key, title=post.title,
+        return cv_screen.Job(role_key=facts.role_key, title=post.title,
                              skills=tuple(facts.required_skills))
-        return base
     return cv_screen.Job(
         role_key=base.role_key,
         title=post.title,
@@ -551,83 +477,42 @@ def to_screening_job(post: JobPost, facts: PoolFacts) -> cv_screen.Job:
 
 
 if __name__ == "__main__":
-    print("Rédaction d'offre - auto-vérification\n")
+    print("Job post writer, self check\n")
 
     people = hr.sample_workforce("sorter", 30, "Alger")
     facts = pool_facts(people, "sorter", "Alger")
-
-    ok = (facts.headcount_role == 30 and facts.gross_monthly > 0
-          and facts.leave_days == hr.ANNUAL_LEAVE_DAYS)
-    print(f"{'OK ' if ok else 'ECHEC'} faits de l'équipe : {facts.headcount_role} "
-          f"sur le poste, {facts.gross_monthly:,.0f} DZD brut, "
-          f"{facts.leave_days} jours de congé")
+    assert facts.headcount_role == 30 and facts.gross_monthly > 0
+    assert facts.leave_days == hr.ANNUAL_LEAVE_DAYS
 
     south = pool_facts(hr.sample_workforce("sorter", 5, "Adrar"), "sorter", "Adrar")
-    ok = south.leave_days == hr.ANNUAL_LEAVE_DAYS + hr.SOUTH_BONUS_DAYS
-    print(f"{'OK ' if ok else 'ECHEC'} wilaya du Sud : {south.leave_days} jours "
-          f"de congé au lieu de {hr.ANNUAL_LEAVE_DAYS}")
+    assert south.leave_days == hr.ANNUAL_LEAVE_DAYS + hr.SOUTH_BONUS_DAYS
 
-    # Lecture de la demande
-    read = read_brief("il me faut 3 agents de tri en CDD de 30 mois à 18000 DA")
-    ok = (read["openings"] == 3 and read["contract"] == "CDD"
-          and read["cdd_months"] == 30 and read["salary"] == 18000)
-    print(f"{'OK ' if ok else 'ECHEC'} demande relue : {read}")
+    read = read_brief("I need 3 sorters on a CDD of 30 months at 18000 DA")
+    assert (read["openings"], read["contract"], read["cdd_months"], read["salary"]) == \
+        (3, "CDD", 30, 18000), read
+    read_fr = read_brief("il me faut 3 agents de tri en CDD de 30 mois à 18000 DA")
+    assert read_fr["openings"] == 3 and read_fr["cdd_months"] == 30, read_fr
 
-    # Les deux garde-fous qui comptent
-    warns = checks("3 agents en CDD de 30 mois à 18000 DA", facts)
-    blocking = [w for lvl, w in warns if lvl == "bloquant"]
-    has_snmg = any("SNMG" in w for w in blocking)
-    has_cdd = any("CDD" in w for w in blocking)
-    print(f"{'OK ' if has_snmg else 'ECHEC'} salaire sous le SNMG signalé comme bloquant")
-    print(f"{'OK ' if has_cdd else 'ECHEC'} CDD de 30 mois signalé comme bloquant")
+    blocking = [w for lvl, w in checks("3 sorters, CDD of 30 months at 18000 DA", facts)
+                if lvl == "bloquant"]
+    assert any("SNMG" in w for w in blocking) and any("CDD" in w for w in blocking)
+    assert any("exceeds" in w for lvl, w in checks("a sorter at 60000 DA", facts)
+               if lvl == "attention")
 
-    equity = checks("un agent de tri à 60000 DA", facts)
-    has_equity = any("dépasse" in w for lvl, w in equity if lvl == "attention")
-    print(f"{'OK ' if has_equity else 'ECHEC'} écart d'équité interne signalé")
-
-    # Le gabarit hors ligne doit produire une offre complète et légale
-    post = draft("un agent de tri sérieux, disponible en shifts", facts,
-                 use_ai=False)
+    post = draft("a reliable sorter, available for shifts", facts, use_ai=False)
     md = post.as_markdown()
-    ok = (post.title and post.missions and post.required and post.conditions
-          and "SNMG" in md and "vendredi et samedi" in md)
-    print(f"{'OK ' if ok else 'ECHEC'} offre hors ligne : {len(md)} caractères, "
-          f"conditions légales incluses")
+    assert post.missions and post.required and "SNMG" in md and "Friday and Saturday" in md
 
     job = to_screening_job(post, facts)
-    ok = job.role_key == "sorter" and job.min_education == \
-        cv_screen.JOBS["sorter"].min_education
-    print(f"{'OK ' if ok else 'ECHEC'} conversion en critères de tri : "
-          f"seuils du référentiel conservés")
+    assert job.min_education == cv_screen.JOBS["sorter"].min_education
 
-    # Une réponse coupée par la limite de jetons doit être récupérée, pas jetée.
-    truncated = ('{"titre": "Agent de tri", "resume": "Deux phrases ici.", '
-                 '"missions": ["Trier les colis", "Scanner les envo')
-    repaired = _parse_json(truncated)
-    ok = bool(repaired) and repaired.get("titre") == "Agent de tri" \
-        and repaired.get("missions") == ["Trier les colis"]
-    print(f"{'OK ' if ok else 'ECHEC'} JSON tronqué réparé : "
-          f"{list(repaired) if repaired else 'perdu'}")
+    repaired = _parse_json('{"title": "Sorter", "summary": "Two lines.", '
+                           '"missions": ["Sort parcels", "Scan the shipm')
+    assert repaired and repaired.get("missions") == ["Sort parcels"], repaired
 
-    # Les conditions n'appartiennent qu'au moteur : une puce du modèle qui parle
-    # d'argent, de congés ou de dimanche doit disparaître.
-    leaked = _clean_list([
-        "Tri et scan des colis",
-        "Salaire brut mensuel attractif",
-        "Disponibilité y compris le dimanche à la place du vendredi",
-        "Congés payés selon la loi",
-        "Relation avec les transporteurs",
-    ])
-    ok = leaked == ["Tri et scan des colis", "Relation avec les transporteurs"]
-    print(f"{'OK ' if ok else 'ECHEC'} puces de conditions filtrées : "
-          f"{len(leaked)} gardées sur 5 -> {leaked}")
-
-    # Un libellé à virgule doit devenir une parenthèse avant d'être publié.
-    labels = facts.skill_labels
-    ok = all(" , " not in lb for lb in labels) and \
-        any(lb.startswith("Arabe (") for lb in labels)
-    print(f"{'OK ' if ok else 'ECHEC'} libellés publiables : "
-          f"{[lb for lb in labels if lb.startswith('Arabe')]}")
-
-    print("\n--- Offre produite sans clé IA ---")
+    kept = _clean_list(["Sort and scan parcels", "Attractive gross monthly salary",
+                        "Available Sunday instead of Friday", "Paid leave by law",
+                        "Work with carriers"])
+    assert kept == ["Sort and scan parcels", "Work with carriers"], kept
+    print("all checks passed\n")
     print(md)

@@ -29,12 +29,12 @@ proves the saving out-of-sample.
 
 ## Positioning
 
-The mechanism a foreign competitor cannot truthfully copy: WorkForce.dz models
+The mechanism a foreign competitor cannot truthfully copy: Tawzia models
 the **real Algerian operating calendar** as a first-class input — the
-Friday–Saturday weekend, the Hijri calendar (Ramadan and the two Aïds, which
+Friday–Saturday weekend, the Hijri calendar (Ramadan and the two Eids, which
 move ~11 days earlier each year and reshape the day), the diaspora summer peak,
-the rentrée and the end-of-month payday cycle — plus real observed weather and
-the real Algerian labour-cost stack (SNMG, CNAS). Global workforce tools
+back to school and the end-of-month payday cycle — plus real observed weather and
+the real Algerian labour-cost stack (SNMG, CNAS). Global tawzia tools
 (Quinyx, UKG, Legion) are built for a Gregorian, Saturday–Sunday, temperate
 market and have no way to express these. A second, aviation-specific mechanism:
 a rotation-aware delay-cascade predictor that names the single flight to protect
@@ -47,8 +47,8 @@ departure boards (FIDS); the dual Hijri/Gregorian almanac and prayer-time
 calendars that govern the Algerian year; delivery-app dispatch dashboards;
 customs/labour bureaucracy; wilaya road signage (French/Arabic/Tifinagh); the
 Saharan and Mediterranean climate that drives labour capacity. Demand events
-that matter: Ramadan, Aïd el-Fitr, Aïd el-Adha, the mid-June–September diaspora
-return, the rentrée scolaire, payday.
+that matter: Ramadan, Eid al-Fitr, Eid al-Adha, the mid-June–September diaspora
+return, back to school, payday.
 
 ## Capabilities and Constraints
 
@@ -83,7 +83,7 @@ return, the rentrée scolaire, payday.
 
 ## Brand Commitments
 
-- Name: **WorkForce.dz** (the `.dz` — Algeria's ccTLD — is load-bearing; this
+- Name: **Tawzia** (the `.dz` — Algeria's ccTLD — is load-bearing; this
   is deliberately, unmistakably Algerian).
 - Voice: rigorous, plain-spoken, radically honest — it states its own caveats
   rather than hiding them.

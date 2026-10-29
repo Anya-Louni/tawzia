@@ -1,10 +1,10 @@
-# Tawzia rebuild brief (for the coding agent)
+# Tawzia rebuild brief (for the build team)
 
 Research date: 28 October 2026. Every legal number below has a source at the bottom. Numbers marked **[verify]** come from a single private source or conflict between sources; make them config values, never hardcode.
 
 ---
 
-## 0. Instructions to the coding agent
+## 0. Build instructions
 
 1. Read this whole file before touching code. Then read the existing Tawzia repo and list every current page/feature.
 2. Map each existing feature to section 4 (keep / merge / cut). Do the cuts first.
@@ -75,7 +75,7 @@ UX rules (enforce them):
 
 ## 6. The agents (each one replaces a job HR does today)
 
-Build each agent as a Python service with explicit tools, run by the the AI model API tool-use loop. Deterministic math (payroll, constraints) stays in code; the LLM plans, explains, drafts text, and extracts data. **No agent ever sends, files, pays, hires or rejects without a human Approve click.**
+Build each agent as a Python service with explicit tools, run by an LLM tool-use loop. Deterministic math (payroll, constraints) stays in code; the LLM plans, explains, drafts text, and extracts data. **No agent ever sends, files, pays, hires or rejects without a human Approve click.**
 
 ### 6.1 Employee Assistant (the demo's star)
 - Channel: a WhatsApp-style chat (in the demo, a phone mockup inside the app; real WhatsApp/Telegram integration listed as roadmap).
@@ -232,7 +232,7 @@ Real database, not spreadsheets or JSON files. Postgres (SQLite only for the loc
 
 **Data model (core tables):** `companies`, `sites`, `employees` (identity), `employment` (contract history: type, dates, role, salary, site), `documents` (metadata + encrypted file reference), `onboarding_tasks`, `access_grants`, `leave_ledger`, `payslips`, `inbox_cards`, `action_log`, `consents`.
 
-**Security rules the coding agent must implement:**
+**Security rules the build must implement:**
 - **Field-level encryption** for NIN, ID card number, RIB/CCP, CNAS number, health-related fields (AES-256-GCM, keys in environment/secret manager, never in the repo). Files encrypted at rest in object storage.
 - **Role-based access:** employee sees only their own file; manager sees their team without salary or health fields; HR sees all; payroll role sees pay fields; auditor is read-only. Enforce in the API layer and with Postgres row-level security.
 - **Data minimisation:** collect only what the configured checklist needs. Medical certificates store "fit for work: yes, date" plus the file, never diagnoses. Background checks store the result, never the record itself.
@@ -258,7 +258,7 @@ Real database, not spreadsheets or JSON files. Postgres (SQLite only for the loc
 8. **Trust layer:** action log, PII redaction, "See why" on every card, settings for local model.
 9. **Polish:** motion, empty states, FR/EN/AR (RTL for Arabic), mobile layout for the employee phone view.
 
-Suggested stack (matches Anya's tools): Next.js + React + TypeScript + Tailwind front end; FastAPI back end importing the existing Python ML; OR-Tools; the AI model API with tool use (latest Sonnet model for speed, Opus for planning-heavy calls); SQLite/Postgres. If the jury date leaves no time for a front-end migration, keep Streamlit and apply sections 4 to 6 anyway: the 5-screen structure and the Inbox matter more than the framework.
+Suggested stack (matches Anya's tools): Next.js + React + TypeScript + Tailwind front end; FastAPI back end importing the existing Python ML; OR-Tools; an LLM API with tool use (a fast model for routine calls, a stronger one for planning-heavy calls); SQLite/Postgres. If the jury date leaves no time for a front-end migration, keep Streamlit and apply sections 4 to 6 anyway: the 5-screen structure and the Inbox matter more than the framework.
 
 ## 10. Jury demo script (about 5.5 minutes, "a day where HR does nothing"; if capped at 5, shorten step 3 to 40 s)
 
@@ -273,7 +273,7 @@ Suggested stack (matches Anya's tools): Next.js + React + TypeScript + Tailwind 
 
 Be honest on stage: the forecast model is trained on simulated volumes with real Hijri and weather signals; it retrains on a client's own data at onboarding.
 
-## 11. Things the coding agent must NOT do
+## 11. Things the build must NOT do
 - Hardcode any rate from this file outside the config.
 - Let any agent submit filings, send messages, or reject candidates without an Approve click.
 - Call real external services (ANEM, CNAS, DGI portals) in the demo; link to them only.

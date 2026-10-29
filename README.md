@@ -1,234 +1,142 @@
 # Tawzia
 
-**La plateforme RH et de planification conçue pour l'Algérie.**
+**An AI HR department for Algerian companies. The agents do the HR work; HR only approves.**
 
-Recruter, planifier, payer, se conformer, décider. Sur le vrai calendrier
-algérien, la vraie météo et le vrai droit du travail.
+Tawzia prepares payroll, filings, leave decisions, schedules, hiring and onboarding
+against Algerian labour law, then puts every finished task in one inbox: what the
+agent did, why, which rule it applied, and three buttons. Nothing is sent, filed,
+paid or rejected without a human click.
 
-> Le récit commercial et le dimensionnement du marché sont dans
-> [`PITCH.md`](PITCH.md). La provenance de chaque chiffre est dans
-> [`SOURCES.md`](SOURCES.md). Pour dérouler une démonstration, suivez
-> [`DEMO_GUIDE.md`](DEMO_GUIDE.md).
-
----
-
-## Pourquoi cet outil existe
-
-Les logiciels RH internationaux sont bâtis pour un monde grégorien, avec un
-week-end samedi-dimanche et un climat tempéré. En Algérie ils se trompent par
-construction : le week-end est **vendredi-samedi**, les deux plus gros
-événements de l'année (le Ramadan et les deux Aïd) reculent d'environ 11 jours
-chaque année sur le **calendrier hégirien**, et l'été n'est pas un creux mais le
-**pic du retour de la diaspora**.
-
-Ces trois faits sont des entrées de première classe ici, pas des options. Et
-l'application mesure ce qu'ils valent, en comparant le même algorithme avec et
-sans eux.
-
-## Ce que contient l'application
-
-29 écrans, répartis en sept sections. Le bandeau supérieur les montre toutes ;
-cliquer sur une section assombrit l'écran et présente ses fonctionnalités.
-
-### Accueil
-| Écran | Ce qu'il fait |
-|---|---|
-| **Accueil** | Le point d'entrée : ce que fait la plateforme, par où commencer, l'engagement d'honnêteté. Une visite guidée se lance au premier lancement. |
-| **Tableau de bord** | L'écran du matin : charge prévue par shift, planning recommandé et son coût chargé, événements du calendrier à venir. |
-
-### Recrutement
-| Écran | Ce qu'il fait |
-|---|---|
-| **Sourcing & marque employeur** | Par quels canaux algériens réels faire venir des candidats : universités, écoles nationales, réseau CFPA/INSFP, ANEM, sites d'emploi. Classés par adéquation métier, proximité, coût et délai, avec un plan chiffré et un message de prise de contact. |
-| **Évaluation de CV** | Déposez un CV, obtenez un verdict adapté au contexte algérien (formation LMD, service national, langues, permis, mobilité), les lacunes et des questions d'entretien. Détecte les CV qui tentent de manipuler le tri automatique. |
-| **Rédiger une offre** | Une phrase suffit : l'annonce est écrite, le salaire et les conditions sont calculés sur votre équipe et le droit algérien. |
-| **Vivier de candidats** | Toutes les candidatures classées du mieux au moins adapté, avec filtres et profil détaillé. Le classement est explicable critère par critère. |
-| **Appariement CV/poste** | Classe un lot de candidats face à une offre par embeddings locaux. Sans clé d'API, hors ligne, reproductible. |
-
-### Équipe & présence
-| Écran | Ce qu'il fait |
-|---|---|
-| **Employés** | Le registre du personnel et les droits à congé calculés sur les entitlements légaux réels. |
-| **Demandes & présence** | Congés, sorties, retards et absences, arbitrés avec la charge prévue de la semaine. |
-| **Compétences & mobilité** | Qui, dans l'effectif, peut déjà tenir le poste à pourvoir, ce qu'il lui manque, et l'arbitrage chiffré former ou recruter. |
-| **Risque de départ** | Qui risque de partir dans six mois, pourquoi, et ce que coûte son remplacement. |
-| **Négociateur de rétention** | L'action la moins chère pour garder un salarié, avec le script d'entretien. |
-
-### Planification
-| Écran | Ce qu'il fait |
-|---|---|
-| **Prévision de la demande** | La charge attendue par shift, avec des intervalles p10-p90 dérivés de l'erreur réelle du backtest. Chaque journée porte la raison de son allure. |
-| **Planning & coût** | Le roster le moins cher qui respecte la loi : plafond d'heures supplémentaires, repos hebdomadaire, niveau de service. |
-| **Analyse sectorielle** | La fonctionnalité propre au secteur choisi, qui change avec le type d'activité. |
-| **Aéroport** | Module aviation, visible seulement en édition aéroport : flux passagers vers effectif de terminal, prédiction de cascade de retards, risque de rotation. Sur le réseau réel d'Alger. |
-
-### Paie & conformité
-| Écran | Ce qu'il fait |
-|---|---|
-| **Paie** | Bulletins, CNAS et IRG calculés sur le barème algérien. |
-| **Échéances & déclarations** | Ce que le comptable doit déposer à la CNAS et aux impôts, avant quand, avec le lien du portail officiel et un export agenda. |
-| **Détection d'anomalies** | Les écarts de paie et de présence qu'un contrôle relèverait avant vous. |
-| **Contrôle de documents** | Un modèle de vision entraîné lit les montants d'un bulletin, et la plateforme les confronte au SNMG, au taux CNAS et au volume horaire légal. |
-| **Simulateur d'inspection** | Ce que verrait un inspecteur du travail s'il passait aujourd'hui. |
-| **Veille Journal Officiel** | Les textes parus qui changent vos obligations. |
-
-### Décision IA
-| Écran | Ce qu'il fait |
-|---|---|
-| **Tableau de KPI** | Les indicateurs qui décident, suivis dans le temps. |
-| **Simulateur de scénarios** | Volume, effectif, salaires : l'effet chiffré avant de trancher. |
-| **Assistant** | Une seule conversation pour toute la plateforme : planning, personnel, paie, décisions. Un routeur choisit le domaine et ne donne au modèle que les chiffres concernés. Bâti sur assistant-ui. |
-| **Données de l'entreprise** | Importez votre fichier : toute la plateforme bascule sur vos vrais chiffres. |
-
-### Preuves & sources
-| Écran | Ce qu'il fait |
-|---|---|
-| **Preuves** | Le backtest walk-forward contre un modèle international générique et des baselines naïves, la comparaison en argent hors échantillon, l'importance des variables. La page de crédibilité. |
-| **Calendrier algérien** | Pourquoi un outil étranger se trompe ici, avec une vérification en direct contre le calendrier de référence. |
-| **Analyse économique** | Dimensionnement du marché et économie unitaire, avec un prix dérivé de l'économie mesurée. |
-| **Confidentialité** | Ce qui est traité, ce qui sort vers un service tiers, et combien de temps c'est conservé. |
-| **Sources & hypothèses** | Chaque chiffre externe et chaque hypothèse, cités. |
-
-> **Les volumes opérationnels de la démonstration sont simulés.** Aucun registre
-> d'entreprise algérienne n'est public. Le calendrier, la météo et le droit
-> auxquels ils répondent sont réels, et l'application le dit sur chaque page.
+> The business case is in [`PITCH.md`](PITCH.md), the provenance of every figure in
+> [`SOURCES.md`](SOURCES.md), and a demo walkthrough in [`DEMO_GUIDE.md`](DEMO_GUIDE.md).
+> The product brief is [`TAWZIA_REBUILD_BRIEF.md`](TAWZIA_REBUILD_BRIEF.md).
 
 ---
 
-## Installation
+## Why it exists
 
-### 1. Prérequis
-- **Python 3.10 ou plus récent**, à vérifier avec `python --version`
+Algerian HR is paperwork-heavy and rule-bound: monthly G50 income-tax filing, CNAS
+contributions, the annual DAS, CNAS affiliation within 10 days of each hire, the ANEM
+5-working-day vacancy window, and data-protection law 25-11. Global HR suites do not
+know these rules, and local tools digitise the forms without doing the work.
 
-### 2. Environnement et dépendances
+Tawzia also models the real Algerian calendar: a **Friday-Saturday weekend**, the
+**Hijri calendar** (Ramadan and the two Eids move about 11 days earlier each year), and
+a summer that is a **diaspora peak**, not a lull.
 
-Windows (PowerShell) :
+## What is in the app
 
-```powershell
+Five screens plus Settings. English by default, French and Arabic (right to left) one
+click away.
+
+| Screen | What it does |
+|---|---|
+| **Decisions** | The approval inbox. Agents for attendance, payroll, filings, compliance, retention, hiring, onboarding and the employee desk drop cards here, most urgent first. Compliant replies are batched into one click. A progress bar shows the day being cleared. |
+| **Decisions › Employee desk** | Employees ask in French, Arabic or Darija ("nheb attestation de travail lel bank") and get a bilingual work certificate, their leave balance or payslip, with HR signing in the inbox. |
+| **People** | Employee files, leave and attendance, skills and internal mobility, rule-based retention early warning. |
+| **Planning** | A weekly schedule from an OR-Tools CP-SAT solver with the law as hard constraints (40 h week, 20% overtime cap, weekly rest, night-work rules for under-19s and women without a site waiver), kept stable week to week. Ramadan hours on a switch. Demand comes from a walk-forward backtested forecast. |
+| **Hiring** | Job posts written from one sentence, Algerian sourcing channels, ranked candidates with a four-fifths bias audit, the ANEM window countdown, and phone-based onboarding that HR approves with one card. |
+| **Payroll & filings** | 2026 payroll (SNMG, CNAS by branch, IRG with smoothing) from a dated rules file, bilingual payslips, G50 / CNAS / DAS drafts with deadlines and portal links, anomaly detection, inspection simulator, Official Journal watch. |
+| **Settings** | Ask Tawzia (chat over company figures), **PDF to AI text**, company data import, privacy and trust controls (PII masking, local model, action log, incident register), evidence and sources. |
+
+**"Ask Tawzia"** in the top bar acts, not only answers: "work certificate for Amina
+Belkacem" creates the card, "Ramadan starts Thursday, redo the schedule" regenerates the
+week, a screen name opens it.
+
+> **The demo company is fictional.** Its 140 employees, two sites and operational volumes
+> are simulated. The calendar, weather, labour law and pay rules they run on are real,
+> and every screen says so.
+
+## PDF to AI text
+
+Any PDF (contract, policy, payslip, CV) becomes clean Markdown with page markers,
+headings and lists, plus paragraph-aligned chunks sized for an AI context window
+(JSONL for embedding pipelines). Hyphenated line breaks are rejoined and repeated
+headers, footers and page numbers removed; personal data can be masked. Scanned pages
+without a text layer are listed, not guessed. Available in Settings and as the MCP
+tool `tawzia_pdf_to_text`. Nothing leaves the machine.
+
+## MCP server
+
+The same engine is exposed to AI assistants through the Model Context Protocol:
+
+- `tawzia_mcp/server.py`: 10 public, read-only tools (net salary, employer cost,
+  overtime and shift legality, CDD validity, compliance calendar, public holidays,
+  labour-law search, payslip lines, PDF to text).
+- `tawzia_mcp/company.py`: 18 company tools behind bearer tokens, scoped by role. Read
+  tools, plus draft tools that only create inbox cards. No tool can approve, file,
+  send, pay, delete or reject.
+
+See [`tawzia_mcp/README.md`](tawzia_mcp/README.md); evaluations in
+`evaluations/tawzia_mcp_eval.xml`.
+
+## Trust and data protection
+
+- Field-level AES-256-GCM encryption of ID numbers, bank details, CNAS numbers and
+  health fields; role-based access (employee, manager, HR, payroll, auditor).
+- Every sensitive read and every decision written to an action log (law 25-11).
+- Personal data replaced by tokens before any call to an external language model, and
+  restored in the answer; a local open-weights model option for sovereign hosting.
+- Human approval on every hire, rejection, payment and filing.
+
+---
+
+## Install
+
+Python 3.10 or newer.
+
+```bash
 python -m venv venv
-venv\Scripts\Activate.ps1
+venv/Scripts/activate        # macOS / Linux: source venv/bin/activate
 python -m pip install -r requirements.txt
-```
-
-macOS ou Linux :
-
-```bash
-python3 -m venv venv
-source venv/bin/activate
-python -m pip install -r requirements.txt
-```
-
-Si PowerShell bloque l'activation :
-`Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`, puis
-recommencez.
-
-`requirements.txt` installe aussi le composant de conversation depuis
-`components/tawzia-chat`. Ses fichiers JavaScript sont déjà construits et
-versionnés, donc aucune installation Node n'est nécessaire pour faire tourner
-l'application.
-
-### 3. Lancer
-
-```bash
 streamlit run dashboard.py
 ```
 
-L'application s'ouvre sur `http://localhost:8501`.
+The app opens on `http://localhost:8501`. The first load of a forecast runs a
+walk-forward backtest (about three minutes); results are cached on disk afterwards.
 
-Le premier affichage récupère la météo réelle et lance un backtest walk-forward,
-ce qui prend environ **trois minutes**. Le résultat est ensuite persisté sur
-disque et les affichages suivants prennent quelques secondes, y compris après un
-redémarrage.
-
-**Avant une démonstration**, ouvrez le tableau de bord une fois pour chaque
-activité et chaque wilaya que vous comptez montrer. Une combinaison jamais
-ouverte repaie ces trois minutes devant le client.
-
-### 4. Clé IA, facultative
-
-Les copilotes et l'assistant utilisent [Groq](https://console.groq.com), dont
-l'offre gratuite ne demande pas de carte. Créez un fichier `.env` à la racine :
+**Optional AI key.** The language layer uses [Groq](https://console.groq.com) (free
+tier). Create a `.env` file at the root:
 
 ```
-GROQ_API_KEY=gsk_votre_cle_ici
+GROQ_API_KEY=your_key
+GROQ_MODEL=openai/gpt-oss-120b
 ```
 
-`.env` est ignoré par git. Tous les modèles maison (prévision, optimiseur,
-attrition, appariement de CV, lecture de documents) tournent sans clé.
+Every owned model (forecast, solver, payroll, anomaly detection, CV ranking, PDF
+conversion) runs without a key. For a local model, set `TAWZIA_LOCAL_MODEL` to an
+Ollama model name.
 
-### Démonstration hors ligne
-
-Ouvrez l'application une fois avec une connexion pour remplir les caches, puis
-désactivez **Données → Autoriser les appels API en direct** dans le bandeau.
-Tout tourne ensuite depuis `data/cache/`.
-
----
-
-## Structure du projet
-
-```
-.
-├── dashboard.py                  # Point d'entrée, navigation sur les 29 pages
-├── app_pages/                    # Un fichier par écran
-├── core/                         # Le moteur, chaque module s'auto-teste
-│   ├── sources.py                # Registre unique des chiffres cités et des hypothèses
-│   ├── calendar_dz.py            # Conversion hégirienne, fêtes, moteurs saisonniers
-│   ├── weather_dz.py             # Open-Meteo par wilaya, avec repli hors ligne
-│   ├── labour_dz.py              # SNMG, CNAS, rôles, shifts
-│   ├── payroll_dz.py             # Bulletins, IRG, déclarations
-│   ├── demand.py                 # Volumes simulés sur calendrier et météo réels
-│   ├── forecast.py               # Backtest walk-forward, prévision boostée
-│   ├── staffing.py               # Optimiseur de roster et baseline de comparaison
-│   ├── attrition.py              # Risque de départ interprétable
-│   ├── skills.py                 # Compétences, mobilité interne, former ou recruter
-│   ├── sourcing.py               # Canaux de sourcing réels et plan chiffré
-│   ├── vision.py                 # Lecteur de chiffres entraîné, contrôle de documents
-│   ├── cv_screen.py              # Lecture de CV et défense contre l'injection
-│   ├── matching.py               # Appariement CV/poste par embeddings locaux
-│   ├── aviation.py               # Réseau de vols d'Alger
-│   ├── delay_cascade.py          # Propagation de retard et vol pivot
-│   ├── nav.py                    # Bandeau et sélecteur de fonctionnalités
-│   ├── tour.py                   # Visite guidée (driver.js embarqué)
-│   └── appdata.py                # Chargeurs mis en cache, thème, état partagé
-├── components/tawzia-chat/    # Composant de conversation (assistant-ui, CCv2)
-├── assets/vendor/                # driver.js embarqué, aucun CDN à l'exécution
-├── DESIGN.md                     # Le système visuel et ses règles
-├── DEMO_GUIDE.md                 # Comment dérouler une démonstration
-├── PITCH.md                      # Récit commercial
-├── SOURCES.md                    # Provenance de chaque chiffre
-└── data/cache/                   # Réponses d'API mises en cache (ignoré par git)
-```
-
-### Vérifier le moteur
-
-Chaque module du moteur porte son propre auto-contrôle :
+## Tests
 
 ```bash
-python -m core.calendar_dz     # aller-retour hégirien et week-end
-python -m core.labour_dz       # pile de coûts, retrouve le plancher de 138,46 DZD/h
-python -m core.forecast        # backtest walk-forward contre les baselines
-python -m core.vision          # entraîne le lecteur de chiffres et affiche son exactitude
-python -m core.sourcing        # classement des canaux de recrutement
-python -m core.skills          # écart de compétences et mobilité interne
-python -m core.pipeline        # économie de bout en bout, hors échantillon
+python tests/test_payroll.py        # IRG / CNAS test vectors
+python tests/test_mcp.py            # public MCP tools
+python tests/test_mcp_company.py    # company MCP tools, roles, drafts
+python tools/check_pages.py         # every screen renders without error
+python -m core.scheduler            # each core module self-tests the same way
 ```
 
----
+## Project layout
 
-## Dépannage
+```
+dashboard.py            entry point and navigation
+app_pages/              one file per screen
+core/                   the engine; every module self-tests with python -m core.<name>
+  autopilot.py          agents -> inbox cards
+  payroll_dz.py rules.py legal.py filings.py   pay, rules, legal checks, filing drafts
+  scheduler.py          CP-SAT weekly schedule
+  self_service.py       employee desk (FR / AR / Darija)
+  onboarding.py db.py   onboarding agent, encrypted employee database
+  pdf_ingest.py pii.py bias.py   PDF to text, PII masking, bias audit
+  forecast.py demand.py calendar_dz.py weather_dz.py   demand forecast on the real calendar
+config/dz_payroll_2026.toml   every legal rate, dated; values marked [verify] are configurable
+tawzia_mcp/             MCP servers
+tests/                  test suites
+```
 
-**Le premier affichage est long.** Il récupère la météo réelle et lance un
-backtest sur une trentaine d'origines. Environ trois minutes, puis c'est persisté
-sur disque.
+## Honesty rules
 
-**`ModuleNotFoundError`.** L'environnement virtuel n'est pas actif, ou les
-dépendances ne sont pas installées. Voir l'étape 2.
-
-**Un copilote signale l'absence de `GROQ_API_KEY`.** Attendu sans clé. Toutes les
-autres pages fonctionnent. Voir l'étape 4.
-
-**Le port 8501 est occupé.**
-`streamlit run dashboard.py --server.port 8502`
-
-**Une valeur météo ou macro affiche « repli hors ligne ».** L'API n'était pas
-joignable et rien n'était encore en cache. Connectez-vous une fois et rechargez.
+Every number is traceable to a source in `core/sources.py` or labelled as an assumption.
+Values marked **[verify]** in the rules file come from a single private source or
+conflicting sources and must be confirmed before a live payroll run.

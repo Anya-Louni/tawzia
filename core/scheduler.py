@@ -1,29 +1,27 @@
 """
 core/scheduler.py
 -----------------
-L'agent de planning : le planning de la semaine par OR-Tools CP-SAT, avec le
-droit du travail algérien en contraintes **dures** (le solveur ne peut pas les
-violer) et le reste en objectifs (brief §6.2, §8.2).
+The planning agent: the week's schedule from OR-Tools CP-SAT, with Algerian
+labour law as **hard** constraints (the solver cannot break them) and everything
+else as objectives (brief §6.2, §8.2).
 
-Contraintes dures
-=================
-- un shift par jour au plus, au moins un jour de repos par semaine (art. 33) ;
-- 48 h par semaine au plus : 40 h légales (ord. 97-03) + 20 % d'heures sup.
-  (art. 31) ;
-- pas de nuit (21 h à 5 h, art. 27) avant 19 ans (art. 28) ;
-- pas de nuit pour une travailleuse sans dérogation du site (art. 29) ;
-- pas de shift du matin au lendemain d'une nuit (repos minimal entre deux
-  shifts : règle de bon sens opérationnel, pas un article) ;
-- congés approuvés respectés.
+Hard constraints
+================
+- at most one shift a day, at least one rest day a week (art. 33);
+- at most 48 h a week: 40 legal hours (ord. 97-03) + 20% overtime (art. 31);
+- no night work (21:00 to 05:00, art. 27) under 19 (art. 28);
+- no night work for a woman without the site's waiver (art. 29);
+- no morning shift the day after a night (minimum rest between shifts: an
+  operational common-sense rule, not an article);
+- approved leave respected.
 
-Objectifs, pondérés dans la configuration
+Objectives, weighted in the configuration
 =========================================
-couvrir la demande, limiter le coût des heures sup., **garder le planning de la
-semaine précédente** (la stabilité paie : essai randomisé de Gap, +7 % de
-ventes, +5 % de productivité), répartir équitablement nuits et vendredis, laisser
-le vendredi libre quand c'est possible.
+cover demand, limit overtime cost, **keep last week's schedule** (stability pays:
+the Gap randomised trial found +7% sales and +5% productivity), share nights and
+Fridays fairly, leave Friday free when possible.
 
-La demande vient de la prévision existante (Ramadan, Aïd, météo compris).
+Demand comes from the existing forecast (Ramadan, Eid and weather included).
 """
 
 from __future__ import annotations
@@ -37,7 +35,7 @@ from . import labour_dz, legal, rules, seed_company
 
 _S = rules.payroll()["scheduler"]
 _H = rules.payroll()["hours"]
-DAYS_FR = ("lun", "mar", "mer", "jeu", "ven", "sam", "dim")
+DAYS_FR = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
 
 @dataclass
@@ -62,8 +60,8 @@ def shifts(ramadan: bool) -> list:
 
 
 def demand(site_headcount: int, day_load: list, ramadan: bool) -> dict:
-    """Effectif requis par jour et par shift. `day_load` : 7 multiplicateurs
-    (1 = jour moyen), tirés de la prévision."""
+    """Headcount needed per day and shift. `day_load`: 7 multipliers
+    (1 = an average day), taken from the forecast."""
     sh = shifts(ramadan)
     base = site_headcount * _S["share_working"]
     return {(d, c): max(1, round(base * day_load[d] * _S["shift_split"][i]))
@@ -71,7 +69,7 @@ def demand(site_headcount: int, day_load: list, ramadan: bool) -> dict:
 
 
 def load_from_forecast(fc, week_start: _dt.date) -> list:
-    """Les 7 multiplicateurs de charge à partir d'une prévision (date, forecast)."""
+    """The 7 load multipliers from a forecast (date, forecast)."""
     if fc is None or getattr(fc, "empty", True):
         return [1.0] * 7
     import pandas as pd
@@ -86,7 +84,7 @@ def solve(site: str, week_start: _dt.date, day_load: list | None = None, *,
           ramadan: bool = False, women_derogation: bool | None = None,
           last_week: dict | None = None, leaves: dict | None = None,
           people: list | None = None) -> Result:
-    """Résoudre une semaine pour un site."""
+    """Solve one week for one site."""
     people = [e for e in (people or seed_company.people()) if e.site == site]
     derog = (seed_company.SITES[site]["women_night_derogation"]
              if women_derogation is None else women_derogation)
@@ -203,10 +201,10 @@ def solve(site: str, week_start: _dt.date, day_load: list | None = None, *,
 
 
 def grid(res: Result) -> list:
-    """Une ligne par salarié, une colonne par jour : M, A, N ou repos."""
+    """One row per employee, one column per day: M, A, N or rest."""
     rows = []
     for e in res.people:
-        row = {"Salarié": e.name, "Poste": labour_dz.ROLES[e.role_key].label}
+        row = {"Employee": e.name, "Role": labour_dz.ROLES[e.role_key].label}
         for d in range(7):
             day = res.week_start + _dt.timedelta(days=d)
             row[f"{DAYS_FR[day.weekday()]} {day.day}"] = res.assign.get((e.emp_id, d), "·")
@@ -215,8 +213,8 @@ def grid(res: Result) -> list:
 
 
 def next_week_start(today: _dt.date | None = None) -> _dt.date:
-    """Le prochain samedi : la semaine de travail algérienne commence le samedi
-    pour les équipes postées qui tournent sept jours sur sept."""
+    """Next Saturday: for shift teams working seven days a week, the Algerian
+    working week starts on Saturday."""
     today = today or _dt.date.today()
     return today + _dt.timedelta(days=(5 - today.weekday()) % 7 or 7)
 
@@ -227,14 +225,14 @@ if __name__ == "__main__":
     assert base.status in ("OPTIMAL", "FEASIBLE"), base.status
     r = solve("OGX", ws, last_week={(eid, d): c for (eid, d), c in base.assign.items()})
     assert not r.violations, r.violations
-    assert any(a == "art. 29" for _, a in r.blocked_nights), "OGX n'a pas de dérogation"
+    assert any(a == "art. 29" for _, a in r.blocked_nights), "OGX has no waiver"
     women = {e.emp_id for e in r.people if e.gender == "F"}
     assert not [k for k, c in r.assign.items() if k[0] in women and c == "N"]
     for e in r.people:
         n = sum(1 for d in range(7) if (e.emp_id, d) in r.assign)
-        assert n <= 6, "jour de repos manquant"
+        assert n <= 6, "missing rest day"
     ram = solve("OGX", ws, ramadan=True)
     assert ram.status in ("OPTIMAL", "FEASIBLE") and not ram.violations
-    print(f"  OGX : {r.status}, stabilité {r.stability:.0%}, manque "
-          f"{sum(r.shortfall.values())}, heures sup. {r.overtime_hours:.0f} h, "
-          f"{len(r.blocked_nights)} nuits bloquées par la loi : ok")
+    print(f"  OGX: {r.status}, stability {r.stability:.0%}, shortfall "
+          f"{sum(r.shortfall.values())}, overtime {r.overtime_hours:.0f} h, "
+          f"{len(r.blocked_nights)} nights blocked by law: ok")

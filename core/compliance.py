@@ -67,11 +67,11 @@ def _weekly_overtime_alerts(roster: pd.DataFrame, cap: float) -> list:
         if ratio > cap + 1e-9:
             alerts.append(Alert(
                 "critical", "Overtime",
-                f"Semaine {week} : les heures supplémentaires atteignent {ratio:.0%} "
-                f"des heures normales, au-dessus du plafond légal de {cap:.0%}.",
-                "Loi 90-11 , heures supplémentaires plafonnées à 20% du temps de travail légal.",
-                "Ajouter de l'effectif permanent ou intérimaire cette semaine, ou "
-                "déplacer les tâches à forte charge ; ne pas planifier l'excédent d'heures sup.",
+                f"Week {week}: overtime reaches {ratio:.0%} "
+                f"of normal hours, above the legal cap of {cap:.0%}.",
+                "Law 90-11, art. 31: overtime capped at 20% of legal working time.",
+                "Add permanent or temporary staff this week, or move the heavy "
+                "tasks; do not schedule the excess overtime.",
             ))
     return alerts
 
@@ -85,12 +85,12 @@ def _coverage_alerts(roster: pd.DataFrame) -> list:
         worst = short.assign(gap=short["required_workers"] - short["total_staff"]).nlargest(1, "gap").iloc[0]
         alerts.append(Alert(
             "warning", "Coverage",
-            f"{len(short)} shift(s) planifié(s) sous le besoin prévu , le pire est "
-            f"{worst['shift']} le {pd.to_datetime(worst['date']):%d %b} "
+            f"{len(short)} shift(s) scheduled below the forecast need; the worst is "
+            f"{worst['shift']} on {pd.to_datetime(worst['date']):%d %b} "
             f"({int(worst['total_staff'])} vs {int(worst['required_workers'])}).",
-            "Politique de niveau de service , le sous-effectif risque une rupture "
-            "de service (en e-commerce COD, une livraison payée deux fois).",
-            "Augmenter le plafond d'intérimaires ou le niveau de service pour ces shifts.",
+            "Service-level policy: understaffing risks a service failure "
+            "(in cash-on-delivery e-commerce, a delivery paid twice).",
+            "Raise the temp ceiling or the service level for these shifts.",
         ))
     return alerts
 
@@ -105,11 +105,11 @@ def _workforce_alerts(people: list, as_of: _dt.date) -> list:
     if long_cdd:
         alerts.append(Alert(
             "critical", "Contracts",
-            f"{len(long_cdd)} contrat(s) à durée déterminée (CDD) de plus de "
-            f"{CDD_MAX_MONTHS} mois (ex. {long_cdd[0]}).",
-            "Pratique du droit du travail algérien , un CDD trop long risque une "
-            "requalification en contrat permanent (CDI).",
-            "Étudier une conversion en CDI ou un renouvellement documenté et légal.",
+            f"{len(long_cdd)} fixed-term contract(s) (CDD) longer than "
+            f"{CDD_MAX_MONTHS} months (e.g. {long_cdd[0]}).",
+            "Algerian labour practice: an overlong CDD risks being "
+            "requalified as a permanent contract (CDI).",
+            "Consider converting to CDI or a documented, lawful renewal.",
         ))
 
     # Negative / over-drawn leave balances
@@ -117,9 +117,9 @@ def _workforce_alerts(people: list, as_of: _dt.date) -> list:
     if overdrawn:
         alerts.append(Alert(
             "warning", "Leave",
-            f"{len(overdrawn)} employé(s) avec un solde de congés négatif.",
-            "Les congés annuels s'acquièrent à 2,5 jours/mois et ne peuvent être dépassés.",
-            "Corriger le registre ou enregistrer l'excédent en congé sans solde.",
+            f"{len(overdrawn)} employee(s) with a negative leave balance.",
+            "Annual leave accrues at 2.5 days a month and cannot be overdrawn.",
+            "Correct the register or record the excess as unpaid leave.",
         ))
 
     # Pay below SNMG
@@ -127,10 +127,10 @@ def _workforce_alerts(people: list, as_of: _dt.date) -> list:
     if below:
         alerts.append(Alert(
             "critical", "Minimum wage",
-            f"{len(below)} employé(s) sous le SNMG de "
+            f"{len(below)} employee(s) below the SNMG of "
             f"{labour_dz.SNMG_MONTHLY:,.0f} DZD.",
-            "Le SNMG est un plancher légal pour un salaire mensuel à temps plein.",
-            "Relever le salaire de base au moins au SNMG immédiatement.",
+            "The SNMG is the legal floor for a full-time monthly salary.",
+            "Raise the base salary to at least the SNMG now.",
         ))
     return alerts
 
@@ -160,11 +160,11 @@ def scorecard(alerts: list) -> dict:
     crit = sum(1 for a in alerts if a.severity == "critical")
     warn = sum(1 for a in alerts if a.severity == "warning")
     if crit:
-        status, label = "critical", "Action requise"
+        status, label = "critical", "Action required"
     elif warn:
-        status, label = "warning", "Revue recommandée"
+        status, label = "warning", "Review recommended"
     else:
-        status, label = "ok", "Conforme"
+        status, label = "ok", "Compliant"
     return {"status": status, "label": label, "critical": crit,
             "warning": warn, "total": len(alerts)}
 

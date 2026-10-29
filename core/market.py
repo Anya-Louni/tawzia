@@ -50,69 +50,66 @@ class SegmentEstimate:
 SEGMENTS = [
     SegmentEstimate(
         key="parcel_hubs",
-        label="Agences de colis et livraison e-commerce",
+        label="Parcel and e-commerce delivery branches",
         sites=600,
         avg_shift_workers=45,
         basis=(
-            "Yalidine exploite à elle seule 160+ agences dans 1 469 communes et "
-            "les 58 wilayas (cité). ZR Express, Maystro, Noest, Kazitour et les "
-            "opérateurs régionaux ensemble égalent ou dépassent plausiblement ce "
-            "chiffre. 600 est un chiffre national volontairement prudent."
+            "Yalidine alone runs 160+ branches across 1,469 communes and all 58 "
+            "wilayas (cited). ZR Express, Maystro, Noest, Kazitour and regional "
+            "operators together plausibly match or exceed that. 600 is a "
+            "deliberately conservative national figure."
         ),
-        confidence="ancré",
+        confidence="anchored",
     ),
     SegmentEstimate(
         key="retail_dc",
-        label="Centres de distribution retail et grande conso",
+        label="Retail and FMCG distribution centres",
         sites=180,
         avg_shift_workers=70,
         basis=(
-            "La distribution organisée alimentaire et grande conso en Algérie , "
-            "Cevital, Numilog, Ardis, NCA Rouiba et les grossistes au niveau des "
-            "wilayas. Estimé à partir du nombre de groupes de distribution en "
-            "grande surface et de leur structure de dépôts régionaux."
+            "Organised food and FMCG distribution in Algeria (large groups and "
+            "wilaya-level wholesalers). Estimated from the number of big-box "
+            "distribution groups and their regional depot structure."
         ),
-        confidence="estimé",
+        confidence="estimated",
     ),
     SegmentEstimate(
         key="airport_ground",
-        label="Assistance aéroportuaire au sol",
+        label="Airport ground handling",
         sites=16,
         avg_shift_workers=140,
         basis=(
-            "L'Algérie compte 35 aéroports commerciaux ; environ 16 portent un "
-            "trafic régulier suffisant pour une assistance au sol en multi-shifts. "
-            "Peu nombreux, mais lourds par site , et le client d'ancrage pour la "
-            "crédibilité."
+            "Algeria has 35 commercial airports; about 16 carry enough regular "
+            "traffic for multi-shift ground handling. Few, but heavy per site, "
+            "and the anchor client for credibility."
         ),
-        confidence="ancré",
+        confidence="anchored",
     ),
     SegmentEstimate(
         key="port_logistics",
-        label="Opérations portuaires, entrepôts sous douane et dédouanement",
+        label="Port operations, bonded warehouses and customs clearance",
         sites=45,
         avg_shift_workers=90,
         basis=(
-            "Les ports commerciaux (Alger, Oran, Bejaia, Skikda, Djen-Djen, "
-            "Annaba, Mostaganem, Ghazaouet) ainsi que les opérateurs de stockage "
-            "sous douane et de dédouanement. L'attente des navires dépasse 7 jours "
-            "à Alger avec des surestaries à 5 000 $/jour/navire (cité) , les "
-            "erreurs de timing y sont déjà chiffrées en devise forte."
+            "The commercial ports (Algiers, Oran, Bejaia, Skikda, Djen-Djen, "
+            "Annaba, Mostaganem, Ghazaouet) plus bonded-storage and customs "
+            "operators. Ship waits exceed 7 days in Algiers with demurrage at "
+            "$5,000/day/ship (cited): timing errors are already priced in hard "
+            "currency."
         ),
-        confidence="estimé",
+        confidence="estimated",
     ),
     SegmentEstimate(
         key="food_manufacturing",
-        label="Industrie agroalimentaire (multi-shifts)",
+        label="Food manufacturing (multi-shift)",
         sites=320,
         avg_shift_workers=85,
         basis=(
-            "L'agroalimentaire est le plus grand secteur industriel hors "
-            "hydrocarbures d'Algérie et tourne en shifts continus avec une forte "
-            "saisonnalité de Ramadan. Vertical d'expansion, pas dans la cible "
-            "initiale."
+            "Food processing is Algeria's largest non-hydrocarbon industry and "
+            "runs continuous shifts with strong Ramadan seasonality. An expansion "
+            "vertical, not in the initial target."
         ),
-        confidence="estimé",
+        confidence="estimated",
     ),
 ]
 
@@ -157,10 +154,10 @@ def price_from_value(
         saving_per_site_month_dzd=saving_per_month,
         payback_months=price / saving_per_month if saving_per_month > 0 else float("inf"),
         note=(
-            f"Économie mesurée de {saving_per_month:,.0f} DZD/site/mois sur "
-            f"{days_scored} jours d'exploitation évalués. Facturée à "
-            f"{value_share:.0%} de ce montant, laissant au client un retour "
-            f"d'environ {1 / value_share:.0f}× sur l'abonnement."
+            f"Measured saving of {saving_per_month:,.0f} DZD/site/month over "
+            f"{days_scored} scored operating days. Priced at {value_share:.0%} of "
+            f"that, leaving the client about a {1 / value_share:.0f}x return on "
+            f"the subscription."
         ),
     )
 
@@ -202,7 +199,7 @@ def sizing(
     # operated, and selling there means public procurement on a multi-year
     # cycle. It stays in TAM and in the roadmap as a credibility anchor, but
     # a startup cannot build a plan on it.
-    sam_segments = table[~table["Segment"].str.contains("aéroport", case=False)]
+    sam_segments = table[~table["Segment"].str.contains("airport", case=False)]
     sam = float(sam_segments["Annual value (DZD)"].sum())
 
     beachhead_sites = sum(s.sites for s in SEGMENTS if s.key in beachhead_keys)
@@ -223,18 +220,17 @@ def sizing(
         "beachhead_dzd": beachhead_value,
         "total_sites": int(table["Sites"].sum()),
         "notes": [
-            "Bottom-up : nombre de sites × prix mensuel × 12. Aucune "
-            "arithmétique top-down du type « 1% d'un gros chiffre ».",
-            "Le SAM exclut l'assistance aéroportuaire. Les aéroports algériens "
-            "sont exploités par l'État et achètent par appel d'offres public sur "
-            "un cycle pluriannuel , du vrai revenu à terme, mais pas de quoi "
-            "bâtir un plan à trois ans.",
-            f"Le SOM suppose {som_penetration:.0%} du SAM en {som_years} ans , "
-            f"environ {som_sites} sites. L'atteindre revient à environ "
-            f"{som_sites / max(som_years * 12, 1):.1f} nouveaux sites par mois.",
-            "Le prix est dérivé de l'économie mesurée par site : si le pilote "
-            "montre une économie plus faible, le prix et tout ce tableau "
-            "baissent avec lui. C'est intentionnel.",
+            "Bottom-up: number of sites x monthly price x 12. No top-down "
+            "\"1% of a big number\" arithmetic.",
+            "SAM excludes airport ground handling. Algerian airports are state "
+            "run and buy through multi-year public tenders: real revenue later, "
+            "but not enough to build a three-year plan on.",
+            f"SOM assumes {som_penetration:.0%} of SAM in {som_years} years, about "
+            f"{som_sites} sites. Getting there means about "
+            f"{som_sites / max(som_years * 12, 1):.1f} new sites a month.",
+            "Price is derived from the measured saving per site: if the pilot "
+            "shows a smaller saving, the price and this whole table fall with "
+            "it. That is intentional.",
         ],
     }
 
@@ -275,34 +271,31 @@ class UnitEconomics:
 
     def table(self) -> pd.DataFrame:
         return pd.DataFrame([
-            {"Indicateur": "Prix par site / mois", "Valeur": f"{self.monthly_price_dzd:,.0f} DZD"},
-            {"Indicateur": "Marge brute", "Valeur": f"{self.gross_margin:.0%}"},
-            {"Indicateur": "Profit brut / site / mois", "Valeur": f"{self.monthly_gross_profit:,.0f} DZD"},
-            {"Indicateur": "CAC (vente + onboarding)", "Valeur": f"{self.cac_dzd + self.onboarding_cost_dzd:,.0f} DZD"},
-            {"Indicateur": "Attrition mensuelle", "Valeur": f"{self.monthly_churn:.1%}"},
-            {"Indicateur": "Durée de vie attendue", "Valeur": f"{self.customer_lifetime_months:.0f} mois"},
-            {"Indicateur": "LTV", "Valeur": f"{self.ltv_dzd:,.0f} DZD"},
-            {"Indicateur": "LTV : CAC", "Valeur": f"{self.ltv_cac:.1f}×"},
-            {"Indicateur": "Retour sur CAC", "Valeur": f"{self.cac_payback_months:.1f} mois"},
+            {"Metric": "Price per site / month", "Value": f"{self.monthly_price_dzd:,.0f} DZD"},
+            {"Metric": "Gross margin", "Value": f"{self.gross_margin:.0%}"},
+            {"Metric": "Gross profit / site / month", "Value": f"{self.monthly_gross_profit:,.0f} DZD"},
+            {"Metric": "CAC (sales + onboarding)", "Value": f"{self.cac_dzd + self.onboarding_cost_dzd:,.0f} DZD"},
+            {"Metric": "Monthly churn", "Value": f"{self.monthly_churn:.1%}"},
+            {"Metric": "Expected lifetime", "Value": f"{self.customer_lifetime_months:.0f} months"},
+            {"Metric": "LTV", "Value": f"{self.ltv_dzd:,.0f} DZD"},
+            {"Metric": "LTV : CAC", "Value": f"{self.ltv_cac:.1f}x"},
+            {"Metric": "CAC payback", "Value": f"{self.cac_payback_months:.1f} months"},
         ])
 
     def assumptions(self) -> list:
         return [
-            f"Marge brute {self.gross_margin:.0%} , l'hébergement et l'inférence "
-            f"sont les seuls vrais coûts variables ; le prévisionniste est un "
-            f"modèle à gradient boosté, pas un LLM, donc le coût de service par "
-            f"site est négligeable.",
-            f"CAC {self.cac_dzd:,.0f} DZD suppose une vente directe menée par les "
-            f"fondateurs à Alger et Oran. Il augmentera à l'embauche d'une équipe "
-            f"commerciale.",
-            f"L'onboarding {self.onboarding_cost_dzd:,.0f} DZD couvre les "
-            f"semaines-ingénieur pour ingérer l'historique d'un client et caler "
-            f"ses constantes de productivité. C'est le chiffre qui décide si le "
-            f"modèle passe à l'échelle , il doit tendre vers zéro avec l'outillage.",
-            f"L'attrition {self.monthly_churn:.1%}/mois est une hypothèse sans "
-            f"preuve à ce stade. Un logiciel opérationnel B2B à usage hebdomadaire "
-            f"actif s'érode généralement moins, mais nous n'avons pas de données "
-            f"de cohorte et ne prétendrons pas le contraire.",
+            f"Gross margin {self.gross_margin:.0%}: hosting and inference are "
+            f"the only real variable costs; the forecaster is a gradient-boosted "
+            f"model, not an LLM, so cost to serve per site is negligible.",
+            f"CAC {self.cac_dzd:,.0f} DZD assumes founder-led direct sales in "
+            f"Algiers and Oran. It will rise once a sales team is hired.",
+            f"Onboarding {self.onboarding_cost_dzd:,.0f} DZD covers the engineer "
+            f"weeks to ingest a client's history and set its productivity "
+            f"constants. This is the number that decides whether the model "
+            f"scales: it must trend to zero with tooling.",
+            f"Churn {self.monthly_churn:.1%}/month is an unproven assumption at "
+            f"this stage. Weekly-active B2B operations software usually churns "
+            f"less, but we have no cohort data and will not pretend otherwise.",
         ]
 
 
@@ -325,12 +318,12 @@ class UnitEconomics:
 # configuration on top of it - a week of work per market, not a rebuild.
 
 REGIONAL_MARKETS = [
-    {"country": "Algérie",       "population_m": 47.4, "weekend": "Ven-Sam", "status": "Tête de pont"},
-    {"country": "Maroc",         "population_m": 38.1, "weekend": "Sam-Dim", "status": "Phase 2"},
-    {"country": "Tunisie",       "population_m": 12.3, "weekend": "Sam-Dim", "status": "Phase 2"},
-    {"country": "Égypte",        "population_m": 116.5, "weekend": "Ven-Sam", "status": "Phase 3"},
-    {"country": "Arabie saoudite", "population_m": 34.1, "weekend": "Ven-Sam", "status": "Phase 3"},
-    {"country": "Jordanie",      "population_m": 11.5, "weekend": "Ven-Sam", "status": "Phase 3"},
+    {"country": "Algeria",      "population_m": 47.4, "weekend": "Fri-Sat", "status": "Beachhead"},
+    {"country": "Morocco",      "population_m": 38.1, "weekend": "Sat-Sun", "status": "Phase 2"},
+    {"country": "Tunisia",      "population_m": 12.3, "weekend": "Sat-Sun", "status": "Phase 2"},
+    {"country": "Egypt",        "population_m": 116.5, "weekend": "Fri-Sat", "status": "Phase 3"},
+    {"country": "Saudi Arabia", "population_m": 34.1, "weekend": "Fri-Sat", "status": "Phase 3"},
+    {"country": "Jordan",       "population_m": 11.5, "weekend": "Fri-Sat", "status": "Phase 3"},
 ]
 
 
@@ -348,31 +341,30 @@ def regional_expansion(algeria_sam_dzd: float) -> dict:
     for m in REGIONAL_MARKETS:
         scaled = algeria_sam_dzd * (m["population_m"] / algeria_pop)
         rows.append({
-            "Pays": m["country"],
+            "Country": m["country"],
             "Population (M)": m["population_m"],
-            "Week-end": m["weekend"],
-            "SAM proportionnel (DZD/an)": scaled,
-            "Statut": m["status"],
+            "Weekend": m["weekend"],
+            "Proportional SAM (DZD/yr)": scaled,
+            "Status": m["status"],
         })
     table = pd.DataFrame(rows)
 
     return {
         "table": table,
-        "total_dzd": float(table["SAM proportionnel (DZD/an)"].sum()),
+        "total_dzd": float(table["Proportional SAM (DZD/yr)"].sum()),
         "notes": [
-            "Proportionnel à la population, ce qui est grossier. Le vaste secteur "
-            "informel de l'Égypte et la structure salariale très différente de "
-            "l'Arabie saoudite plaident tous deux pour un net escompte.",
-            "L'actif réutilisable est le moteur de calendrier hégirien , le "
-            "Ramadan et les Aïds remodèlent la demande à l'identique sur les six "
-            "marchés, et aucun outil RH mondial ne les modélise.",
-            "La convention de week-end NE se généralise PAS : trois de ces six "
-            "marchés fonctionnent en samedi-dimanche. C'est de la configuration "
-            "par pays, ce qui est précisément pourquoi le moteur est paramétré "
-            "par marché plutôt que figé sur l'Algérie.",
-            "L'Algérie seule est une opportunité d'ARR de quelques millions de "
-            "dollars , une bonne affaire, mais pas à l'échelle du capital-risque "
-            "à elle seule. C'est le dossier régional qui justifie le second chèque.",
+            "Proportional to population, which is crude. Egypt's large informal "
+            "sector and Saudi Arabia's very different wage structure both argue "
+            "for a steep discount.",
+            "The reusable asset is the Hijri calendar engine: Ramadan and the "
+            "Eids reshape demand the same way in all six markets, and no global "
+            "HR tool models them.",
+            "The weekend convention does NOT generalise: three of these six "
+            "markets run Saturday-Sunday. That is per-country configuration, "
+            "which is why the engine is parameterised by market.",
+            "Algeria alone is a few-million-dollar ARR opportunity: a good "
+            "business, but not venture scale on its own. The regional case is "
+            "what justifies the second cheque.",
         ],
     }
 
@@ -382,19 +374,16 @@ def funding_context() -> list:
     asf = sources.get("asf_fund_dzd")
     label = sources.get("startup_label_exemption_years")
     return [
-        f"L'Algerian Startup Fund est capitalisé à {asf.value / 1e9:.1f} "
-        f"milliards DZD par six banques publiques et a financé 100+ startups sur "
-        f"350+ candidatures. Un premier chèque réaliste. [{asf.cite()}]",
-        f"Le Label Startup porte {label.value} ans d'exonération d'impôt sur les "
-        f"bénéfices des sociétés, de la taxe sur l'activité professionnelle et de "
-        f"l'impôt sur le revenu des fondateurs, plus 0% de TVA sur les "
-        f"équipements importés. Prolonge sensiblement la trésorerie. [{label.cite()}]",
-        "Le fonds d'Algérie Télécom de 1,5 milliard DZD (~11 M$) cible "
-        "spécifiquement l'IA, la cybersécurité et la robotique , ce produit y "
-        "est éligible.",
-        "Des fonds paneuropéens (Partech, Orange Ventures, Flat6Labs) ont bouclé "
-        "environ 8 opérations algériennes en 2024-2025, un tour de suivi a donc "
-        "un précédent.",
+        f"The Algerian Startup Fund is capitalised at {asf.value / 1e9:.1f} "
+        f"billion DZD by six public banks and has funded 100+ startups from "
+        f"350+ applications. A realistic first cheque. [{asf.cite()}]",
+        f"The Startup Label brings {label.value} years of exemption from "
+        f"corporate tax, professional activity tax and founders' income tax, "
+        f"plus 0% VAT on imported equipment. Extends runway materially. [{label.cite()}]",
+        "Algerie Telecom's 1.5 billion DZD fund (about $11M) targets AI, "
+        "cybersecurity and robotics specifically: this product is eligible.",
+        "Pan-regional funds (Partech, Orange Ventures, Flat6Labs) closed about "
+        "8 Algerian deals in 2024-2025, so a follow-on round has precedent.",
     ]
 
 

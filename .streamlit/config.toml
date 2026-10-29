@@ -1,22 +1,22 @@
 # Tawzia , la plateforme RH par l'IA, conçue pour l'Algérie.
-# Deux bleus (le bleu profond et le bleu clair du logo), de l'argile en relief
-# sur un fond néomorphique, et le chiffre comme objet principal de chaque tuile. La palette vit dans core/brand.py ; ce fichier en
+# Sharp and high contrast: a navy command band, white worksheets with a
+# visible edge, square controls, one colour per agent. La palette vit dans core/brand.py ; ce fichier en
 # est le reflet côté thème natif. Voir DESIGN.md.
 
 [theme]
 base = "light"
 primaryColor = "#0B57A8"              # bleu de marque , actions, liens, actif
-backgroundColor = "#E6ECF5"           # argile : fond et surfaces d'une même teinte
-secondaryBackgroundColor = "#EEF3F9"  # surfaces d'argile
-textColor = "#0F1B2D"
+backgroundColor = "#EDF1F6"           # argile : fond et surfaces d'une même teinte
+secondaryBackgroundColor = "#FFFFFF"  # surfaces d'argile
+textColor = "#0A1628"
 linkColor = "#0B57A8"
-codeBackgroundColor = "#E6ECF5"
+codeBackgroundColor = "#EDF1F6"
 codeTextColor = "#0B3A6B"
-borderColor = "#D5DEEA"               # la profondeur vient de la lumière, le filet aide l'œil
+borderColor = "#C5D0DE"               # la profondeur vient de la lumière, le filet aide l'œil
 showWidgetBorder = true
 showSidebarBorder = false
-baseRadius = "16px"                   # argile : des formes douces
-buttonRadius = "16px"
+baseRadius = "3px"                   # argile : des formes douces
+buttonRadius = "3px"
 linkUnderline = true
 
 font = "'Manrope':https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"

@@ -91,12 +91,12 @@ def _features(emp, att_row: Optional[dict], as_of: _dt.date) -> dict:
 
 
 _DRIVER_LABELS = {
-    "absence": "Absentéisme élevé",
-    "lateness": "Retards fréquents",
-    "short_tenure": "Faible ancienneté (turnover de 1re année)",
-    "low_pay": "Salaire proche du plancher SNMG",
-    "cdd": "Contrat à durée déterminée (CDD)",
-    "unused_leave": "Congés jamais pris (burnout)",
+    "absence": "High absence",
+    "lateness": "Frequent lateness",
+    "short_tenure": "Short tenure (first-year turnover)",
+    "low_pay": "Pay close to the SNMG floor",
+    "cdd": "Fixed-term contract (CDD)",
+    "unused_leave": "Leave never taken (burnout)",
 }
 
 
@@ -168,22 +168,21 @@ def retention_actions(df: pd.DataFrame) -> list:
     if not high.empty:
         top = high.iloc[0]
         actions.append(
-            f"Parlez à {top['Name']} cette semaine ({top['Risk %']:.0f}% de risque, "
-            f"{top['Top driver'].lower()}). Son remplacement coûte "
+            f"Talk to {top['Name']} this week ({top['Risk %']:.0f}% risk, "
+            f"{top['Top driver'].lower()}). Replacing them costs "
             f"{top['Replacement cost (DZD)']:,.0f} DZD."
         )
     pay_driven = df[df["Top driver"].str.contains("SNMG", na=False)]
     if len(pay_driven) >= 3:
         actions.append(
-            f"{len(pay_driven)} employés à risque le sont pour le salaire. Une "
-            f"petite hausse vers {PAY_COMFORT:,.0f} DZD coûte moins cher que de "
-            f"les remplacer."
+            f"{len(pay_driven)} at-risk employees are at risk over pay. A small "
+            f"raise towards {PAY_COMFORT:,.0f} DZD costs less than replacing them."
         )
-    absent_driven = df[df["Top driver"].str.contains("Absent", case=False, na=False)]
+    absent_driven = df[df["Top driver"].str.contains("absen", case=False, na=False)]
     if not absent_driven.empty:
         actions.append(
-            f"{len(absent_driven)} signalés pour absentéisme , un entretien de "
-            f"reprise maintenant vaut mieux qu'une démission plus tard."
+            f"{len(absent_driven)} flagged for absence: a return-to-work talk now beats "
+            f"a resignation later."
         )
     return actions
 

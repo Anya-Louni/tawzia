@@ -1,24 +1,23 @@
 """
 core/db.py
 ----------
-La base du personnel : une vraie base, pas un tableur. SQLite pour la démo
-locale ; le même schéma passe sur Postgres en production (brief §8.5).
+The staff database: a real database, not a spreadsheet. SQLite for the local
+demo; the same schema runs on Postgres in production (brief §8.5).
 
-Sécurité
+Security
 ========
-- **Chiffrement par champ** (AES-256-GCM) du NIN, du numéro de pièce, du RIB/CCP,
-  du numéro CNAS et des champs de santé. La clé vient de la variable
-  d'environnement TAWZIA_DATA_KEY (32 octets en base64), jamais du dépôt. En démo,
-  si elle manque, une clé est créée dans `.env`, fichier ignoré par git.
-- **Accès par rôle** appliqué ici, dans la couche d'accès : le salarié ne voit
-  que son dossier ; le manager voit son équipe sans salaire ni santé ; le RH voit
-  tout ; la paie voit les champs de paie ; l'auditeur lit sans écrire. En
-  production, Postgres ajoute la sécurité au niveau des lignes (RLS).
-- **Journal** : chaque lecture d'un champ sensible et chaque modification sont
-  écrites dans `action_log` (qui, quoi, quand, pourquoi), comme l'attend la loi
-  25-11.
-- **Minimisation** : la santé se résume à « apte : oui, date », jamais un
-  diagnostic ; une enquête de moralité à « faite, date, par qui ».
+- **Field-level encryption** (AES-256-GCM) of the NIN, ID number, RIB/CCP, CNAS
+  number and health fields. The key comes from the TAWZIA_DATA_KEY environment
+  variable (32 bytes, base64), never from the repository. In the demo, when it is
+  missing, a key is created in `.env`, a git-ignored file.
+- **Role-based access** enforced here, in the access layer: an employee sees only
+  their own file; a manager sees their team without salary or health; HR sees
+  everything; payroll sees pay fields; an auditor reads without writing. In
+  production, Postgres adds row-level security (RLS).
+- **Log**: every read of a sensitive field and every change is written to
+  `action_log` (who, what, when, why), as law 25-11 expects.
+- **Minimisation**: health is reduced to "fit: yes, date", never a diagnosis; a
+  background check to "done, date, by whom".
 """
 
 from __future__ import annotations
@@ -143,7 +142,7 @@ def _fake_digits(rng, n: int) -> str:
 
 
 def seed(con=None) -> sqlite3.Connection:
-    """Charge la société fictive si la base est vide. Idempotent."""
+    """Load the fictional company when the database is empty. Idempotent."""
     import numpy as np
 
     from . import seed_company as sc
@@ -174,7 +173,7 @@ def seed(con=None) -> sqlite3.Connection:
                     (e.emp_id, e.contract, e.role_key, e.hire_date.isoformat(),
                      round(e.monthly_gross()), e.site))
     con.commit()
-    log(con, "system", "hr", "seed", "DEMO", "chargement de la société fictive")
+    log(con, "system", "hr", "seed", "DEMO", "loading the fictional company")
     return con
 
 
@@ -197,46 +196,46 @@ def _visible(role: str, field: str, own: bool, team: bool) -> bool:
 
 
 def get_employee(con, emp_id: str, *, actor: str, role: str, why: str = "") -> dict | None:
-    """Le dossier d'un salarié, réduit à ce que le rôle a le droit de voir.
+    """An employee's file, reduced to what the role may see.
 
-    Les champs sensibles masqués valent « masqué ». Chaque champ chiffré
-    effectivement lu est journalisé."""
+    Hidden sensitive fields read "masked". Every encrypted field actually read is
+    logged."""
     if role not in ROLES:
-        raise PermissionError(f"Rôle inconnu : {role}")
+        raise PermissionError(f"Unknown role: {role}")
     row = con.execute("SELECT * FROM employees WHERE id = ?", (emp_id,)).fetchone()
     if row is None:
         return None
     own = actor == emp_id
     team = row["manager_id"] == actor
     if role == "employee" and not own:
-        log(con, actor, role, "refus_lecture", emp_id, why)
-        raise PermissionError("Un salarié ne voit que son propre dossier.")
+        log(con, actor, role, "read_refused", emp_id, why)
+        raise PermissionError("An employee only sees their own file.")
     if role == "manager" and not team:
-        raise PermissionError("Ce salarié n'est pas dans votre équipe.")
+        raise PermissionError("This employee is not in your team.")
     job = con.execute("SELECT * FROM employment WHERE employee_id = ? ORDER BY id DESC LIMIT 1",
                       (emp_id,)).fetchone()
     out = {"id": row["id"], "name": row["name"], "site": row["site_id"],
            "gender": row["gender"], "birth_date": row["birth_date"],
            "contract": job["contract"], "role": job["role"], "start_date": job["start_date"]}
-    out["gross"] = job["gross"] if _visible(role, "gross", own, team) else "masqué"
+    out["gross"] = job["gross"] if _visible(role, "gross", own, team) else "masked"
     read = []
     for f in ENCRYPTED:
         if _visible(role, f, own, team):
             out[f] = decrypt(row[f])
             read.append(f)
         else:
-            out[f] = "masqué"
+            out[f] = "masked"
     if read:
-        log(con, actor, role, "lecture:" + ",".join(read), emp_id, why or "consultation du dossier")
+        log(con, actor, role, "read:" + ",".join(read), emp_id, why or "file consultation")
     return out
 
 
 def export_own_data(con, emp_id: str) -> str:
-    """« Mes données » : tout ce qui est stocké sur moi, en JSON (droit d'accès)."""
-    data = get_employee(con, emp_id, actor=emp_id, role="employee", why="droit d'accès")
+    """"My data": everything stored about me, as JSON (right of access)."""
+    data = get_employee(con, emp_id, actor=emp_id, role="employee", why="right of access")
     data["documents"] = [dict(r) for r in con.execute(
         "SELECT kind, status, created FROM documents WHERE employee_id = ?", (emp_id,))]
-    log(con, emp_id, "employee", "export", emp_id, "droit d'accès, loi 25-11")
+    log(con, emp_id, "employee", "export", emp_id, "right of access, law 25-11")
     return json.dumps(data, ensure_ascii=False, indent=2)
 
 
@@ -252,7 +251,7 @@ def add_card(con, *, source: str, agent: str, title: str, detail: str, law: str,
         (source, agent, title, detail, law, decision, json.dumps(payload or {}, ensure_ascii=False),
          _dt.datetime.now().isoformat(timespec="seconds")))
     con.commit()
-    log(con, source, "agent", "carte_creee", str(cur.lastrowid), title)
+    log(con, source, "agent", "card_created", str(cur.lastrowid), title)
     return cur.lastrowid
 
 
@@ -267,7 +266,7 @@ def decide_card(con, card_id: int, verdict: str, actor: str) -> None:
     con.execute("UPDATE inbox_cards SET status = ?, decided_by = ?, decided_at = ? WHERE id = ?",
                 (verdict, actor, _dt.datetime.now().isoformat(timespec="seconds"), card_id))
     con.commit()
-    log(con, actor, "hr", verdict, f"carte {card_id}", "décision humaine")
+    log(con, actor, "hr", verdict, f"card {card_id}", "human decision")
 
 
 if __name__ == "__main__":
@@ -277,21 +276,21 @@ if __name__ == "__main__":
     con = seed(connect())
     assert con.execute("SELECT COUNT(*) FROM employees").fetchone()[0] == 140
     raw = con.execute("SELECT nin FROM employees LIMIT 1").fetchone()[0]
-    assert raw != decrypt(raw).encode() and not raw.isdigit(), "le NIN doit être chiffré"
+    assert raw != decrypt(raw).encode() and not raw.isdigit(), "the NIN must be encrypted"
     eid = con.execute("SELECT id FROM employees WHERE manager_id IS NOT NULL LIMIT 1").fetchone()[0]
     mgr = con.execute("SELECT manager_id FROM employees WHERE id = ?", (eid,)).fetchone()[0]
     hr_view = get_employee(con, eid, actor="rh1", role="hr")
     assert len(hr_view["nin"]) == 18
     m = get_employee(con, eid, actor=mgr, role="manager")
-    assert m["gross"] == "masqué" and m["nin"] == "masqué" and m["medical_fit"] == "masqué"
+    assert m["gross"] == "masked" and m["nin"] == "masked" and m["medical_fit"] == "masked"
     try:
         get_employee(con, eid, actor="DH9999", role="employee")
-        raise AssertionError("un salarié a lu le dossier d'un autre")
+        raise AssertionError("an employee read someone else's file")
     except PermissionError:
         pass
     assert get_employee(con, eid, actor=eid, role="employee")["rib"].startswith("007")
     cid = add_card(con, source="mcp", agent="Guichet", title="t", detail="d", law="l", decision="x")
     decide_card(con, cid, "approved", "rh1")
     assert not pending_cards(con)
-    assert any(r["action"].startswith("lecture") for r in recent_log(con))
-    print("  base du personnel chiffrée : ok")
+    assert any(r["action"].startswith("read") for r in recent_log(con))
+    print("  encrypted staff database: ok")

@@ -1,9 +1,8 @@
 """
-Sources & hypothèses — chaque chiffre du produit, et d'où il vient.
+Sources and assumptions: every figure in the product, and where it comes from.
 
-Avoir cette page fait partie du pitch. Elle dit : nous savons lesquels de nos
-chiffres sont mesurés et lesquels sont supposés, et nous n'espérons pas que vous
-ne poserez pas la question.
+This page is part of the pitch. It says: we know which of our numbers are
+measured and which are assumed, and we do not hope you will not ask.
 """
 
 import pandas as pd
@@ -13,87 +12,72 @@ from core import appdata, sources
 
 appdata.sidebar_controls()
 
-st.title("Sources & hypothèses")
-st.caption("Chaque chiffre d'origine externe, chaque choix de modélisation, en un seul endroit.")
+st.title("Sources and assumptions")
+st.caption("Every externally sourced figure and every modelling choice, in one place.")
 
 measured = sources.measured()
 live = sources.live_sources()
 assumptions = sources.assumptions()
 
 with st.container(horizontal=True):
-    st.metric("Mesures citées", len(measured), border=True)
-    st.metric("Flux de données en direct", len(live), border=True)
-    st.metric("Hypothèses déclarées", len(assumptions), border=True)
+    st.metric("Cited measurements", len(measured), border=True)
+    st.metric("Live data feeds", len(live), border=True)
+    st.metric("Stated assumptions", len(assumptions), border=True)
 
 st.divider()
 
-# ---------------------------------------------------------------------------
-st.subheader("Ce qui est réel dans cette app")
-
+st.subheader("What is real in this app")
 with st.container(border=True):
     st.markdown(
         """
-| Couche | Statut |
+| Layer | Status |
 |---|---|
-| **Calendrier algérien** — Ramadan, les deux Aïds, Yennayer, jours fériés officiels, week-end vendredi-samedi | **Réel.** Calculé à partir du calendrier islamique tabulaire, vérifié en aller-retour sur 60 années hégiriennes et recoupé avec le service de référence Aladhan. |
-| **Météo** — température, précipitations et stress thermique quotidiens par wilaya | **Réel.** Réanalyse ERA5 (historique observé) et prévision opérationnelle, via Open-Meteo. |
-| **Macroéconomie** — population, population active, IPC, chômage | **Réel.** World Bank Open Data, récupéré en direct. |
-| **Coûts de main-d'œuvre** — SNMG, charges patronales CNAS, majorations et plafonds légaux | **Réel.** Dérivés des taux algériens publiés et du code du travail. Notre plancher horaire dérivé de 138,46 DZD reproduit exactement le chiffre officiellement publié. |
-| **Volumes opérationnels** — colis, passagers, cartons par shift | **Simulés.** Le registre d'aucun vrai opérateur algérien n'est public. Les volumes sont synthétiques ; le calendrier et la météo auxquels ils répondent ne le sont pas. |
-| **Chiffre d'économie** | **Hors échantillon, sur des volumes simulés.** La méthode est solide et se transférerait inchangée à de vraies données. L'ampleur exige un pilote. |
+| **Algerian calendar**: Ramadan, both Eids, Yennayer, official public holidays, Friday-Saturday weekend | **Real.** Computed from the tabular Islamic calendar, round-trip checked over 60 Hijri years and cross-checked with the Aladhan reference service. |
+| **Weather**: daily temperature, rainfall and heat stress per wilaya | **Real.** ERA5 reanalysis (observed history) and operational forecast, via Open-Meteo. |
+| **Macroeconomics**: population, labour force, CPI, unemployment | **Real.** World Bank Open Data, fetched live. |
+| **Labour costs**: SNMG, CNAS employer contributions, legal premiums and caps | **Real.** Derived from published Algerian rates and the labour code. |
+| **Payroll and filings**: IRG scale, CNAS, G50, DAS | **Real rules, dated config.** Every rate lives in `config/dz_payroll_2026.toml`, with test vectors. |
+| **Employees and operational volumes** | **Simulated.** A fictional 140-person company on two sites. The calendar and weather they respond to are not. |
+| **Savings figure** | **Out of sample, on simulated volumes.** The method transfers unchanged to real data. The size needs a pilot. |
 """
     )
 
 st.divider()
 
-# ---------------------------------------------------------------------------
-st.subheader("Mesures citées")
-st.caption("Chiffres publiés. Chacun renvoie à sa source.")
-
-rows = []
-for f in measured:
-    rows.append({
-        "Quoi": f.label,
-        "Valeur": f"{f.value:,}" if isinstance(f.value, (int, float)) else str(f.value),
-        "Unité": f.unit,
-        "Source": f.source,
-        "En date de": f.as_of,
-        "Lien": f.url,
-    })
+st.subheader("Cited measurements")
+st.caption("Published figures. Each links to its source.")
+rows = [{
+    "What": f.label,
+    "Value": f"{f.value:,}" if isinstance(f.value, (int, float)) else str(f.value),
+    "Unit": f.unit,
+    "Source": f.source,
+    "As of": f.as_of,
+    "Link": f.url,
+} for f in measured]
 with st.container(border=True):
-    st.dataframe(
-        pd.DataFrame(rows), hide_index=True, width="stretch",
-        column_config={
-            "Source": st.column_config.TextColumn("Source", width="medium"),
-            "Lien": st.column_config.LinkColumn("Lien", display_text="ouvrir"),
-        },
-    )
+    st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch", column_config={
+        "Source": st.column_config.TextColumn("Source", width="medium"),
+        "Link": st.column_config.LinkColumn("Link", display_text="open"),
+    })
 
-with st.expander("Pourquoi chacune compte", icon=":material/help:"):
+with st.expander("Why each one matters", icon=":material/help:"):
     for f in measured:
-        st.markdown(f"**{f.label}** — {f.note}")
+        st.markdown(f"**{f.label}**: {f.note}")
 
 st.divider()
 
-# ---------------------------------------------------------------------------
-st.subheader("Flux de données en direct")
-
+st.subheader("Live data feeds")
 with st.container(border=True):
     for f in live:
-        st.markdown(f"**{f.label}** — {f.source}")
+        st.markdown(f"**{f.label}**: {f.source}")
         st.caption(f"{f.note}  \n{f.url}")
 
 st.divider()
 
-# ---------------------------------------------------------------------------
-st.subheader("Hypothèses")
-st.warning(
-    "Ce sont nos choix de modélisation, pas des conclusions. Ce sont les "
-    "chiffres qu'un client pilote remplace par les siens dès le premier jour, "
-    "et ceux sur lesquels un investisseur devrait insister le plus.",
-    icon=":material/warning:",
-)
-
+st.subheader("Assumptions")
+st.warning("These are our modelling choices, not findings. They are the figures a "
+           "pilot client replaces with its own on day one, and the ones an investor "
+           "should push on hardest.", icon=":material/warning:")
 for f in assumptions:
     with st.container(border=True):
         st.markdown(f"**{f.label}** = `{f.value}` {f.unit}")
@@ -101,35 +85,24 @@ for f in assumptions:
 
 st.divider()
 
-# ---------------------------------------------------------------------------
-st.subheader("Ce que nous avons retiré du prototype précédent")
-
+st.subheader("What we removed from the earlier prototype")
 with st.container(border=True):
     st.markdown(
         """
-Être explicite là-dessus vaut mieux que de le cacher , cela montre que le
-travail est tenu à un standard.
+Being explicit about this beats hiding it: it shows the work is held to a standard.
 
-- **Une référence truquée.** L'ancienne comparaison de coût imputait à la
-  stratégie « naïve » une surcharge d'urgence de 1,3× que le plan optimisé ne
-  payait jamais. L'économie était un artefact de ce choix. Les deux stratégies
-  affrontent désormais des structures de coût et de pénalité identiques.
-
-- **Une validation circulaire.** L'ancien prévisionniste était entraîné sur une
-  formule à graine fixe puis évalué sur cette même formule, donc sa précision
-  était garantie. Il est désormais évalué par backtest en marche avant contre
-  des périodes tenues à l'écart, avec des chocs délibérément imprévisibles
-  laissés dedans.
-
-- **Le mauvais week-end.** Le motif hebdomadaire d'origine traitait le samedi et
-  le dimanche comme les jours creux. Le week-end algérien est vendredi-samedi.
-
-- **Des coûts de main-d'œuvre inventés.** « 3 000 DZD par employé par shift »
-  apparaissait sans aucune dérivation. Les coûts se construisent désormais à
-  partir du SNMG et du barème CNAS.
-
-- **Un tableau des vols décoratif.** Un faux flux de vols d'apparence live ne
-  pilotait rien et ne prouvait rien. Il a été retiré plutôt que maquillé.
+- **A rigged baseline.** The old cost comparison charged the "naive" strategy a
+  1.3x rush surcharge the optimised plan never paid. Both strategies now face
+  identical cost and penalty structures.
+- **Circular validation.** The old forecaster was trained and tested on the same
+  fixed-seed formula. It is now walk-forward backtested on held-out periods,
+  with deliberately unpredictable shocks left in.
+- **The wrong weekend.** The original weekly pattern treated Saturday and Sunday
+  as quiet days. The Algerian weekend is Friday-Saturday.
+- **Invented labour costs.** "3,000 DZD per employee per shift" appeared with no
+  derivation. Costs are now built from the SNMG and the CNAS scale.
+- **A decorative flight board.** A fake live-looking flight feed drove nothing
+  and proved nothing. It was removed rather than dressed up.
 """
     )
 

@@ -1,41 +1,29 @@
 """
 core/copilot.py
 ---------------
-Le moteur de décision de l'Assistant — il apprend de la base de l'entreprise.
+The assistant's decision engine: it learns from the company's own database.
 
-The other AI touchpoints answer one narrow question each. This one is the manager
-sitting across the desk: you ask "faut-il embaucher ?", "qui risque de partir ?",
-"est-ce qu'on est en règle ?", and it answers *grounded in this company's own
-numbers*, then recommends and can quantify the recommendation as a scenario.
+The manager asks "should we hire?", "who might leave?", "are we compliant?",
+and it answers grounded in this company's own numbers, then recommends.
 
-How it "learns from the company's database"
-===========================================
-It never free-associates. On every question it first builds a **factual brief**
-from the company's data through the owned engines — KPIs (core/kpis), anomalies
-(core/anomalies), attrition (core/attrition), the real cost stack (core/labour_dz,
-payroll_dz) — all read via core/company_data, so on an imported file the brief is
-the customer's real figures. That brief is handed to the language layer
-(core/ai, Groq) as the ONLY source of truth, with a strict instruction to reason
-only from it and to cite the numbers. The intelligence is in the local models;
-Groq turns their output into a decision, in French.
+How it "learns from the company's database": it never free-associates. On every
+question it first builds a factual brief from the company's data through the
+owned engines (KPIs, anomalies, attrition, the real cost stack), all read via
+core/company_data, so on an imported file the brief is the customer's real
+figures. That brief is handed to the language layer as the ONLY source of
+truth, with a strict instruction to reason only from it and cite the numbers.
 
 Without an AI key it still works: it returns the brief plus a deterministic,
-rule-based recommendation, so the feature degrades to "very useful" rather than
-"broken".
+rule-based recommendation.
 """
 
 from __future__ import annotations
 
 import datetime as _dt
-import json
 from typing import Optional
 
 from . import ai, anomalies as anom_mod, attrition as attr_mod, kpis as kpi_mod
 
-
-# ---------------------------------------------------------------------------
-# The factual brief — the company's own numbers
-# ---------------------------------------------------------------------------
 
 def build_brief(people: list, records: list, as_of: Optional[_dt.date] = None,
                 source_label: str = "") -> dict:
@@ -49,201 +37,170 @@ def build_brief(people: list, records: list, as_of: Optional[_dt.date] = None,
                     "display": k.display, "band": k.band} for k in kres["kpis"]}
 
     top_anoms = [{
-        "gravité": a.severity, "domaine": a.domain, "employé": a.name,
-        "constat": a.detail, "action": a.recommendation,
+        "severity": anom_mod.SEVERITY_LABEL.get(a.severity, a.severity),
+        "area": anom_mod.DOMAIN_LABEL.get(a.domain, a.domain),
+        "employee": a.name, "finding": a.detail, "action": a.recommendation,
     } for a in ares["anomalies"][:8]]
 
     top_risk = []
     if risk_df is not None and not risk_df.empty:
         for _, r in risk_df.head(5).iterrows():
             top_risk.append({
-                "employé": r["Name"], "risque_%": r["Risk %"],
-                "facteur": r["Top driver"],
-                "coût_remplacement": int(r["Replacement cost (DZD)"]),
+                "employee": r["Name"], "risk_pct": r["Risk %"],
+                "driver": r["Top driver"],
+                "replacement_cost": int(r["Replacement cost (DZD)"]),
             })
 
     return {
-        "source": source_label or "démonstration",
+        "source": source_label or "demo",
         "date": as_of.isoformat(),
-        "effectif": len(people),
+        "headcount": len(people),
         "kpis": kpis,
         "anomalies": {"total": ares["summary"]["total"],
-                      "critiques": ares["summary"]["critique"],
-                      "élevées": ares["summary"]["élevée"],
-                      "principales": top_anoms},
-        "risque_depart": {"resume": attr_mod.summary(risk_df) if risk_df is not None else {},
-                          "top": top_risk},
+                      "critical": ares["summary"]["critique"],
+                      "high": ares["summary"]["élevée"],
+                      "top": top_anoms},
+        "leaving_risk": {"summary": attr_mod.summary(risk_df) if risk_df is not None else {},
+                         "top": top_risk},
     }
 
 
 def brief_as_text(brief: dict) -> str:
     """Compact human/LLM-readable rendering of the brief."""
-    lines = [f"SOURCE DES DONNÉES : {brief['source']} · {brief['effectif']} employés "
-             f"· au {brief['date']}", "", "INDICATEURS CLÉS :"]
+    lines = [f"DATA SOURCE: {brief['source']} · {brief['headcount']} employees "
+             f"· as of {brief['date']}", "", "KEY INDICATORS:"]
     for k in brief["kpis"].values():
-        lines.append(f"  - {k['label']} : {k['display']} [{k['band']}]")
+        lines.append(f"  - {k['label']}: {k['display']} [{k['band']}]")
     a = brief["anomalies"]
-    lines += ["", f"ANOMALIES : {a['total']} au total "
-                  f"({a['critiques']} critiques, {a['élevées']} élevées)"]
-    for x in a["principales"]:
-        lines.append(f"  - [{x['gravité']}] {x['domaine']} · {x['employé']} : {x['constat']}")
-    r = brief["risque_depart"]
+    lines += ["", f"ANOMALIES: {a['total']} in total "
+                  f"({a['critical']} critical, {a['high']} high)"]
+    for x in a["top"]:
+        lines.append(f"  - [{x['severity']}] {x['area']} · {x['employee']}: {x['finding']}")
+    r = brief["leaving_risk"]
     if r["top"]:
-        lines += ["", "RISQUE DE DÉPART (top) :"]
+        lines += ["", "LEAVING RISK (top):"]
         for x in r["top"]:
-            lines.append(f"  - {x['employé']} : {x['risque_%']}% ({x['facteur']}), "
-                         f"remplacement {x['coût_remplacement']:,} DZD")
+            lines.append(f"  - {x['employee']}: {x['risk_pct']}% ({x['driver']}), "
+                         f"replacement {x['replacement_cost']:,} DZD")
     return "\n".join(lines)
 
-
-# ---------------------------------------------------------------------------
-# Deterministic recommendation (no key needed)
-# ---------------------------------------------------------------------------
 
 def rule_recommendation(brief: dict) -> list:
     """Concrete moves derived from the brief alone, ranked by urgency."""
     recs = []
     a = brief["anomalies"]
-    if a["critiques"]:
-        recs.append(f":material/error: {a['critiques']} anomalie(s) critique(s) de "
-                    f"paie à régulariser en priorité (voir Détection d'anomalies).")
+    if a["critical"]:
+        recs.append(f":material/error: {a['critical']} critical payroll anomaly(ies) "
+                    f"to fix first (see Anomaly detection).")
     kpis = brief["kpis"]
 
     def band_of(key):
         return kpis.get(key, {}).get("band")
 
     if band_of("absenteeism") in ("surveiller", "critique"):
-        recs.append(f":material/event_busy: Absentéisme "
-                    f"{kpis['absenteeism']['display']} — cibler 4% libère "
-                    f"{kpis.get('absence_cost', {}).get('display', 'du budget')} "
-                    f"(simulez-le dans le Simulateur de scénarios).")
+        recs.append(f":material/event_busy: Absenteeism "
+                    f"{kpis['absenteeism']['display']}: bringing it to 4% frees "
+                    f"{kpis.get('absence_cost', {}).get('display', 'budget')} "
+                    f"(model it in the Scenario simulator).")
     if band_of("attrition_risk") in ("surveiller", "critique"):
-        n_high = kpis.get("high_risk", {}).get("display", "plusieurs")
-        recs.append(f":material/trending_down: Risque de départ élevé : {n_high} "
-                    f"employé(s) à haut risque — entretiens de rétention cette semaine.")
+        n_high = kpis.get("high_risk", {}).get("display", "several")
+        recs.append(f":material/trending_down: High leaving risk: {n_high} "
+                    f"employee(s) at high risk. Hold retention talks this week.")
     if band_of("cdd_pct") == "critique":
-        recs.append(f":material/badge: Part de CDD {kpis['cdd_pct']['display']} — "
-                    f"stabiliser les meilleurs éléments en CDI réduit le turnover.")
-    for x in brief["risque_depart"].get("top", [])[:1]:
-        recs.append(f":material/priority_high: Parler à {x['employé']} "
-                    f"({x['risque_%']}% de risque, {x['facteur'].lower()}).")
+        recs.append(f":material/badge: CDD share {kpis['cdd_pct']['display']}: "
+                    f"moving your best people to CDI cuts turnover.")
+    for x in brief["leaving_risk"].get("top", [])[:1]:
+        recs.append(f":material/priority_high: Talk to {x['employee']} "
+                    f"({x['risk_pct']}% risk, {x['driver'].lower()}).")
     if not recs:
-        recs.append(":material/check_circle: Aucun signal critique — indicateurs "
-                    "dans les normes. Continuer le suivi hebdomadaire.")
+        recs.append(":material/check_circle: No critical signal: indicators are "
+                    "within norms. Keep the weekly review.")
     return recs
 
 
-# ---------------------------------------------------------------------------
-# The AI decision layer, grounded strictly in the brief
-# ---------------------------------------------------------------------------
-
 _SYSTEM = (
-    "Tu es le copilote décisionnel RH de Tawzia, pour un employeur algérien. "
-    "Tu raisonnes UNIQUEMENT à partir du BRIEF chiffré fourni (les vrais chiffres de "
-    "l'entreprise, calculés par les modèles maison). N'invente aucun chiffre : si une "
-    "donnée manque, dis-le. Cite les indicateurs du brief pour justifier chaque point. "
-    "Contexte algérien : SNMG, CNAS, IRG, droit du travail. Réponds en FRANÇAIS, de "
-    "façon concise et actionnable. Structure ta réponse : (1) réponse directe, "
-    "(2) ce que disent les chiffres, (3) recommandation concrète, et si pertinent "
-    "(4) le scénario à simuler pour la chiffrer."
+    "You are Tawzia's HR decision copilot for an Algerian employer. Reason ONLY "
+    "from the BRIEF provided (the company's real figures, computed by the in-house "
+    "models). Invent no figure: if data is missing, say so. Cite the brief's "
+    "indicators to justify each point. Algerian context: SNMG, CNAS, IRG, labour "
+    "law. Answer in English, concise and actionable. Structure: (1) direct answer, "
+    "(2) what the figures say, (3) a concrete recommendation, and where relevant "
+    "(4) the scenario to simulate to cost it."
 )
 
 
 def ask(question: str, brief: dict, max_tokens: int = 800) -> dict:
-    """
-    Answer a manager's question, grounded in the company's brief.
-
-    Returns {"text", "grounded": bool, "recommendations": [...], "used_ai": bool}.
-    """
+    """Answer a manager's question, grounded in the company's brief."""
     rule_recs = rule_recommendation(brief)
     if not any(ai.providers_available().values()):
         return {
             "text": "", "grounded": True, "recommendations": rule_recs,
             "used_ai": False,
-            "note": "Sans clé IA : recommandations issues des règles. Ajoutez "
-                    "GROQ_API_KEY pour une réponse rédigée.",
+            "note": "No AI key: recommendations come from the rules. Add "
+                    "GROQ_API_KEY for a written answer.",
         }
 
-    user = (f"BRIEF (source de vérité — ne raisonne qu'à partir de ceci) :\n"
-            f"{brief_as_text(brief)}\n\nQUESTION DU RESPONSABLE :\n{question}")
+    user = (f"BRIEF (source of truth, reason only from this):\n"
+            f"{brief_as_text(brief)}\n\nMANAGER'S QUESTION:\n{question}")
     res = ai.chat(_SYSTEM, user, max_tokens=max_tokens, temperature=0.25)
     if not res.ok:
         return {"text": "", "grounded": True, "recommendations": rule_recs,
-                "used_ai": False, "note": res.error or "Erreur IA."}
+                "used_ai": False, "note": res.error or "AI error."}
     return {"text": res.text, "grounded": True, "recommendations": rule_recs,
             "used_ai": True, "model": res.model}
 
 
 SUGGESTED_QUESTIONS = [
-    "Quels sont les 3 risques les plus urgents ce mois-ci ?",
-    "Faut-il embaucher, et à quel poste en priorité ?",
-    "Sommes-nous en règle côté paie et CNAS/IRG ?",
-    "Qui risque de partir et que faire pour les retenir ?",
-    "Où puis-je réduire les coûts sans casser le service ?",
+    "What are the 3 most urgent risks this month?",
+    "Should we hire, and for which role first?",
+    "Are we compliant on payroll, CNAS and IRG?",
+    "Who might leave and how do we keep them?",
+    "Where can I cut costs without hurting service?",
 ]
 
 
-# ---------------------------------------------------------------------------
-# Routage : une seule conversation, trois domaines de connaissance
-# ---------------------------------------------------------------------------
-# L'assistant avait trois écrans (planning, RH, décision) qui posaient la même
-# question à trois endroits différents. Il n'en reste qu'un, et c'est ce routeur
-# qui choisit le contexte à donner au modèle. Il est volontairement à base de
-# mots-clés : pas d'appel réseau, pas de latence, et un choix qu'on peut
-# expliquer et tester. En cas d'égalité ou de doute, on retombe sur "decision",
-# qui porte les indicateurs de l'entreprise et répond au plus grand nombre de
-# questions.
+# Routing: one conversation, three knowledge domains. Keyword-based on purpose:
+# no network call, no latency, a choice you can explain and test. When in doubt
+# it falls back to "decision", which carries the company indicators.
 
 TOPICS = {
-    "planning": "Planning et charge",
-    "rh": "Personnel, paie et droit du travail",
-    "decision": "Indicateurs et décisions",
+    "planning": "Scheduling and load",
+    "rh": "People, payroll and labour law",
+    "decision": "Indicators and decisions",
 }
 
 _ROUTER_KEYWORDS = {
     "planning": (
-        "planning", "prevision", "prévision", "charge", "shift", "poste du",
-        "interim", "intérim", "roster", "effectif de pic", "pic", "demande",
-        "volume", "colis", "passager", "couvrir", "couverture", "horaire",
-        "heures supplementaires", "heures supplémentaires", "week-end",
-        "vendredi", "samedi", "meteo", "météo", "saison",
+        "schedule", "roster", "forecast", "shift", "temp", "peak", "demand",
+        "volume", "parcel", "passenger", "cover", "coverage", "weekend",
+        "friday", "saturday", "weather", "season", "overtime",
+        "planning", "prévision", "prevision", "charge", "intérim", "interim",
+        "vendredi", "samedi", "météo", "heures supplémentaires",
     ),
     "rh": (
-        "conge", "congé", "absence", "absent", "retard", "salaire", "paie",
-        "bulletin", "cnas", "irg", "snmg", "contrat", "cdd", "cdi", "loi",
-        "droit", "legal", "légal", "inspection", "inspecteur", "maternite",
-        "maternité", "maladie", "demission", "démission", "preavis", "préavis",
-        "embauche", "licenciement", "declaration", "déclaration", "cotisation",
-        "anciennete", "ancienneté", "sortie", "prime",
+        "leave day", "annual leave", "on leave", "absence", "absent", "late", "salary", "payroll", "payslip",
+        "cnas", "irg", "snmg", "contract", "cdd", "cdi", "law", "legal",
+        "inspection", "inspector", "maternity", "sick", "resign", "notice",
+        "hire", "dismiss", "filing", "contribution", "seniority", "bonus",
+        "congé", "conge", "salaire", "paie", "bulletin", "contrat", "loi",
+        "maladie", "démission", "embauche", "déclaration", "cotisation",
     ),
     "decision": (
-        "faut-il", "dois-je", "combien", "rentable", "recruter", "economie",
-        "économie", "kpi", "indicateur", "risque de depart", "risque de départ",
-        "turnover", "budget", "decision", "décision", "priorite", "priorité",
-        "urgent", "reduire", "réduire", "cout", "coût", "rentabilite",
-        "rentabilité", "investir", "arbitrer",
+        "should", "how much", "worth", "recruit", "saving", "kpi", "indicator",
+        "leaving risk", "might leave", "turnover", "budget", "decision",
+        "priority", "urgent", "reduce", "cut", "cost", "invest",
+        "faut-il", "dois-je", "combien", "rentable", "recruter", "risque",
+        "décision", "priorité", "réduire", "coût",
     ),
 }
 
-
-# Tournures qui annoncent une demande d'arbitrage. Elles pèsent double : « faut-il
-# embaucher » contient le mot « embauche », qui est un mot RH, alors que la
-# question posée est une décision. L'intention exprimée par la tournure est un
-# signal plus fiable que le domaine du nom employé.
-_INTENT_MARKERS = ("faut-il", "faut il", "dois-je", "dois je", "devrais-je",
-                   "vaut-il mieux", "est-ce que je dois", "ai-je intérêt",
-                   "ai-je interet", "que faire", "quoi faire")
+# Phrasings that announce a judgement call weigh double: "should we hire"
+# contains "hire" (an HR word) but the question is a decision.
+_INTENT_MARKERS = ("should we", "should i", "is it worth", "what should", "faut-il", "faut il", "dois-je", "que faire")
 
 
 def route(question: str) -> str:
-    """
-    Le domaine à interroger pour cette question.
-
-    Renvoie une clé de `TOPICS`. Le comptage privilégie le domaine qui a le plus
-    de mots-clés présents ; à égalité, l'ordre planning > rh > decision tranche,
-    parce qu'une question qui mentionne à la fois le planning et un congé porte
-    presque toujours sur l'arbitrage de planning.
-    """
+    """The domain to query for this question (a key of TOPICS)."""
     q = (question or "").lower()
     scores = {topic: sum(1 for kw in kws if kw in q)
               for topic, kws in _ROUTER_KEYWORDS.items()}
@@ -260,31 +217,27 @@ def route(question: str) -> str:
 if __name__ == "__main__":
     from . import attendance as att_mod, hr
 
-    print("Copilote décisionnel — self check\n")
+    print("Decision copilot, self check\n")
     people = hr.sample_workforce("sorter", 50, "Alger")
     records = att_mod.sample_attendance(people, days=20)
-    brief = build_brief(people, records, source_label="démonstration (simulée)")
+    brief = build_brief(people, records, source_label="demo (simulated)")
     print(brief_as_text(brief)[:900], "...\n")
-    print("Recommandations (règles, sans IA) :")
     for r in rule_recommendation(brief):
         print("   ", r.split(": ", 1)[-1])
-    print("\nIA disponible :", any(ai.providers_available().values()))
 
-    print("\nRoutage des questions :")
     cases = [
-        ("Combien de personnes prévoir vendredi prochain ?", "planning"),
-        ("Quel jour dépend-on le plus des intérimaires ?", "planning"),
-        ("Combien de jours de congé reste-t-il à Amine ?", "rh"),
-        ("Quelle sera la facture CNAS ce mois-ci ?", "rh"),
-        ("Sommes-nous en règle avec le droit du travail ?", "rh"),
+        ("How many people do we need next Friday?", "planning"),
+        ("Which day depends most on temps?", "planning"),
+        ("How many leave days does Amine have left?", "rh"),
+        ("What will the CNAS bill be this month?", "rh"),
+        ("Are we compliant with labour law?", "rh"),
+        ("Should we hire this quarter?", "decision"),
+        ("Who might leave and why?", "decision"),
+        ("Hello", "decision"),
         ("Faut-il embaucher ce trimestre ?", "decision"),
-        ("Qui risque de partir et pourquoi ?", "decision"),
-        ("Bonjour", "decision"),
     ]
-    bad = 0
-    for question, expected in cases:
-        got = route(question)
-        ok = got == expected
-        bad += 0 if ok else 1
-        print(f"  {'OK ' if ok else 'ECHEC'} {TOPICS[got]:34s} <- {question}")
-    print(f"\n{len(cases) - bad}/{len(cases)} questions routées comme attendu")
+    bad = [(q, e, route(q)) for q, e in cases if route(q) != e]
+    for q, e, g in bad:
+        print(f"  FAIL {q!r}: expected {e}, got {g}")
+    assert not bad, bad
+    print(f"\n{len(cases)}/{len(cases)} questions routed as expected")

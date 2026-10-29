@@ -1,27 +1,25 @@
 """
 core/talent.py
 --------------
-Le vivier de candidats : classer des candidatures du plus au moins adapté, et
-pouvoir les parcourir.
+The candidate pool: rank applications from best to worst fit, and browse them.
 
-Ce que ça ajoute par rapport à `core/cv_screen.py`
-=================================================
-`cv_screen` sait juger **une** candidature contre **un** poste. Ici on raisonne
-sur le lot : un vivier de profils, un poste, un classement, et de quoi filtrer.
-Le calcul de score reste celui de `cv_screen.score` , il n'y a pas deux barèmes
-dans le produit, sinon deux écrans donneraient deux réponses différentes sur le
-même candidat.
+What it adds to `core/cv_screen.py`
+===================================
+`cv_screen` judges **one** application against **one** job. Here we reason about
+the batch: a pool of profiles, one job, a ranking, and filters. The scoring stays
+`cv_screen.score`: there are not two scales in the product, otherwise two
+screens would give two answers about the same candidate.
 
-Le classement est **déterministe et explicable** : chaque candidat porte ses
-points forts et ses réserves, et le score se décompose critère par critère. Un
-recruteur qui doit justifier un refus peut le faire.
+The ranking is **deterministic and explainable**: every candidate carries their
+strengths and reservations, and the score breaks down criterion by criterion. A
+recruiter who must justify a refusal can.
 
-Les profils de démonstration
-============================
-`sample_pool()` fabrique un vivier plausible (noms, wilayas, formations,
-expérience, langues, permis, service national) parce qu'aucun vivier réel de CV
-algériens n'est public. **Ces profils sont simulés et l'écran le dit.** En
-production, le vivier vient des CV réellement reçus, lus par `cv_screen.extract`.
+The demo profiles
+=================
+`sample_pool()` builds a plausible pool (names, wilayas, education, experience,
+languages, licence, national service) because no real pool of Algerian CVs is
+public. **These profiles are simulated and the screen says so.** In production
+the pool comes from the CVs actually received, read by `cv_screen.extract`.
 """
 
 from __future__ import annotations
@@ -34,15 +32,15 @@ import pandas as pd
 
 from . import cv_screen, hr
 
-# Formations réellement rencontrées sur un CV algérien, du plus court au plus long.
+# Qualifications actually found on Algerian CVs, shortest to longest.
 _EDUCATIONS = [
-    ("sans", "Niveau secondaire, sans diplôme"),
-    ("cap", "CAP / CFPA"),
-    ("bac", "Baccalauréat"),
-    ("bts", "BTS / Technicien supérieur"),
-    ("licence", "Licence (LMD)"),
+    ("sans", "Secondary level, no diploma"),
+    ("cap", "Vocational certificate (CAP / CFPA)"),
+    ("bac", "Baccalaureate"),
+    ("bts", "Higher technician (BTS)"),
+    ("licence", "Bachelor (Licence LMD)"),
     ("master", "Master (LMD)"),
-    ("ingenieur", "Ingénieur d'État"),
+    ("ingenieur", "State engineer"),
 ]
 
 _ESTABLISHMENTS = [
@@ -81,7 +79,7 @@ _SN_STATES = ["degage", "degage", "degage", "exempte", "en cours", "inconnu"]
 # Le verdict, en français. Défini ici et pas emprunté à un autre module : c'est
 # cette table qui alimente les filtres de l'écran, donc elle doit vivre à côté
 # du tableau qu'elle remplit.
-BANDS_FR = {"strong": "Fort", "possible": "Possible", "weak": "Faible"}
+BANDS_FR = {"strong": "Strong", "possible": "Possible", "weak": "Weak"}
 
 _WILAYA_MIX = ["Alger", "Alger", "Alger", "Blida", "Boumerdes", "Tipaza",
                "Oran", "Constantine", "Setif", "Annaba", "Bejaia", "Tizi Ouzou"]
@@ -148,47 +146,47 @@ def sample_pool(role_key: str = "sorter", n: int = 28, seed: int = 11) -> list:
 
 
 def rank_pool(candidates: list, job: cv_screen.Job) -> list:
-    """Le vivier trié du plus au moins adapté, avec le détail de chaque score."""
+    """The pool sorted from best to worst fit, with each score's detail."""
     scored = [cv_screen.score(c, job, method="rules") for c in candidates]
     return sorted(scored, key=lambda s: (-s.score, s.candidate.name))
 
 
 def pool_frame(screenings: list) -> pd.DataFrame:
     """
-    Le classement en tableau, une ligne par candidat.
+    The ranking as a table, one row per candidate.
 
-    Colonnes pensées pour être filtrées et triées telles quelles par l'écran :
-    tout ce sur quoi un recruteur veut restreindre est une colonne.
+    Columns built to be filtered and sorted as is by the screen: everything a
+    recruiter wants to narrow on is a column.
     """
     rows = []
     for rank, s in enumerate(screenings, start=1):
         c = s.candidate
         rows.append({
-            "Rang": rank,
-            "Nom": c.name,
+            "Rank": rank,
+            "Name": c.name,
             "Score": s.score,
             "Verdict": BANDS_FR.get(s.band, s.band),
             "Wilaya": c.wilaya,
-            "Formation": c.education_raw or c.education,
-            "Niveau": c.education,
-            "Expérience": c.experience_years,
-            "Langues": ", ".join(c.languages),
-            "Permis": bool(c.driving_licence),
-            "Service national": c.service_national,
-            "Mobilité": c.mobility,
-            "Points forts": len(s.pluses),
-            "Réserves": len(s.flags),
+            "Education": c.education_raw or c.education,
+            "Level": c.education,
+            "Experience": c.experience_years,
+            "Languages": ", ".join(c.languages),
+            "Licence": bool(c.driving_licence),
+            "National service": c.service_national,
+            "Mobility": c.mobility,
+            "Strengths": len(s.pluses),
+            "Reservations": len(s.flags),
         })
     return pd.DataFrame(rows)
 
 
 def score_breakdown(screening) -> pd.DataFrame:
     """
-    Le score critère par critère, pour pouvoir justifier un classement.
+    The score criterion by criterion, to justify a ranking.
 
-    On recalcule chaque part avec la même logique que `cv_screen.score`, puis on
-    la pondère : c'est ce qui rend le classement défendable devant un candidat
-    qui demande pourquoi.
+    Each part is recomputed with the same logic as `cv_screen.score`, then
+    weighted: that is what makes the ranking defensible to a candidate who asks
+    why.
     """
     c, job = screening.candidate, screening.job
     w = job.weight
@@ -199,29 +197,29 @@ def score_breakdown(screening) -> pd.DataFrame:
     missing = req - set(c.languages)
 
     parts = {
-        "Formation": (1.0 if have >= need
+        "Education": (1.0 if have >= need
                       else max(0.0, have / max(need, 1) * 0.7)),
-        "Expérience": (1.0 if job.min_experience_years <= 0 else
+        "Experience": (1.0 if job.min_experience_years <= 0 else
                        min(c.experience_years / job.min_experience_years, 1.0)),
-        "Langues": 1.0 - (len(missing) / max(len(req), 1)),
-        "Compétences": (min(len(set(c.skills) & set(job.skills)) /
+        "Languages": 1.0 - (len(missing) / max(len(req), 1)),
+        "Skills": (min(len(set(c.skills) & set(job.skills)) /
                             len(job.skills), 1.0) if job.skills else 1.0),
-        "Permis": (1.0 if not job.needs_driving_licence
-                   else (1.0 if c.driving_licence else 0.0)),
-        "Service national": _sn_part(c, job),
+        "Licence": (1.0 if not job.needs_driving_licence
+                    else (1.0 if c.driving_licence else 0.0)),
+        "National service": _sn_part(c, job),
     }
-    keys = {"Formation": "education", "Expérience": "experience",
-            "Langues": "languages", "Compétences": "skills",
-            "Permis": "licence", "Service national": "service_national"}
+    keys = {"Education": "education", "Experience": "experience",
+            "Languages": "languages", "Skills": "skills",
+            "Licence": "licence", "National service": "service_national"}
     total_w = sum(w.values())
     rows = []
     for label, part in parts.items():
         weight = w.get(keys[label], 0)
         rows.append({
-            "Critère": label,
-            "Atteint": round(part * 100),
-            "Poids": round(weight / total_w * 100),
-            "Apport": round(part * weight / total_w * 100, 1),
+            "Criterion": label,
+            "Achieved": round(part * 100),
+            "Weight": round(weight / total_w * 100),
+            "Contribution": round(part * weight / total_w * 100, 1),
         })
     return pd.DataFrame(rows)
 
@@ -235,16 +233,16 @@ def _sn_part(c, job) -> float:
 
 
 def shortlist_note(screenings: list, job: cv_screen.Job, keep: int = 5) -> str:
-    """Une phrase de synthèse pour le haut de l'écran, sans jargon."""
+    """One summary sentence for the top of the screen, no jargon."""
     if not screenings:
-        return "Aucune candidature dans le vivier."
+        return "No application in the pool."
     strong = sum(1 for s in screenings if s.band == "strong")
     possible = sum(1 for s in screenings if s.band == "possible")
     top = screenings[0]
-    return (f"{len(screenings)} candidatures pour « {job.title} » : "
-            f"{strong} dossiers solides, {possible} à voir, "
-            f"{len(screenings) - strong - possible} hors cible. "
-            f"Le mieux placé est {top.candidate.name} ({top.score}%).")
+    return (f"{len(screenings)} applications for \"{job.title}\": "
+            f"{strong} strong, {possible} worth a look, "
+            f"{len(screenings) - strong - possible} off target. "
+            f"The best placed is {top.candidate.name} ({top.score}%).")
 
 
 if __name__ == "__main__":
@@ -279,7 +277,7 @@ if __name__ == "__main__":
     print(f"{'OK ' if ok else 'ECHEC'} verdicts affichables : {sorted(labels)}")
 
     bd = score_breakdown(ranked[0])
-    total = bd["Apport"].sum()
+    total = bd["Contribution"].sum()
     close = abs(total - ranked[0].score) <= 1.5
     print(f"{'OK ' if close else 'ECHEC'} décomposition du score : somme des "
           f"apports {total:.1f} vs score {ranked[0].score}")

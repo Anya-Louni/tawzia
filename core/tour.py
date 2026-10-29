@@ -1,30 +1,28 @@
 """
 core/tour.py
 ------------
-La visite guidée du produit, au premier lancement.
+The product's guided tour, on first launch.
 
-Pourquoi elle existe
-====================
-Une plateforme de vingt-huit écrans perd la personne qui l'ouvre pour la
-première fois, et une personne perdue n'achète pas. La visite dit en cinq
-étapes ce que l'outil fait, où l'on clique, et ce qu'on y gagne , puis elle
-s'efface et ne revient plus, sauf demande explicite.
+Why it exists
+=============
+A platform with many screens loses the person who opens it for the first time,
+and a lost person does not buy. The tour says in five steps what the tool does,
+where to click and what it earns, then disappears and never comes back unless
+asked.
 
-Comment c'est branché
-=====================
-`driver.js` (MIT, embarqué dans `assets/vendor/`, jamais chargé depuis un CDN :
-la démonstration doit tenir sans réseau) est monté dans un composant
-**Custom Components v2**. CCv2 ne met pas le composant dans une iframe : le
-script s'exécute dans le document de l'application, il peut donc mettre en
-évidence les vrais éléments de l'interface , le bandeau, les sections, les
-réglages , et pas une copie dans un cadre isolé.
+How it is wired
+===============
+`driver.js` (MIT, bundled in `assets/vendor/`, never loaded from a CDN: the demo
+must work without a network) is mounted in a **Custom Components v2**
+component. CCv2 does not put the component in an iframe: the script runs in the
+app's document, so it can highlight the real interface elements (the band, the
+spaces, the settings), not a copy in an isolated frame.
 
-`isolate_styles=False` est nécessaire : driver.js pose son voile et sa bulle
-sur `document.body`, hors du shadow root, donc sa feuille de style doit être
-globale.
+`isolate_styles=False` is required: driver.js draws its overlay and popover on
+`document.body`, outside the shadow root, so its stylesheet must be global.
 
-Les sélecteurs visés sont nos propres conteneurs nommés (`st-key-*`), jamais
-des classes `st-emotion-cache-*`, qui changent à chaque version de Streamlit.
+The selectors are our own named containers (`st-key-*`), never
+`st-emotion-cache-*` classes, which change with every Streamlit version.
 """
 
 from __future__ import annotations
@@ -65,7 +63,7 @@ export default function (component) {
   const factory = window.driver && window.driver.js && window.driver.js.driver;
   if (typeof factory !== "function") return;
 
-  // Une seule visite à la fois, même si Streamlit remonte le composant.
+  // One tour at a time, even if Streamlit remounts the component.
   if (window.__wfTourRunning) return;
   window.__wfTourRunning = true;
 
@@ -98,31 +96,31 @@ export default function (component) {
     stagePadding: 6,
     stageRadius: 8,
     popoverClass: "wf-tour",
-    nextBtnText: "Suivant",
-    prevBtnText: "Précédent",
-    doneBtnText: "Commencer",
+    nextBtnText: "Next",
+    prevBtnText: "Back",
+    doneBtnText: "Get started",
     progressText: "{{current}} / {{total}}",
     steps: steps,
     onDestroyed: finish,
   });
 
-  // Laisse Streamlit finir de peindre la page avant de mesurer les cibles.
-  // `setTimeout` et non `requestAnimationFrame` : rAF ne se déclenche pas
-  // dans un onglet non visible, et la visite resterait alors bloquée.
+  // Let Streamlit finish painting the page before measuring the targets.
+  // `setTimeout`, not `requestAnimationFrame`: rAF does not fire in a hidden
+  // tab, and the tour would then hang.
   setTimeout(function () {
     try {
       tour.drive();
     } catch (err) {
       window.__wfTourRunning = false;
-      console.error("Tawzia , visite guidée :", err);
+      console.error("Tawzia guided tour:", err);
     }
   }, 300);
 }
 """ % _DRIVER_SRC
 
 _CSS = _DRIVER_CSS + """
-/* La bulle prend la langue visuelle du produit : navy, bleu d'action,
-   angles équerrés, aucun dégradé. */
+/* The popover speaks the product's visual language: navy, action blue,
+   square corners, no gradient. */
 .driver-popover.wf-tour {
   background:#FFFFFF; border:1px solid #CBD5E1; border-radius:10px;
   box-shadow:0 24px 60px -20px rgba(10,37,64,.6);
@@ -154,46 +152,45 @@ _CSS = _DRIVER_CSS + """
 .driver-popover.wf-tour .driver-popover-arrow { border-color:#FFFFFF; }
 """
 
-# Les étapes : ce que l'outil fait, où l'on clique, ce qu'on y gagne.
+# The steps: what the tool does, where to click, what it earns.
 STEPS = [
     {
         "element": ".st-key-wf_topbar",
-        "title": "Bienvenue sur Tawzia",
-        "text": "La plateforme RH qui fait le travail à votre place, sur le "
-                "vrai calendrier et le vrai droit du travail algériens.",
+        "title": "Welcome to Tawzia",
+        "text": "The HR platform that does the work for you, on the real "
+                "Algerian calendar and labour law.",
         "side": "bottom",
     },
     {
         "element": ".st-key-wf_sections",
-        "title": "Cinq écrans, un seul indispensable",
-        "text": "La boîte de décisions suffit au quotidien. Les quatre autres "
-                "montrent le détail : personnel, planning, recrutement, paie.",
+        "title": "Five screens, one you need every day",
+        "text": "The decision inbox is enough day to day. The others show the "
+                "detail: people, planning, hiring, payroll.",
         "side": "bottom",
     },
     {
         "element": ".st-key-wf_controls",
-        "title": "Votre contexte",
-        "text": "Choisissez votre activité et votre wilaya : les rôles, les "
-                "coûts et la météo utilisée par le modèle s'adaptent aussitôt. "
-                "Un hôtel à Oran ne se planifie pas comme un hub à Alger.",
+        "title": "Your context",
+        "text": "Pick your activity and wilaya: roles, costs and the weather "
+                "the model uses adapt at once. A hotel in Oran is not planned "
+                "like a hub in Algiers. Switch the language here too.",
         "side": "bottom",
         "align": "end",
     },
     {
         "element": "[data-testid='stMainBlockContainer']",
-        "title": "Des chiffres, pas des promesses",
-        "text": "Chaque écran affiche sa source. Ce qui est réel est cité ; ce "
-                "qui est une hypothèse est marqué comme telle. C'est ce qui "
-                "tient devant un directeur financier.",
+        "title": "Figures, not promises",
+        "text": "Every screen shows its source. What is real is cited; what is "
+                "an assumption is marked as one. That is what holds up in front "
+                "of a finance director.",
         "side": "top",
     },
     {
         "element": ".st-key-wf_sec_active",
-        "title": "Votre matinée : signer",
-        "text": "Les agents ont déjà traité les demandes, la paie et les "
-                "échéances. Ce qui reste vous attend ici, la décision la plus "
-                "urgente en haut. Importez vos données dans « Réglages » pour "
-                "passer sur vos vrais chiffres.",
+        "title": "Your morning: sign",
+        "text": "The agents have already handled the requests, payroll and "
+                "deadlines. What is left waits here, the most urgent decision "
+                "first. Import your data in Settings to switch to your real figures.",
         "side": "bottom",
     },
 ]
@@ -211,16 +208,16 @@ _COMPONENT = st.components.v2.component(
 
 
 def available() -> bool:
-    """La visite n'est possible que si driver.js a bien été embarqué."""
+    """The tour is only possible if driver.js was bundled."""
     return bool(_DRIVER_SRC)
 
 
 def maybe_run(current) -> None:
     """
-    Lancer la visite au premier affichage de la session, ou sur demande.
+    Run the tour on the session's first display, or on request.
 
-    Appelée après le rendu de la page, pour que les cibles existent déjà dans
-    le document au moment où driver.js les mesure.
+    Called after the page renders, so the targets already exist in the
+    document when driver.js measures them.
     """
     if not available():
         return

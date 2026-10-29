@@ -34,7 +34,7 @@ Repo visibility and app visibility are two different settings:
 
 The owned models (forecasting, roster, inspection, Journal Officiel watch,
 retention, anomaly detection, CV matching) all work with no key. To enable the
-natural-language layer (copilote décisionnel, plain-language answers, the
+natural-language layer (decision copilot, plain-language answers, the
 inspector's report, the retention script), add the Groq key in the app's
 **Settings -> Secrets**:
 

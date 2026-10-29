@@ -1,4 +1,4 @@
-# WorkForce.dz
+# Tawzia
 
 **Shift-labour intelligence for Algerian operations.**
 
@@ -32,14 +32,14 @@ It cannot see the day coming.
 
 ## 2. Why existing software doesn't fix it
 
-Global workforce-management tools — Quinyx, UKG, Legion, Deputy — are built
+Global tawzia-management tools — Quinyx, UKG, Legion, Deputy — are built
 for a Gregorian, Saturday–Sunday, temperate market. In Algeria they are wrong
 in four structural ways:
 
 | What they assume | What's actually true in Algeria |
 |---|---|
 | Weekend is Saturday–Sunday | Weekend is **Friday–Saturday** |
-| The year is Gregorian | **Ramadan and the two Aïds move ~11 days earlier each year** and reshape the day, not just its volume |
+| The year is Gregorian | **Ramadan and the two Eids move ~11 days earlier each year** and reshape the day, not just its volume |
 | Summer is a demand trough | Summer is the **annual peak** — the diaspora return, mid-June to early September |
 | Demand is smooth within a month | Salaries are paid **end of month**; demand spikes in the first days of the next |
 
@@ -55,9 +55,9 @@ has **no way to express the right answer**, however much data you give it.
 A forecasting and rostering engine with Algeria as a first-class citizen:
 
 - **A real Algerian calendar engine.** Hijri conversion computed locally
-  (verified round-trip across 60 Hijri years; Aïd el-Fitr 1445 resolves to
+  (verified round-trip across 60 Hijri years; Eid al-Fitr 1445 resolves to
   10 April 2024, the actual date), plus gazetted civil holidays including
-  Yennayer, the Friday–Saturday weekend, the rentrée scolaire, the diaspora
+  Yennayer, the Friday–Saturday weekend, back to school, the diaspora
   season and the payday cycle.
 - **Real weather.** ERA5 observed history and operational forecast per wilaya
   via Open-Meteo. Ouargla recorded **84 days above 38°C in summer 2024** —
@@ -98,7 +98,7 @@ the data it's scored on:
 
 | Model | MAPE |
 |---|---|
-| **WorkForce.dz** | **~15%** |
+| **Tawzia** | **~15%** |
 | Generic international model *(same algorithm, blind to Algeria)* | ~31% |
 | Seasonal naive | ~30% |
 | Trailing mean | ~38% |
@@ -171,7 +171,7 @@ that directly:
 
 1. **Passenger-flow forecaster → terminal staffing.** Predicts the crowd
    physically at check-in / security / boarding *each hour* — driven by the
-   flight schedule *and* the diaspora-summer / Ramadan / Aïd calendar — and
+   flight schedule *and* the diaspora-summer / Ramadan / Eid calendar — and
    turns it into desk and agent counts. The peak (not the daily total) is what
    jams ALG in July, and it's invisible to a Western-calendar tool.
 
@@ -233,7 +233,7 @@ one-off sale) → adjacent verticals → Maghreb.
 2. **Bring onboarding cost to near zero.** Today it's engineer-weeks per
    customer to ingest history and fit productivity constants. That number
    decides whether this scales.
-3. **Sync the calendar to the official announcement.** Ramadan and Aïd dates
+3. **Sync the calendar to the official announcement.** Ramadan and Eid dates
    are set by the Commission Nationale d'Observation du Croissant Lunaire; our
    local calendar is accurate to within a day or two and flags the days where
    that ambiguity bites.

@@ -1,12 +1,12 @@
 """
 core/law_corpus.py
 ------------------
-Le petit corpus juridique que l'assistant et le serveur MCP citent.
+The small legal corpus cited by the assistant and the MCP server.
 
-Ce sont des **résumés**, pas le texte officiel : chaque entrée dit ce que
-l'article prévoit, en une ou deux phrases, et renvoie au texte. Le corpus ne
-couvre que les articles que la plateforme applique. Une question qui n'y trouve
-pas de réponse part au service RH : le système ne devine jamais un droit.
+These are **summaries**, not the official text: each entry states what
+the article provides, in one or two sentences, and links to the text. The corpus only
+covers the articles that the platform applies. A question that is not answered
+there goes to the HR service: the system never guesses a right.
 """
 
 from __future__ import annotations
@@ -17,58 +17,47 @@ WIPO_90_11 = "https://www.wipo.int/wipolex/edocs/lexdocs/laws/fr/dz/dz039fr.html
 JO_25_11 = "https://droit.mjustice.gov.dz/sites/default/files/loi_25-11-fr.pdf"
 
 ARTICLES = [
-    ("90-11/12", "Loi 90-11", "art. 12", "Contrat à durée déterminée",
-     "Le CDD n'est permis que dans des cas listés : remplacement d'un titulaire, "
-     "surcroît temporaire ou saisonnier, travaux temporaires par nature.", WIPO_90_11),
-    ("90-11/18", "Loi 90-11", "art. 18", "Période d'essai",
-     "La période d'essai a une durée maximale, plus longue pour les postes de haute "
-     "qualification. La plateforme applique les valeurs de sa configuration "
-     "(10 et 12 mois) [à vérifier sur le texte].", WIPO_90_11),
-    ("90-11/20", "Loi 90-11", "art. 20", "Rupture pendant l'essai",
-     "Pendant l'essai, chaque partie peut rompre sans préavis ni indemnité.", WIPO_90_11),
-    ("90-11/27", "Loi 90-11", "art. 27", "Travail de nuit",
-     "Est travail de nuit celui exécuté entre 21 heures et 5 heures.", WIPO_90_11),
-    ("90-11/28", "Loi 90-11", "art. 28", "Nuit et âge",
-     "Les travailleurs de moins de 19 ans ne peuvent pas travailler de nuit.", WIPO_90_11),
-    ("90-11/29", "Loi 90-11", "art. 29", "Nuit et travailleuses",
-     "Le travail de nuit des femmes requiert une dérogation de l'inspecteur du "
-     "travail territorialement compétent.", WIPO_90_11),
-    ("90-11/31", "Loi 90-11", "art. 31", "Heures supplémentaires",
-     "Les heures supplémentaires ne peuvent dépasser 20 % de la durée légale.", WIPO_90_11),
-    ("90-11/32", "Loi 90-11", "art. 32", "Majoration",
-     "Chaque heure supplémentaire est majorée d'au moins 50 % du salaire horaire normal.",
-     WIPO_90_11),
-    ("90-11/33", "Loi 90-11", "art. 33", "Repos hebdomadaire",
-     "Le travailleur a droit à une journée entière de repos par semaine, en principe "
-     "le vendredi.", WIPO_90_11),
-    ("90-11/36", "Loi 90-11", "art. 36", "Repos compensateur",
-     "Le travail un jour de repos légal ouvre droit à un repos compensateur d'égale durée.",
-     WIPO_90_11),
-    ("90-11/37", "Loi 90-11", "art. 37", "Déplacement du repos",
-     "Le repos hebdomadaire peut être déplacé pour des raisons de production.", WIPO_90_11),
-    ("90-11/40", "Loi 90-11", "art. 40", "Année de référence des congés",
-     "Le droit au congé se calcule sur l'année du 1er juillet au 30 juin.", WIPO_90_11),
-    ("90-11/41", "Loi 90-11", "art. 41", "Durée du congé annuel",
-     "Deux jours et demi par mois de travail, dans la limite de 30 jours calendaires par an.",
-     WIPO_90_11),
-    ("90-11/42", "Loi 90-11", "art. 42", "Congé dans le Sud",
-     "Les travailleurs des wilayas du Sud bénéficient d'au moins dix jours supplémentaires.",
-     WIPO_90_11),
-    ("90-11/54", "Loi 90-11", "art. 54", "Absences spéciales payées",
-     "Trois jours ouvrables payés pour certains événements familiaux listés "
-     "(mariage, naissance, décès d'un proche).", WIPO_90_11),
-    ("90-11/75", "Loi 90-11", "art. 75", "Règlement intérieur",
-     "Obligatoire dans les organismes employeurs d'au moins 20 travailleurs.", WIPO_90_11),
-    ("97-03", "Ordonnance 97-03", "art. 2", "Durée légale",
-     "La durée légale du travail est de 40 heures par semaine.", WIPO_90_11),
-    ("20-03", "Loi 04-19 modifiée par la loi 20-03", "", "Offre d'emploi et ANEM",
-     "L'employeur dépose ses offres auprès des services de l'emploi ; l'ANEM dispose de "
-     "cinq jours ouvrés pour proposer des candidats avant tout recrutement direct.",
+    ("90-11/12", "Law 90-11", "art. 12", "Fixed-term contract",
+     "A CDD is only allowed in listed cases: replacement of a holder, "
+     "temporary or seasonal increase, temporary work by nature.", WIPO_90_11),
+    ("90-11/18", "Law 90-11", "art. 18", "Probation period",
+     "The probation period has a maximum duration, longer for high‑qualification positions. The platform applies the values from its configuration "
+     "(10 and 12 months) [to be verified against the text].", WIPO_90_11),
+    ("90-11/20", "Law 90-11", "art. 20", "Termination during probation",
+     "During probation, either party may terminate without notice or compensation.", WIPO_90_11),
+    ("90-11/27", "Law 90-11", "art. 27", "Night work",
+     "Night work is work performed between 9 p.m. and 5 a.m.", WIPO_90_11),
+    ("90-11/28", "Law 90-11", "art. 28", "Night work and age",
+     "Workers under 19 years old may not work at night.", WIPO_90_11),
+    ("90-11/29", "Law 90-11", "art. 29", "Night work and women",
+     "Night work for women requires a waiver from the territorially competent labor inspector.", WIPO_90_11),
+    ("90-11/31", "Law 90-11", "art. 31", "Overtime",
+     "Overtime may not exceed 20 % of the legal duration.", WIPO_90_11),
+    ("90-11/32", "Law 90-11", "art. 32", "Overtime premium",
+     "Each overtime hour is increased by at least 50 % of the normal hourly wage.", WIPO_90_11),
+    ("90-11/33", "Law 90-11", "art. 33", "Weekly rest",
+     "The worker is entitled to a full day of rest per week, usually on Friday.", WIPO_90_11),
+    ("90-11/36", "Law 90-11", "art. 36", "Compensatory rest",
+     "Work on a legal rest day gives rise to an equal‑duration compensatory rest.", WIPO_90_11),
+    ("90-11/37", "Law 90-11", "art. 37", "Rest day shift",
+     "The weekly rest may be shifted for production reasons.", WIPO_90_11),
+    ("90-11/40", "Law 90-11", "art. 40", "Reference year for leave",
+     "Leave entitlement is calculated on the year from July 1 to June 30.", WIPO_90_11),
+    ("90-11/41", "Law 90-11", "art. 41", "Annual leave duration",
+     "Two and a half days per month of work, up to a maximum of 30 calendar days per year.", WIPO_90_11),
+    ("90-11/42", "Law 90-11", "art. 42", "Leave in the South",
+     "Workers in the southern wilayas receive at least ten additional days.", WIPO_90_11),
+    ("90-11/54", "Law 90-11", "art. 54", "Special paid absences",
+     "Three paid working days for certain listed family events (marriage, birth, death of a close relative).", WIPO_90_11),
+    ("90-11/75", "Law 90-11", "art. 75", "Internal regulations",
+     "Mandatory in employer organizations with at least 20 workers.", WIPO_90_11),
+    ("97-03", "Ordinance 97-03", "art. 2", "Legal duration",
+     "The legal working time is 40 hours per week.", WIPO_90_11),
+    ("20-03", "Law 04-19 amended by Law 20-03", "", "Job offer and ANEM",
+     "The employer submits its offers to the employment services; ANEM has five working days to propose candidates before any direct recruitment.", 
      "https://blog.emploitic.com/index.php/delai-de-traitement-de-loffre-demploi-par-lanem-et-organismes-de-recrutement-prives/"),
-    ("25-11", "Loi 18-07 modifiée par la loi 25-11", "", "Données personnelles",
-     "Les traitements de données des salariés sont tracés (collecte, consultation, "
-     "modification, effacement) et les transferts à l'étranger exigent des garanties.",
-     JO_25_11),
+    ("25-11", "Law 18-07 amended by Law 25-11", "", "Personal data",
+     "Employee data processing is tracked (collection, consultation, modification, deletion) and transfers abroad require safeguards.", JO_25_11),
 ]
 
 FIELDS = ("id", "text", "article", "title", "summary", "url")
@@ -80,7 +69,7 @@ def _plain(s: str) -> str:
 
 
 def search(query: str, limit: int = 5) -> list:
-    """Les articles dont le titre ou le résumé partage le plus de mots avec la question."""
+    """Articles whose title or summary share the most words with the question."""
     words = [w for w in _plain(query).replace("'", " ").split() if len(w) > 2]
     scored = []
     for row in ARTICLES:
@@ -93,8 +82,8 @@ def search(query: str, limit: int = 5) -> list:
 
 
 if __name__ == "__main__":
-    assert search("travail de nuit des femmes")[0]["article"] in ("art. 29", "art. 27")
-    assert search("heures supplémentaires plafond")[0]["article"] == "art. 31"
-    assert search("congé dans le sud")[0]["article"] == "art. 42"
+    assert search("night work women")[0]["article"] in ("art. 29", "art. 27")
+    assert search("overtime cap")[0]["article"] == "art. 31"
+    assert search("leave south")[0]["article"] == "art. 42"
     assert search("xyzzy") == []
-    print("  corpus juridique : ok")
+    print("  law corpus: ok")

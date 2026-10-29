@@ -1,6 +1,6 @@
 # Tawzia: business model, growth engine, and MCP server
 
-Companion to `TAWZIA_REBUILD_BRIEF.md`. Part A is for Anya, the pitch, and investors. Part B is a build spec for the coding agent.
+Companion to `TAWZIA_REBUILD_BRIEF.md`. Part A is for Anya, the pitch, and investors. Part B is the build spec.
 
 Research date: 28 October 2026. Market figures are sourced at the bottom. Anything labelled **hypothesis** is a starting guess to test with real customers, never a claim to put on a slide as fact.
 
@@ -44,7 +44,7 @@ Local pricing reality: Stripe doesn't operate in Algeria and PayPal has withdraw
 | Plan | Who | Price (hypothesis) | Includes |
 |---|---|---|---|
 | **Essentiel** | 10 to 49 employees | 300 DA / employee / month, minimum 6,000 DA | Payroll agent, filings calendar + drafts, documents, employee assistant |
-| **Opérations** | Shift-based firms | + 200 DA / employee / month | Scheduler agent (CP-SAT, Ramadan mode, swaps), demand forecast |
+| **Operations** | Shift-based firms | + 200 DA / employee / month | Scheduler agent (CP-SAT, Ramadan mode, swaps), demand forecast |
 | **Entreprise** | 250+ / public groups | Annual contract, quote | Local or on-premise hosting, SSO, custom rules, SLA |
 | **Cabinet** (accountants) | Accounting firms | Per client file, volume tiers | Multi-company console, white-label payslips |
 | **Setup fee** | All paid plans | One-off | Data migration from Excel/old software, leave-balance import |
@@ -62,7 +62,7 @@ Sanity check for the sales conversation: a 50-employee firm on Essentiel pays 15
 
 **Loop 2: Verified documents (product-led virality).** Every attestation de travail / de salaire Tawzia issues carries a QR code and a short verification link ("Vérifié par Tawzia"). Banks, landlords, embassies and visa centres scan it. Every scan shows Tawzia to someone who decides on credit or hiring, and to the employee's next employer. Free for the verifier, so it spreads.
 
-**Loop 3: Free tools that rank and capture leads.** Public calculators: net salary (with the 2026 IRG rules), employer cost, overtime legality, "is this night shift legal?", the monthly compliance calendar by email. People search these every January (new finance law) and every month before the 20th. Each tool ends with "Let Tawzia's agents do this for your whole company." The MCP server (Part B) puts the same tools inside the AI model and other AI assistants, so people asking an AI about Algerian payroll land on Tawzia too.
+**Loop 3: Free tools that rank and capture leads.** Public calculators: net salary (with the 2026 IRG rules), employer cost, overtime legality, "is this night shift legal?", the monthly compliance calendar by email. People search these every January (new finance law) and every month before the 20th. Each tool ends with "Let Tawzia's agents do this for your whole company." The MCP server (Part B) puts the same tools inside AI assistants, so people asking an AI about Algerian payroll land on Tawzia too.
 
 **Loop 4: Employees carry Tawzia to their next job.** Workers use the assistant for payslips, leave and attestations. When they change companies, they ask HR: "why don't you have Tawzia?" Make it easy: a referral link in the employee app ("Recommend Tawzia to your new employer").
 
@@ -108,7 +108,7 @@ Track these monthly: logo churn, net revenue retention (expansion from modules a
 
 **Audience profile:** *DRH or payroll manager at an Algerian company of 20 to 300 people, often shift-based, who loses days every month to payroll, G50 and CNAS paperwork and fears a CNAS penalty. They discover tools through LinkedIn, Facebook HR/compta groups, their accountant, and word of mouth, and care most about legal safety and time.*
 
-**Core message:** *Vos agents RH font la paie, les déclarations et les plannings. Vous signez.*
+**Core message:** *Vos agents RH font la paie, les déclarations et les plannings. Vous signez.* (Your HR agents do payroll, filings and schedules. You sign.)
 
 Supporting messages:
 1. Zero missed deadline: G50, CNAS, DAS prepared before you think of them. (Proof: calendar demo)
@@ -134,7 +134,7 @@ Supporting messages:
 |---|---|---|---|
 | 1-2 | Landing page FR/AR/EN + net-salary calculator live | Website | Must exist before any posting |
 | 1-2 | Shortlist 15 design-partner targets, 20 accountant firms | Direct | Start with warm leads |
-| 3 | Post: "Combien coûte vraiment un salarié en 2026 ?" with calculator | LinkedIn, FB groups | |
+| 3 | Post: "Combien coûte vraiment un salarié en 2026 ?" (What does an employee really cost in 2026?) with calculator | LinkedIn, FB groups | |
 | 3-4 | Design-partner meetings, 20-min live demo | In person | Sign pilot agreements |
 | 4 | Overtime + night-shift legality checker live | Website, MCP | |
 | 5 | Embassy jury presentation | Event | Film it; reuse clips |
@@ -156,13 +156,13 @@ Supporting messages:
 
 ---
 
-# PART B: MCP server spec (for the coding agent)
+# PART B: MCP server spec
 
 ## B1. Why an MCP server
 
 One tool layer, three users:
 1. **Tawzia's own agents** call these tools (no duplicated logic between the app and the agents).
-2. **Accountants and HR managers** connect Tawzia to the AI model (or any MCP client) and ask "prepare November G50 drafts for all my clients."
+2. **Accountants and HR managers** connect Tawzia to any MCP client and ask "prepare November G50 drafts for all my clients."
 3. **The public**: free, read-only legal and payroll tools anyone's AI assistant can call. This is growth loop 3 and a distribution channel nobody in Algeria has claimed.
 
 Safety rule carried over from the brief: **MCP tools can read, calculate and create drafts or Inbox cards. They never approve, file, pay, send or reject.** Approvals happen in the Tawzia app by a human.

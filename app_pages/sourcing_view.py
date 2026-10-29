@@ -1,4 +1,4 @@
-"""Sourcing & marque employeur , d'où viennent les candidats, et à quel coût."""
+"""Sourcing and employer brand: where candidates come from, and at what cost."""
 
 import altair as alt
 import streamlit as st
@@ -10,122 +10,99 @@ appdata.sidebar_controls()
 profile = demand_mod.PROFILES[st.session_state["profile_key"]]
 wilaya = st.session_state["wilaya"]
 
-st.title("Sourcing & marque employeur")
-st.caption("Le reste de la suite traite le candidat une fois qu'il a postulé. "
-           "Cette page répond à la question posée avant toutes les autres : "
-           "d'où viennent les candidats, par quel canal, à quel coût et en "
-           "combien de temps.")
+st.title("Sourcing channels")
+st.caption("The rest of the suite handles a candidate once they have applied. "
+           "This page answers the question before all the others: where do "
+           "candidates come from, through which channel, at what cost and how fast.")
 
-# --- le besoin -------------------------------------------------------------
-
-role_labels = sourcing.ROLE_FAMILY
-options = [k for k in labour_dz.ROLES if k in role_labels]
+options = [k for k in labour_dz.ROLES if k in sourcing.ROLE_FAMILY]
 default_role = profile.primary_role if profile.primary_role in options else options[0]
 
 with st.container(border=True):
-    st.subheader("Le besoin à couvrir")
+    st.subheader("The need to cover")
     c1, c2, c3, c4 = st.columns([2, 1, 1, 1])
-    role_key = c1.selectbox(
-        "Poste à pourvoir", options,
-        index=options.index(default_role),
-        format_func=lambda k: labour_dz.ROLES[k].label,
-    )
-    headcount = c2.number_input("Personnes à recruter", 1, 500, 25)
-    urgency = c3.number_input("Délai souhaité (j)", 7, 180, 45)
-    budget = c4.number_input("Budget par canal (DZD)", 0, 500_000, 60_000, step=5_000)
+    role_key = c1.selectbox("Role to fill", options, index=options.index(default_role),
+                            format_func=lambda k: labour_dz.ROLES[k].label)
+    headcount = c2.number_input("People to hire", 1, 500, 25)
+    urgency = c3.number_input("Target lead time (d)", 7, 180, 45)
+    budget = c4.number_input("Budget per channel (DZD)", 0, 500_000, 60_000, step=5_000)
 
     family = sourcing.ROLE_FAMILY[role_key]
-    st.caption(f":material/category: Famille de métiers : **{sourcing.FAMILIES[family]}** · "
-               f"Site : **{wilaya}** ({sourcing.region_of(wilaya)})")
+    st.caption(f":material/category: Job family: **{sourcing.FAMILIES[family]}** · "
+               f"Site: **{wilaya}** ({sourcing.REGION_LABEL[sourcing.region_of(wilaya)]})")
 
-ranked = sourcing.rank_channels(role_key, wilaya, headcount,
-                                urgency_days=urgency,
+ranked = sourcing.rank_channels(role_key, wilaya, headcount, urgency_days=urgency,
                                 budget_dzd=budget or None)
 plan = sourcing.build_plan(ranked, headcount)
 
 st.info(
-    "Le répertoire de canaux est réel : universités, écoles nationales, réseau "
-    "CFPA/INSFP, ANEM et sites d'emploi algériens existants et vérifiables. "
-    "**Les volumes, coûts et délais sont des hypothèses de cadrage** , aucun "
-    "opérateur algérien ne publie son coût par embauche. Un pilote les remplace "
-    "par les chiffres réels du client dès la première campagne mesurée.",
+    "The channel directory is real: universities, national schools, the "
+    "CFPA/INSFP network, ANEM and existing, verifiable Algerian job sites. "
+    "**Volumes, costs and lead times are framing assumptions**: no Algerian "
+    "operator publishes cost per hire. A pilot replaces them with the client's "
+    "real figures after the first measured campaign.",
     icon=":material/fact_check:",
 )
 
-# --- le plan ---------------------------------------------------------------
-
 with st.container(horizontal=True):
-    st.metric("Canaux retenus", len(plan["channels"]), border=True)
-    st.metric("Couverture du besoin", f"{plan['coverage_pct']} %", border=True,
-              help="Embauches attendues rapportées au besoin exprimé.")
-    st.metric("Coût du plan", appdata.dzd(plan["total_cost"], compact=True), border=True)
-    st.metric("Coût par embauche",
+    st.metric("Channels picked", len(plan["channels"]), border=True)
+    st.metric("Need covered", f"{plan['coverage_pct']}%", border=True,
+              help="Expected hires against the stated need.")
+    st.metric("Plan cost", appdata.dzd(plan["total_cost"], compact=True), border=True)
+    st.metric("Cost per hire",
               appdata.dzd(plan["cost_per_hire"], compact=True) if plan["cost_per_hire"] else "-",
               border=True)
-    st.metric("Délai", f"{plan['lead_days']} j", border=True,
-              help="Le canal le plus lent du plan détermine le délai.")
+    st.metric("Lead time", f"{plan['lead_days']} d", border=True,
+              help="The slowest channel in the plan sets the lead time.")
 
 if plan["gap"] > 0:
-    st.warning(
-        f"Les canaux disponibles ne couvrent que {plan['coverage_pct']} % du "
-        f"besoin : il manque environ **{plan['gap']:.0f} embauches**. Élargir la "
-        f"wilaya, allonger le délai, ou relever le budget par canal.",
-        icon=":material/warning:",
-    )
+    st.warning(f"The available channels only cover {plan['coverage_pct']}% of the "
+               f"need: about **{plan['gap']:.0f} hires** are missing. Widen the "
+               f"wilaya, extend the lead time, or raise the budget per channel.",
+               icon=":material/warning:")
 
 left, right = st.columns([3, 2])
 
-with left:
-    with st.container(border=True):
-        st.subheader("Classement des canaux")
-        df = sourcing.rank_frame(ranked)
-        st.dataframe(
-            df, hide_index=True, width="stretch", height=430,
-            column_config={
-                "Score": st.column_config.ProgressColumn(
-                    "Score", min_value=0, max_value=100, format="%d"),
-                "Coût campagne (DZD)": st.column_config.NumberColumn(format="%d"),
-                "Coût par embauche (DZD)": st.column_config.NumberColumn(format="%d"),
-            },
-        )
-        st.download_button(
-            "Exporter le classement (CSV)", df.to_csv(index=False).encode("utf-8"),
-            file_name=f"sourcing_{role_key}_{wilaya}.csv", mime="text/csv",
-            icon=":material/download:",
-        )
+with left, st.container(border=True):
+    st.subheader("Channel ranking")
+    df = sourcing.rank_frame(ranked)
+    st.dataframe(df, hide_index=True, width="stretch", height=430, column_config={
+        "Score": st.column_config.ProgressColumn("Score", min_value=0, max_value=100, format="%d"),
+        "Campaign cost (DZD)": st.column_config.NumberColumn(format="%d"),
+        "Cost per hire (DZD)": st.column_config.NumberColumn(format="%d"),
+    })
+    st.download_button("Export the ranking (CSV)", df.to_csv(index=False).encode("utf-8"),
+                       file_name=f"sourcing_{role_key}_{wilaya}.csv", mime="text/csv",
+                       icon=":material/download:")
 
 with right:
     with st.container(border=True):
-        st.subheader("Coût par embauche")
+        st.subheader("Cost per hire")
         top = sourcing.rank_frame(ranked).head(8)
-        top = top[top["Coût par embauche (DZD)"] > 0]
+        top = top[top["Cost per hire (DZD)"] > 0]
         if top.empty:
-            st.caption("Aucun canal payant dans le classement.")
+            st.caption("No paid channel in the ranking.")
         else:
-            chart = (
-                alt.Chart(top).mark_bar(cornerRadiusEnd=4).encode(
-                    x=alt.X("Coût par embauche (DZD):Q", title="DZD par embauche"),
-                    y=alt.Y("Canal:N", sort="x", title=None),
-                    tooltip=["Canal:N", "Coût par embauche (DZD):Q", "Délai (j):Q"],
-                ).properties(height=260)
-            )
+            chart = alt.Chart(top).mark_bar(cornerRadiusEnd=2, color="#0B57A8").encode(
+                x=alt.X("Cost per hire (DZD):Q", title="DZD per hire"),
+                y=alt.Y("Channel:N", sort="x", title=None),
+                tooltip=["Channel:N", "Cost per hire (DZD):Q", "Lead time (d):Q"],
+            ).properties(height=260)
             st.altair_chart(chart, width="stretch")
 
     with st.container(border=True):
-        st.subheader("Le plan retenu")
+        st.subheader("The chosen plan")
         if not plan["channels"]:
-            st.caption("Aucun canal ne convertit sur ce besoin.")
+            st.caption("No channel converts for this need.")
         for s in plan["channels"]:
             st.markdown(f"**{s.channel.name}**")
-            st.caption(f"{s.expected_hires:.1f} embauches attendues · "
+            st.caption(f"{s.expected_hires:.1f} expected hires · "
                        f"{appdata.dzd(s.channel.cost_dzd, compact=True)} · "
-                       f"{s.channel.lead_days} j")
+                       f"{s.channel.lead_days} d")
 
-# --- pourquoi ce classement ------------------------------------------------
-
-with st.expander("Pourquoi ces canaux, et pas les autres", icon=":material/help:"):
+with st.expander("Why these channels and not others", icon=":material/help:"):
     for s in ranked[:8]:
-        st.markdown(f"**{s.channel.name}** , score {s.score}")
+        st.markdown(f"**{s.channel.name}**, score {s.score}")
         if s.channel.note:
             st.caption(s.channel.note)
         for r in s.reasons:
@@ -134,56 +111,45 @@ with st.expander("Pourquoi ces canaux, et pas les autres", icon=":material/help:
             st.markdown(f"[{s.channel.url}]({s.channel.url})")
         st.divider()
 
-# --- partenaires -----------------------------------------------------------
-
-st.subheader("Partenaires et relais à activer")
-st.caption("Des profils à rechercher et des critères vérifiables, pas une liste "
-           "de noms. Un modèle de langage qui « trouve des influenceurs » invente "
-           "des noms plausibles et faux : c'est le pire résultat possible face à "
-           "quelqu'un qui connaît son écosystème. La vérification reste humaine.")
+st.subheader("Partners and relays to activate")
+st.caption("Profiles to look for and verifiable criteria, not a list of names. A "
+           "language model that \"finds influencers\" invents plausible, false "
+           "names. Verification stays human.")
 
 partners = sourcing.partner_profiles_for(role_key)
 cols = st.columns(min(len(partners), 3) or 1)
 for i, p in enumerate(partners):
-    with cols[i % len(cols)]:
-        with st.container(border=True):
-            st.markdown(f"**{p.label}**")
-            st.caption(f":material/travel_explore: {p.where}")
-            st.markdown("**Critères**")
-            for c in p.criteria:
-                st.markdown(f":material/check_circle: {c}")
-            st.markdown("**Ce qu'on demande**")
-            st.markdown(p.ask)
+    with cols[i % len(cols)], st.container(border=True):
+        st.markdown(f"**{p.label}**")
+        st.caption(f":material/travel_explore: {p.where}")
+        st.markdown("**Criteria**")
+        for c in p.criteria:
+            st.markdown(f":material/check_circle: {c}")
+        st.markdown("**What we ask**")
+        st.markdown(p.ask)
 
-# --- prise de contact ------------------------------------------------------
-
-st.subheader("Message de prise de contact")
-
+st.subheader("Outreach message")
 use_ai = any(ai.providers_available().values())
-st.caption((":material/smart_toy: Rédaction par IA active (" + ai.status_line() + ")")
-           if use_ai else
-           ":material/rule: Aucune clé IA , modèle de message déterministe. "
-           "Ajoutez GROQ_API_KEY pour une rédaction sur mesure.")
+st.caption((":material/smart_toy: AI writing on (" + ai.status_line() + ")") if use_ai else
+           ":material/rule: No AI key: deterministic template. Add GROQ_API_KEY for "
+           "a tailored message.")
 
 c1, c2 = st.columns([2, 1])
 channel_keys = [s.channel.key for s in ranked[:12]]
-pick = c1.selectbox(
-    "Canal à contacter", channel_keys,
-    format_func=lambda k: sourcing.CHANNELS[k].name,
-) if channel_keys else None
-company = c2.text_input("Nom de l'entreprise", "Votre entreprise")
+pick = c1.selectbox("Channel to contact", channel_keys,
+                    format_func=lambda k: sourcing.CHANNELS[k].name) if channel_keys else None
+company = c2.text_input("Company name", "Your company")
 
-if pick and st.button("Rédiger le message", type="primary", icon=":material/edit_note:"):
-    with st.spinner("Rédaction…"):
+if pick and st.button("Write the message", type="primary", icon=":material/edit_note:"):
+    with st.spinner("Writing…"):
         st.session_state["sourcing_msg"] = sourcing.draft_outreach(
             sourcing.CHANNELS[pick], role_key, company, int(headcount), wilaya,
-            use_ai=use_ai,
-        )
+            use_ai=use_ai)
 
 msg = st.session_state.get("sourcing_msg")
 if msg:
     with st.container(border=True):
         st.text_area("Message", msg["text"], height=300, label_visibility="collapsed")
-        st.caption(f"Méthode de rédaction : {msg['method']}")
+        st.caption(f"Writing method: {msg['method']}")
 
 appdata.data_badge()

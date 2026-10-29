@@ -1,11 +1,11 @@
 """
 dashboard.py
 ------------
-Tawzia , la plateforme RH et de planification par l'IA, conçue pour le droit du
-travail algérien. Le nom vient de l'arabe توزيع, « répartition » : affecter les
-bonnes personnes aux bons postes est le geste que fait le moteur.
+Tawzia, the AI HR department built on Algerian labour law. The name comes
+from the Arabic توزيع, "distribution": putting the right people in the right
+posts is what the engine does.
 
-Lancer :
+Run:
     streamlit run dashboard.py
 """
 
@@ -24,13 +24,11 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# Mode secteur : adapte l'app au prospect via ?industry=hotel|delivery|...
+# Sector mode: tailors the app to a prospect via ?industry=hotel|delivery|...
 industry.apply()
 _ind = industry.current()
 
-# "Aéroport" est un module sectoriel : affiché seulement pour l'édition aéroport
-# (ou l'app complète), pour ne pas encombrer un prospect hôtel ou livraison.
-# Planification. "Aéroport" is a sector module: it appears only in the airport
+# "Aéroport" is a sector module: it appears only in the airport
 # edition (?industry=airport), so the default platform stays sector-neutral and
 # reads as built for any company, not for airports.
 _planification = [
@@ -47,11 +45,10 @@ if _ind["show_airport"]:
     _planification.append(st.Page("app_pages/airport_ops.py", title="Aéroport",
                                   icon=":material/flight:"))
 
-# Cinq écrans, plus les réglages. La boîte de décisions fait le travail des
-# quatre autres : les agents y déposent chaque tâche terminée, le responsable
-# signe. Le reste sert à regarder le détail ou à corriger une carte. Les écrans
-# qui se répétaient (trois tris de CV, deux tableaux de bord, risque et
-# rétention, KPI) ont été fusionnés ou retirés.
+# Five screens plus Settings. The decision inbox does the work of the other
+# four: agents drop every finished task there and the manager signs. The rest
+# is for looking at the detail or correcting a card. Page titles are the
+# navigation ids (French); core/i18n.py displays them in the chosen language.
 pages = {
     "Décisions": [
         st.Page("app_pages/autopilot.py", title="Boîte de décisions",
@@ -95,6 +92,8 @@ pages = {
     "Réglages": [
         st.Page("app_pages/assistant.py", title="Demander à Tawzia",
                 icon=":material/forum:"),
+        st.Page("app_pages/pdf_tool.py", title="PDF vers texte IA",
+                icon=":material/picture_as_pdf:"),
         st.Page("app_pages/company_data_view.py", title="Données de l'entreprise",
                 icon=":material/database:"),
         st.Page("app_pages/privacy_view.py", title="Confidentialité",
@@ -114,22 +113,20 @@ pages = {
     ],
 }
 
-# Navigation faite main (voir core/nav.py) : les cinq écrans et les réglages
-# restent visibles en grand, un clic ouvre l'espace et ses écrans s'alignent juste dessous. La navigation native `position="top"` est écartée , elle
-# replie toutes les sections dans un menu « N more » dès qu'elle ne parvient pas
-# à les mesurer, ce qui est un risque inacceptable sur une démonstration
-# projetée. `position="hidden"` désactive donc le rendu natif, et tout ce qui est
-# écrit avant `.run()` s'affiche en haut de la page (voir DESIGN.md).
+# Hand-built navigation (see core/nav.py). Streamlit's native `position="top"`
+# folds every section into an "N more" menu when it cannot measure them, which
+# is unacceptable on a projected demo. `position="hidden"` turns the native one
+# off, and whatever is written before `.run()` shows at the top (see DESIGN.md).
 _nav = st.navigation(pages, position="hidden")
 
-from core import appdata, gate, nav, tour  # noqa: E402  , après st.set_page_config
+from core import appdata, gate, nav, tour  # noqa: E402  , after st.set_page_config
 
 appdata.init_state()
 appdata.inject_theme()
 
-# Le portillon d'accès : exigé seulement si un APP_PASSWORD est configuré, pour
-# qu'une démonstration ne se heurte pas à un écran de connexion inutile. Placé
-# après le thème, afin que l'écran de connexion porte déjà la marque.
+# The access gate: required only when an APP_PASSWORD is set, so a demo never
+# hits a needless sign-in screen. Placed after the theme so the sign-in screen
+# already carries the brand.
 if not gate.require_access():
     st.stop()
 nav.render(pages, _nav)

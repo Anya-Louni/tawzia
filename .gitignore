@@ -34,7 +34,6 @@ components/**/*.egg-info/
 .vscode/
 
 # AI-assistant tooling / local agent state (not part of the product)
-.agent/
 .kilocode/
 .impeccable/
 skills-lock.json

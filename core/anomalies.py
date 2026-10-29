@@ -1,7 +1,7 @@
 """
 core/anomalies.py
 -----------------
-Détection d'anomalies paie & présence.
+Payroll and attendance anomaly detection.
 
 Two ledgers where a quiet error is expensive: the monthly payroll and the daily
 attendance log. This module surfaces the outliers a manager would otherwise only
@@ -9,11 +9,11 @@ find during a CNAS/DGI audit or after a worker has already walked out.
 
 It combines two complementary detectors, because neither alone is enough:
 
-  * **Règles interprétables** — hard, cited Algerian rules. A gross below the SNMG
+  * **Interpretable rules**: hard, cited Algerian rules. A gross below the SNMG
     is illegal, full stop; an IRG that disagrees with the recomputed barème is a
     filing error; an absence rate far above the team is a flight risk. Each has a
     clear "why" and a clear fix. These never need a model to be trusted.
-  * **Modèle non supervisé (IsolationForest)** — learns the shape of *this*
+  * **Unsupervised model (IsolationForest)**: learns the shape of *this*
     company's own data and flags the rows that do not fit it, catching odd
     combinations no single threshold would (e.g. high pay + high absence + short
     tenure). This is the part that genuinely *learns from the company's database*:
@@ -82,8 +82,8 @@ def _rule_payroll(df: pd.DataFrame) -> list:
         if r["gross"] < snmg - 1:
             out.append(Anomaly(
                 "paie", r["emp_id"], r["name"], "critique", "sous_snmg",
-                f"Brut {r['gross']:,.0f} DZD sous le SNMG ({snmg:,.0f} DZD).",
-                "Régulariser immédiatement : un salaire sous le SNMG est illégal.",
+                f"Gross {r['gross']:,.0f} DZD below the SNMG ({snmg:,.0f} DZD).",
+                "Correct it now: a salary below the SNMG is illegal.",
                 score=1.0,
             ))
         # 2. Gross far off the role's reference band (data-entry / grille error).
@@ -94,18 +94,18 @@ def _rule_payroll(df: pd.DataFrame) -> list:
                 sev = "élevée" if abs(dev) >= 0.6 else "moyenne"
                 out.append(Anomaly(
                     "paie", r["emp_id"], r["name"], sev, "brut_hors_bande",
-                    f"Brut {r['gross']:,.0f} DZD à {dev:+.0%} de la référence du "
-                    f"poste ({ref:,.0f} DZD, {r['role']}).",
-                    "Vérifier la grille salariale ou une erreur de saisie.",
+                    f"Gross {r['gross']:,.0f} DZD is {dev:+.0%} from the role "
+                    f"reference ({ref:,.0f} DZD, {r['role']}).",
+                    "Check the pay grid or a data-entry error.",
                     score=min(abs(dev), 1.0),
                 ))
         # 3. Recompute IRG; flag the DGI smoothing band that must be checked.
         if r["needs_dgi_check"]:
             out.append(Anomaly(
                 "paie", r["emp_id"], r["name"], "moyenne", "bande_irg_dgi",
-                f"Brut {r['gross']:,.0f} DZD dans la bande de lissage IRG "
-                f"(30 001–35 000 DZD).",
-                "Recalculer l'IRG avec la calculette officielle DGI avant dépôt.",
+                f"Gross {r['gross']:,.0f} DZD in the IRG smoothing band "
+                f"(30,001 to 35,000 DZD).",
+                "Recheck the IRG with the official DGI calculator before filing.",
                 score=0.5,
             ))
     return out
@@ -145,17 +145,17 @@ def _rule_attendance(df: pd.DataFrame) -> list:
             sev = "élevée" if r["absent_pct"] >= 30 else "moyenne"
             out.append(Anomaly(
                 "présence", r["emp_id"], r["name"], sev, "absenteisme",
-                f"Absence {r['absent_pct']:.0f}% (moyenne équipe "
-                f"{abs_mean:.0f}%, écart {z_abs:+.1f}σ).",
-                "Entretien de reprise : l'absentéisme chronique précède la démission.",
+                f"Absence {r['absent_pct']:.0f}% (team average "
+                f"{abs_mean:.0f}%, {z_abs:+.1f}σ).",
+                "Return-to-work talk: chronic absence comes before resignation.",
                 score=float(max(z_abs, 0) / 4),
             ))
         if r["late_pct"] >= 30 or z_late >= 2.0:
             out.append(Anomaly(
                 "présence", r["emp_id"], r["name"], "moyenne", "retards",
-                f"Retards {r['late_pct']:.0f}% des shifts (moyenne équipe "
-                f"{late_mean:.0f}%), {r['avg_late_min']:.0f} min en moyenne.",
-                "Comprendre la cause (transport, shift) avant que ça s'aggrave.",
+                f"Late on {r['late_pct']:.0f}% of shifts (team average "
+                f"{late_mean:.0f}%), {r['avg_late_min']:.0f} min on average.",
+                "Find the cause (transport, shift) before it gets worse.",
                 score=float(max(z_late, 0) / 4),
             ))
     return out
@@ -209,7 +209,7 @@ def _model_anomalies(df: pd.DataFrame, feature_cols: list, domain: str,
         out.append(Anomaly(
             domain, emp_id, name_by_id.get(emp_id, emp_id), sev, "profil_atypique",
             label_of(df[df["emp_id"] == emp_id].iloc[0]),
-            "Combinaison inhabituelle vs le reste de l'entreprise — à vérifier.",
+            "Unusual combination compared with the rest of the company: check it.",
             score=round(float(s), 2),
         ))
     return out
@@ -248,14 +248,14 @@ def detect(people: list, records: list, as_of: Optional[_dt.date] = None) -> dic
     if not pay.empty:
         found += _model_anomalies(
             pay, ["gross", "irg", "seniority", "dependants"], "paie",
-            lambda r: (f"Profil paie atypique : brut {r['gross']:,.0f} DZD, "
-                       f"IRG {r['irg']:,.0f}, ancienneté {int(r['seniority'])} ans."),
+            lambda r: (f"Unusual pay profile: gross {r['gross']:,.0f} DZD, "
+                       f"IRG {r['irg']:,.0f}, seniority {int(r['seniority'])} years."),
         )
     if not presence.empty:
         found += _model_anomalies(
             presence, ["late_pct", "absent_pct", "avg_late_min"], "présence",
-            lambda r: (f"Profil présence atypique : {r['absent_pct']:.0f}% absence, "
-                       f"{r['late_pct']:.0f}% retards."),
+            lambda r: (f"Unusual attendance profile: {r['absent_pct']:.0f}% absence, "
+                       f"{r['late_pct']:.0f}% late."),
         )
 
     anomalies = _dedupe(found)
@@ -281,17 +281,23 @@ def summarise(anomalies: list) -> dict:
     }
 
 
+# Severity and domain are internal codes; these are their display labels.
+SEVERITY_LABEL = {"critique": "critical", "élevée": "high", "moyenne": "medium", "faible": "low"}
+DOMAIN_LABEL = {"paie": "payroll", "présence": "attendance"}
+
+
 def anomalies_frame(anomalies: list) -> pd.DataFrame:
     return pd.DataFrame([{
-        "Gravité": a.severity, "Domaine": a.domain, "ID": a.emp_id,
-        "Employé": a.name, "Constat": a.detail, "Action": a.recommendation,
+        "Severity": SEVERITY_LABEL.get(a.severity, a.severity),
+        "Area": DOMAIN_LABEL.get(a.domain, a.domain), "ID": a.emp_id,
+        "Employee": a.name, "Finding": a.detail, "Action": a.recommendation,
     } for a in anomalies])
 
 
 if __name__ == "__main__":
     from . import hr
 
-    print("Anomaly detection (paie & présence) — self check\n")
+    print("Anomaly detection (payroll and attendance): self check\n")
     people = hr.sample_workforce("sorter", 40, "Alger")
     # inject a couple of obvious payroll errors
     people[0].leave_taken_ytd = 0

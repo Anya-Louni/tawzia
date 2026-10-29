@@ -1,6 +1,6 @@
 # Sources & assumptions
 
-Every externally-sourced number in WorkForce.dz, and every modelling
+Every externally-sourced number in Tawzia, and every modelling
 assumption, in one place. The app renders the same information on its
 **Sources & assumptions** page, pulled from the single registry in
 [`core/sources.py`](core/sources.py).
@@ -15,7 +15,7 @@ choice, labelled as one). Nothing is dressed up as more certain than it is.
 
 | Layer | Status |
 |---|---|
-| **Algerian calendar** (Ramadan, the two Aïds, Yennayer, gazetted holidays, Friday–Saturday weekend) | **Real.** Computed locally from the tabular Islamic calendar; round-trip verified over 60 Hijri years; key dates cross-checked live against api.aladhan.com. |
+| **Algerian calendar** (Ramadan, the two Eids, Yennayer, gazetted holidays, Friday–Saturday weekend) | **Real.** Computed locally from the tabular Islamic calendar; round-trip verified over 60 Hijri years; key dates cross-checked live against api.aladhan.com. |
 | **Weather** (temperature, rainfall, heat stress per wilaya) | **Real.** ERA5 reanalysis archive + operational forecast, via Open-Meteo. |
 | **Macroeconomics** (population, labour force, CPI, unemployment) | **Real.** World Bank Open Data, fetched live. |
 | **Labour costs** (SNMG, CNAS, statutory premiums/caps) | **Real.** Derived from published Algerian rates and the labour code. |
@@ -28,7 +28,7 @@ choice, labelled as one). Nothing is dressed up as more certain than it is.
 | **Partner and influencer lists** | **Not generated.** The app returns partner *profiles* with verifiable selection criteria, never names. A language model asked to "find influencers" invents plausible false ones, which is the worst possible output in front of someone who knows the local scene. |
 | **Digit-reading model** (document check) | **Trained on real data.** The UCI/NIST *Optical Recognition of Handwritten Digits* set, 1797 digits written by 43 real people, a quarter held out. Printed digits are added to training and are **rendered by us** from the server's fonts; the two accuracies are reported separately and recomputed at every start. |
 | **Forgery / tampering detection** | **Not shipped.** Implemented with error-level analysis and noise inconsistency, then measured: it flagged clean payslips as retouched and did not separate clean from spliced. Removed. Only file metadata (a fact) and a human-read ELA image remain. |
-| **Skills reference and employee skill profiles** | **Modelling choice.** The per-role skill requirements are ours and are the first thing a customer replaces with their own grid. Demo profiles are derived deterministically from the synthetic workforce; in deployment they come from the annual review or the imported HR file. |
+| **Skills reference and employee skill profiles** | **Modelling choice.** The per-role skill requirements are ours and are the first thing a customer replaces with their own grid. Demo profiles are derived deterministically from the synthetic tawzia; in deployment they come from the annual review or the imported HR file. |
 | **Savings figure** | **Out-of-sample, on simulated volumes.** Validates the method, not the market magnitude. |
 
 ---
@@ -39,11 +39,11 @@ choice, labelled as one). Nothing is dressed up as more certain than it is.
 |---|---|---|
 | **Open-Meteo** | Real daily weather per wilaya — ERA5 archive (observed history) and operational forecast | `archive-api.open-meteo.com`, `api.open-meteo.com` |
 | **World Bank Open Data** | Algeria population, labour force, CPI inflation, unemployment | `api.worldbank.org/v2/country/DZA` |
-| **Aladhan** | Cross-check of the local Hijri calendar on Ramadan/Aïd dates | `api.aladhan.com/v1/gToH` |
+| **Aladhan** | Cross-check of the local Hijri calendar on Ramadan/Eid dates | `api.aladhan.com/v1/gToH` |
 
 All responses cache to `data/cache/` on first fetch, so the app runs fully
 offline afterwards. Turn off "Autoriser les appels API en direct" under
-**Données** in the top bar to force cache-only mode.
+**Data** in the top bar to force cache-only mode.
 
 ---
 

@@ -1,35 +1,24 @@
 """
 core/sourcing.py
 ----------------
-Sourcing & marque employeur , l'étape zéro du recrutement.
+Sourcing and employer brand: step zero of recruitment.
 
-Le reste de la suite prend le candidat une fois qu'il a postulé : évaluation de
-CV, appariement, entretien, embauche, paie, rétention. Ce module traite la
-question posée *avant* toutes les autres : **d'où viennent les candidats ?**
+The rest of the suite takes the candidate once they have applied. This module
+answers the question asked before all the others: where do candidates come from?
 
-Ce qui est réel, ce qui est modélisé
-====================================
-C'est la distinction qui compte pour un jury RH, et elle est appliquée
-structurellement ici :
+What is real and what is modelled:
+  * The channel directory is real. Universities, national schools, the
+    vocational-training network, Algerian agencies and job sites: existing,
+    verifiable institutions, named as they are. Nothing is invented by a model.
+  * Volumes, costs and lead times are modelled. No Algerian operator publishes
+    cost per hire by channel. The figures are framing assumptions, marked as
+    such, which a pilot replaces with the client's real numbers.
+  * No list of people is generated. A model that "finds influencers" invents
+    plausible, false names. Instead the module produces partner profiles to look
+    for (criteria, where to look, what to ask), and the AI writes the outreach.
 
-  * **Le répertoire de canaux est réel.** Universités, écoles nationales,
-    réseau de la formation professionnelle, agences et sites d'emploi
-    algériens : ce sont des institutions existantes et vérifiables, nommées
-    telles quelles. Rien n'est inventé par un modèle de langage.
-  * **Les volumes, coûts et délais sont modélisés.** Aucun opérateur algérien
-    ne publie son coût par embauche par canal. Les chiffres portés par chaque
-    canal sont des hypothèses de cadrage, marquées comme telles, qu'un pilote
-    remplace par les vrais chiffres du client dès la première campagne.
-  * **Aucune liste de personnes n'est générée.** Un modèle qui « trouve des
-    influenceurs » invente des noms plausibles et faux , le pire résultat
-    possible face à un DRH qui connaît son écosystème. À la place, le module
-    produit des **profils de partenaires à rechercher** (critères, où chercher,
-    quoi demander), et l'IA rédige la prise de contact. Les noms se vérifient,
-    ils ne se devinent pas.
-
-L'IA (Groq) n'intervient qu'à la fin, pour rédiger le message d'approche à
-partir d'un canal et d'un poste déjà choisis par le moteur. Le classement, lui,
-est déterministe : mêmes entrées, même résultat.
+AI only writes the outreach message at the end, from a channel and role the
+engine already picked. The ranking is deterministic.
 """
 
 from __future__ import annotations
@@ -41,19 +30,14 @@ import pandas as pd
 
 from . import ai, labour_dz, sources
 
-# ---------------------------------------------------------------------------
-# Familles de métiers
-# ---------------------------------------------------------------------------
-# Un canal ne recrute pas « un poste », il alimente une famille de métiers.
-# Cette table relie les rôles de core/labour_dz aux viviers réels.
-
+# A channel does not recruit "a role", it feeds a job family.
 FAMILIES = {
-    "operations": "Opérations & logistique",
-    "terrain": "Terrain & conduite",
-    "client": "Relation client & accueil",
-    "encadrement": "Encadrement & pilotage",
-    "technique": "Technique & maintenance",
-    "education": "Enseignement & vie scolaire",
+    "operations": "Operations and logistics",
+    "terrain": "Field and driving",
+    "client": "Customer service and reception",
+    "encadrement": "Management and supervision",
+    "technique": "Technical and maintenance",
+    "education": "Teaching and school life",
 }
 
 ROLE_FAMILY = {
@@ -73,8 +57,7 @@ ROLE_FAMILY = {
     "school_life": "education",
 }
 
-# Niveau de qualification typiquement requis, par famille. Sert à orienter vers
-# l'université (bac+3 et plus) ou vers la formation professionnelle.
+# Typical qualification level per family: university (bac+3 and up) or vocational.
 FAMILY_LEVEL = {
     "operations": "professionnel",
     "terrain": "professionnel",
@@ -84,16 +67,13 @@ FAMILY_LEVEL = {
     "education": "superieur",
 }
 
-# ---------------------------------------------------------------------------
-# Régions , pour la proximité géographique
-# ---------------------------------------------------------------------------
-
 REGIONS = {
     "centre": ["Alger", "Blida", "Tizi Ouzou", "Bejaia", "Djelfa", "Medea", "Boumerdes"],
     "ouest": ["Oran", "Tlemcen", "Mostaganem", "Sidi Bel Abbes", "Chlef", "Bechar"],
     "est": ["Constantine", "Annaba", "Setif", "Batna", "Skikda", "Biskra"],
     "sud": ["Ouargla", "Ghardaia", "Tamanrasset", "Adrar", "Illizi", "El Oued"],
 }
+REGION_LABEL = {"centre": "Centre", "ouest": "West", "est": "East", "sud": "South"}
 
 
 def region_of(wilaya: str) -> str:
@@ -103,29 +83,24 @@ def region_of(wilaya: str) -> str:
     return "centre"
 
 
-# ---------------------------------------------------------------------------
-# Le répertoire , institutions réelles
-# ---------------------------------------------------------------------------
-
 @dataclass(frozen=True)
 class Channel:
     """
-    Un canal de sourcing réel.
+    A real sourcing channel.
 
-    `name`, `kind`, `wilaya` et `url` décrivent une institution existante.
-    `volume`, `cost_dzd`, `lead_days` et `quality` sont des **hypothèses de
-    cadrage** (voir le docstring du module) : ordres de grandeur pour comparer
-    les canaux entre eux, pas des chiffres mesurés.
+    `name`, `kind`, `wilaya` and `url` describe an existing institution.
+    `volume`, `cost_dzd`, `lead_days` and `quality` are framing assumptions:
+    orders of magnitude to compare channels, not measured figures.
     """
     key: str
     name: str
     kind: str                 # universite | formation | emploi | institution
-    wilaya: str               # wilaya d'implantation, ou "National"
-    families: tuple           # familles de métiers alimentées
-    volume: int               # candidatures attendues par campagne (hypothèse)
-    cost_dzd: int             # coût d'une campagne (hypothèse)
-    lead_days: int            # délai avant première short-list (hypothèse)
-    quality: float            # adéquation moyenne attendue 0..1 (hypothèse)
+    wilaya: str               # wilaya, or "National"
+    families: tuple
+    volume: int               # applications per campaign (assumption)
+    cost_dzd: int             # campaign cost (assumption)
+    lead_days: int            # days to first shortlist (assumption)
+    quality: float            # expected average fit 0..1 (assumption)
     url: str = ""
     note: str = ""
 
@@ -134,229 +109,203 @@ class Channel:
         return self.wilaya == "National"
 
 
-# Universités et écoles nationales. Noms et implantations réels.
+# Universities and national schools. Real names and locations.
 _UNIVERSITIES = [
-    Channel("usthb", "USTHB , Univ. des Sciences et de la Technologie Houari Boumediene",
+    Channel("usthb", "USTHB, Houari Boumediene University of Science and Technology",
             "universite", "Alger", ("technique", "encadrement"),
             140, 45_000, 21, 0.62, "https://www.usthb.dz",
-            "Le plus gros vivier scientifique et technique du pays."),
-    Channel("esi", "ESI Alger , École nationale Supérieure d'Informatique",
+            "The country's largest science and engineering pool."),
+    Channel("esi", "ESI Algiers, National Higher School of Computer Science",
             "universite", "Alger", ("technique", "encadrement"),
             60, 40_000, 18, 0.78, "https://www.esi.dz",
-            "Filière informatique la plus sélective. Faible volume, forte qualité."),
-    Channel("enp", "ENP , École Nationale Polytechnique d'El Harrach",
+            "The most selective computing track. Low volume, high quality."),
+    Channel("enp", "ENP, National Polytechnic School, El Harrach",
             "universite", "Alger", ("technique", "encadrement"),
             55, 40_000, 18, 0.76, "https://www.enp.edu.dz",
-            "Ingénierie généraliste, profil encadrement technique."),
-    Channel("esc_alger", "ESC Alger , École Supérieure de Commerce (Koléa)",
+            "General engineering, technical-management profile."),
+    Channel("esc_alger", "ESC Algiers, Higher School of Commerce (Kolea)",
             "universite", "Alger", ("encadrement", "client"),
             70, 38_000, 20, 0.70, "https://www.esc-alger.dz",
-            "Commerce, gestion et relation client, niveau encadrement."),
-    Channel("univ_oran", "Université d'Oran 1 Ahmed Ben Bella",
+            "Business, management and customer relations, management level."),
+    Channel("univ_oran", "University of Oran 1 Ahmed Ben Bella",
             "universite", "Oran", ("technique", "encadrement", "client"),
             120, 40_000, 21, 0.60, "https://www.univ-oran1.dz",
-            "Principal pôle universitaire de l'Ouest."),
-    Channel("univ_constantine", "Université Constantine 1 Frères Mentouri",
+            "The main university hub of the West."),
+    Channel("univ_constantine", "University of Constantine 1 Freres Mentouri",
             "universite", "Constantine", ("technique", "encadrement", "education"),
             120, 40_000, 21, 0.60, "https://www.umc.edu.dz",
-            "Principal pôle universitaire de l'Est."),
-    Channel("univ_annaba", "Université Badji Mokhtar , Annaba",
+            "The main university hub of the East."),
+    Channel("univ_annaba", "Badji Mokhtar University, Annaba",
             "universite", "Annaba", ("technique", "encadrement"),
             95, 36_000, 21, 0.58, "https://www.univ-annaba.dz",
-            "Bassin industriel et portuaire de l'Est."),
-    Channel("univ_setif", "Université Ferhat Abbas , Sétif 1",
+            "Industrial and port basin of the East."),
+    Channel("univ_setif", "Ferhat Abbas University, Setif 1",
             "universite", "Setif", ("technique", "encadrement", "education"),
             95, 36_000, 21, 0.58, "https://www.univ-setif.dz",
-            "Pôle des Hauts-Plateaux, fort en sciences et technologie."),
-    Channel("univ_tlemcen", "Université Abou Bekr Belkaïd , Tlemcen",
+            "High Plateaux hub, strong in science and technology."),
+    Channel("univ_tlemcen", "Abou Bekr Belkaid University, Tlemcen",
             "universite", "Tlemcen", ("encadrement", "education", "client"),
             80, 34_000, 21, 0.56, "https://www.univ-tlemcen.dz"),
-    Channel("univ_bejaia", "Université Abderrahmane Mira , Béjaïa",
+    Channel("univ_bejaia", "Abderrahmane Mira University, Bejaia",
             "universite", "Bejaia", ("technique", "encadrement", "client"),
             85, 34_000, 21, 0.57, "https://www.univ-bejaia.dz"),
-    Channel("ummto", "Université Mouloud Mammeri , Tizi Ouzou",
+    Channel("ummto", "Mouloud Mammeri University, Tizi Ouzou",
             "universite", "Tizi Ouzou", ("technique", "encadrement", "education"),
             85, 34_000, 21, 0.57, "https://www.ummto.dz"),
-    Channel("univ_batna", "Université Hadj Lakhdar , Batna 1",
+    Channel("univ_batna", "Hadj Lakhdar University, Batna 1",
             "universite", "Batna", ("technique", "education"),
             80, 32_000, 21, 0.55, ""),
-    Channel("univ_ouargla", "Université Kasdi Merbah , Ouargla",
+    Channel("univ_ouargla", "Kasdi Merbah University, Ouargla",
             "universite", "Ouargla", ("technique", "education"),
             70, 32_000, 24, 0.55, "https://www.univ-ouargla.dz",
-            "Le vivier du Sud , décisif pour un site saharien, où le "
-            "recrutement depuis le Nord échoue sur la mobilité."),
-    Channel("univ_blida", "Université Saad Dahlab , Blida 1",
+            "The southern pool: decisive for a Saharan site, where hiring from "
+            "the North fails on mobility."),
+    Channel("univ_blida", "Saad Dahlab University, Blida 1",
             "universite", "Blida", ("technique", "encadrement", "client"),
             90, 34_000, 21, 0.58, "https://www.univ-blida.dz"),
 ]
 
-# Formation professionnelle : le réseau public CFPA / INSFP, sous tutelle du
-# Ministère de la Formation et de l'Enseignement Professionnels. C'est le vivier
-# réel des métiers opérationnels, très largement sous-utilisé par les
-# recruteurs privés qui publient tout sur les mêmes sites d'emploi.
+# Vocational training: the public CFPA / INSFP network (Ministry of Vocational
+# Training). The real pool for operational trades, heavily under-used.
 _VOCATIONAL = [
-    Channel("cfpa_local", "Réseau CFPA , Centres de Formation Professionnelle (wilaya)",
+    Channel("cfpa_local", "CFPA network, vocational training centres (wilaya)",
             "formation", "National", ("operations", "terrain", "client", "technique"),
             110, 18_000, 14, 0.64, "https://www.mfep.gov.dz",
-            "Un CFPA par daïra. Formations logistique, conduite, magasinage, "
-            "accueil. Le canal le moins cher par embauche sur les métiers "
-            "opérationnels."),
-    Channel("insfp", "Réseau INSFP , Instituts Nationaux Spécialisés",
+            "One CFPA per daira. Logistics, driving, warehousing and reception "
+            "courses. The cheapest channel per hire for operational trades."),
+    Channel("insfp", "INSFP network, national specialised institutes",
             "formation", "National", ("technique", "operations", "encadrement"),
             75, 22_000, 16, 0.68, "https://www.mfep.gov.dz",
-            "Niveau technicien supérieur. Le bon canal quand le CFPA est trop "
-            "junior et l'université trop théorique."),
-    Channel("apprentissage", "Contrats d'apprentissage MFEP",
+            "Senior-technician level. The right channel when CFPA is too junior "
+            "and university too theoretical."),
+    Channel("apprentissage", "MFEP apprenticeship contracts",
             "formation", "National", ("operations", "terrain", "client"),
-            60, 12_000, 30, 0.72,
-            "https://www.mfep.gov.dz",
-            "L'apprenti est formé au poste réel puis embauché. Délai plus long, "
-            "mais la meilleure rétention à 12 mois de tous les canaux."),
+            60, 12_000, 30, 0.72, "https://www.mfep.gov.dz",
+            "The apprentice is trained in the real job, then hired. Longer lead "
+            "time, but the best 12-month retention of any channel."),
 ]
 
-# Agences et sites d'emploi algériens.
+# Algerian agencies and job sites.
 _JOB_MARKET = [
-    Channel("anem", "ANEM , Agence Nationale de l'Emploi",
+    Channel("anem", "ANEM, National Employment Agency",
             "institution", "National", ("operations", "terrain", "client", "technique"),
             180, 0, 12, 0.42, "https://www.anem.dz",
-            "Service public, gratuit, obligatoire à connaître : c'est aussi par "
-            "l'ANEM que passent les dispositifs d'aide à l'emploi."),
+            "Public and free, and a must: employment-support schemes go through ANEM."),
     Channel("emploitic", "Emploitic.com",
             "emploi", "National", ("client", "encadrement", "technique", "operations"),
             220, 55_000, 7, 0.48, "https://www.emploitic.com",
-            "Le plus grand site d'emploi algérien. Volume élevé, tri à faire , "
-            "c'est exactement là que l'appariement automatique paie."),
+            "The largest Algerian job site. High volume, sorting needed: that is "
+            "where automatic matching pays."),
     Channel("emploipartner", "Emploipartner",
             "emploi", "National", ("encadrement", "client", "technique"),
             90, 35_000, 9, 0.52, "https://www.emploipartner.com",
-            "Plus orienté cadres et profils qualifiés."),
-    Channel("linkedin", "LinkedIn , recherche et annonces",
+            "More oriented to managers and qualified profiles."),
+    Channel("linkedin", "LinkedIn, search and ads",
             "emploi", "National", ("encadrement", "technique", "client"),
             70, 60_000, 10, 0.66, "https://www.linkedin.com",
-            "Le seul canal efficace sur l'encadrement expérimenté. Cher au "
-            "candidat, inutile sur les métiers opérationnels."),
-    Channel("reseaux_sociaux", "Groupes emploi Facebook (wilaya)",
+            "The only effective channel for experienced managers. Expensive per "
+            "candidate, useless for operational trades."),
+    Channel("reseaux_sociaux", "Facebook job groups (wilaya)",
             "emploi", "National", ("operations", "terrain", "client"),
-            250, 5_000, 4, 0.28,
-            "",
-            "Volume immédiat et quasi gratuit, qualité faible : à n'utiliser "
-            "que couplé à un filtrage automatique des candidatures."),
-    Channel("cooptation", "Cooptation interne (prime de parrainage)",
+            250, 5_000, 4, 0.28, "",
+            "Immediate volume, almost free, low quality: use only with automatic "
+            "application screening."),
+    Channel("cooptation", "Employee referrals (referral bonus)",
             "institution", "National", ("operations", "terrain", "client", "technique",
                                         "encadrement", "education"),
             35, 25_000, 6, 0.74, "",
-            "Les salariés connaissent le métier et le site. Meilleure "
-            "rétention, coût maîtrisé, mais volume plafonné par l'effectif."),
+            "Staff know the job and the site. Best retention, controlled cost, "
+            "volume capped by headcount."),
 ]
 
 CHANNELS = {c.key: c for c in (_UNIVERSITIES + _VOCATIONAL + _JOB_MARKET)}
 
 
-# ---------------------------------------------------------------------------
-# Profils de partenaires , des critères, jamais des noms inventés
-# ---------------------------------------------------------------------------
-
 @dataclass(frozen=True)
 class PartnerProfile:
     """
-    Un *type* de partenaire ou de relais d'influence à aller chercher.
-
-    Volontairement dépourvu de noms de personnes : un nom d'influenceur produit
-    par un modèle de langage est plausible et faux une fois sur deux. Le module
-    dit quoi chercher, où, et quoi demander , la vérification reste humaine.
+    A type of partner or relay to look for. Deliberately without names of
+    people: what to look for, where, and what to ask. Verification stays human.
     """
     key: str
     label: str
-    where: str                # où trouver ce partenaire
-    criteria: tuple           # critères de sélection vérifiables
-    ask: str                  # ce qu'on lui demande concrètement
+    where: str
+    criteria: tuple
+    ask: str
     families: tuple
 
 
 PARTNER_PROFILES = [
     PartnerProfile(
-        "club_etudiant", "Club étudiant / association de filière",
-        "Pages Facebook et Instagram des clubs scientifiques et associations "
-        "de filière de l'université ciblée ; le service des stages de "
-        "l'établissement les recense.",
-        ("Actif sur les 6 derniers mois (événements datés)",
-         "Filière alignée sur le poste",
-         "Un référent joignable et un compte officiel de l'établissement"),
-        "Co-organiser une journée métier ou un atelier CV sur le campus, avec "
-        "collecte de candidatures le jour même.",
+        "club_etudiant", "Student club or programme association",
+        "Facebook and Instagram pages of the target university's science clubs "
+        "and programme associations; the internship office lists them.",
+        ("Active in the last 6 months (dated events)",
+         "Programme aligned with the role",
+         "A reachable contact and an official school account"),
+        "Co-host a careers day or CV workshop on campus, collecting applications "
+        "on the day.",
         ("technique", "encadrement", "education"),
     ),
     PartnerProfile(
-        "communaute_tech", "Communauté technique locale",
-        "Meetups et communautés de développeurs des grandes villes "
-        "(Alger, Oran, Constantine) ; les événements publics sont annoncés "
-        "sur Meetup, LinkedIn et Facebook.",
-        ("Réunions régulières et publiques",
-         "Audience locale, pas une communauté diaspora",
-         "Thème technique correspondant au besoin"),
-        "Sponsoriser une session et présenter un cas technique réel, pas une "
-        "offre d'emploi : le recrutement suit la crédibilité.",
+        "communaute_tech", "Local tech community",
+        "Developer meetups and communities in the big cities (Algiers, Oran, "
+        "Constantine); public events are posted on Meetup, LinkedIn and Facebook.",
+        ("Regular, public meetings",
+         "Local audience, not a diaspora community",
+         "Technical theme matching the need"),
+        "Sponsor a session and present a real technical case, not a job ad: "
+        "hiring follows credibility.",
         ("technique", "encadrement"),
     ),
     PartnerProfile(
-        "createur_metier", "Créateur de contenu métier (pas généraliste)",
-        "Recherche par mots-clés métier en arabe et en français sur "
-        "TikTok, Instagram et LinkedIn ; filtrer sur une audience algérienne.",
-        ("Audience majoritairement algérienne et vérifiable",
-         "Contenu lié au métier ou à l'orientation professionnelle",
-         "Taux d'engagement réel, pas seulement un nombre d'abonnés",
-         "Aucune controverse publique , un partenariat engage la marque"),
-        "Un format « une journée dans le poste » tourné sur site. C'est le "
-        "contenu qui convertit sur les métiers opérationnels, où l'annonce "
-        "écrite ne dit rien du travail réel.",
+        "createur_metier", "Trade content creator (not a generalist)",
+        "Search by trade keywords in Arabic and French on TikTok, Instagram and "
+        "LinkedIn; filter on an Algerian audience.",
+        ("Mostly Algerian, verifiable audience",
+         "Content about the trade or career guidance",
+         "Real engagement, not just follower count",
+         "No public controversy: a partnership commits the brand"),
+        "A \"day in the job\" format filmed on site. That is what converts for "
+        "operational trades, where a written ad says nothing about the real work.",
         ("operations", "terrain", "client"),
     ),
     PartnerProfile(
-        "referent_cfpa", "Référent d'un CFPA ou INSFP de la wilaya",
-        "Direction de la formation professionnelle de la wilaya ; chaque "
-        "centre a un responsable des relations entreprises.",
-        ("Centre situé à moins de 45 min du site",
-         "Spécialité correspondant au poste",
-         "Promotion sortante dans les 3 mois"),
-        "Une convention de stage-embauche sur la promotion sortante, avec "
-        "visite du site avant la fin de formation.",
+        "referent_cfpa", "Contact at a CFPA or INSFP in the wilaya",
+        "The wilaya's vocational-training directorate; each centre has a "
+        "business-relations officer.",
+        ("Centre within 45 minutes of the site",
+         "Specialty matching the role",
+         "A class graduating within 3 months"),
+        "An internship-to-hire agreement on the graduating class, with a site "
+        "visit before the course ends.",
         ("operations", "terrain", "technique", "client"),
     ),
     PartnerProfile(
-        "ambassadeur_interne", "Ambassadeur interne (salarié)",
-        "Vos propres salariés : les plus anciens sur le poste, ceux dont le "
-        "risque de départ est faible dans le module Risque de départ.",
-        ("Plus de 2 ans d'ancienneté sur le poste visé",
-         "Risque de départ faible",
-         "Volontaire , un ambassadeur contraint dessert la marque"),
-        "Témoignage vidéo court et parrainage rémunéré. Le canal le moins cher "
-        "et le plus crédible, et le seul que la concurrence ne peut pas copier.",
+        "ambassadeur_interne", "Internal ambassador (employee)",
+        "Your own staff: the longest-serving in the role, with low leaving risk "
+        "in the Retention module.",
+        ("More than 2 years in the target role",
+         "Low leaving risk",
+         "Volunteer: a forced ambassador hurts the brand"),
+        "A short video testimony and a paid referral. The cheapest, most "
+        "credible channel, and the only one competitors cannot copy.",
         ("operations", "terrain", "client", "encadrement", "technique", "education"),
     ),
 ]
 
-
-# ---------------------------------------------------------------------------
-# Hypothèses du modèle de plan
-# ---------------------------------------------------------------------------
-# Exposées comme constantes nommées pour qu'un client les remplace par ses
-# vrais ratios dès la première campagne mesurée.
-
+# Plan-model assumptions, named so a client can replace them with real ratios.
 APPLICANTS_PER_HIRE = sources.value("applicants_per_hire")
 SHORTLIST_RATE = sources.value("sourcing_shortlist_rate")
-QUALITY_FLOOR = 0.20           # qualité en deçà de laquelle un canal ne convertit plus
+QUALITY_FLOOR = 0.20           # quality below which a channel no longer converts
 
-
-# ---------------------------------------------------------------------------
-# Classement des canaux
-# ---------------------------------------------------------------------------
 
 @dataclass
 class ScoredChannel:
     channel: Channel
-    fit: float                 # adéquation métier 0..1
-    geo: float                 # proximité géographique 0..1
-    score: int                 # 0..100
+    fit: float
+    geo: float
+    score: int
     expected_applicants: int
     expected_hires: float
     cost_per_hire: Optional[int]
@@ -366,7 +315,6 @@ class ScoredChannel:
 def _fit_score(channel: Channel, family: str) -> float:
     if family in channel.families:
         return 1.0
-    # Familles voisines : l'encadrement se recrute aussi dans le technique, etc.
     neighbours = {
         "operations": {"terrain", "technique"},
         "terrain": {"operations"},
@@ -380,45 +328,31 @@ def _fit_score(channel: Channel, family: str) -> float:
 
 def _level_score(channel: Channel, family: str) -> float:
     """
-    Adéquation du niveau de qualification.
-
-    Sourcer un poste opérationnel dans une université n'est pas neutre : le
-    diplômé accepte le poste faute de mieux et repart dès qu'il trouve. C'est
-    une des causes de turnover les plus coûteuses et les plus évitables, donc
-    elle est pénalisée explicitement plutôt que laissée au hasard du score.
+    Qualification-level fit. Sourcing an operational role at a university is not
+    neutral: the graduate takes the job for lack of better and leaves as soon as
+    they can. One of the most expensive, most avoidable causes of turnover.
     """
     level = FAMILY_LEVEL.get(family, "mixte")
     if level == "professionnel" and channel.kind == "universite":
-        return 0.25          # surqualification : embauche fragile
+        return 0.25
     if level == "superieur" and channel.kind == "formation":
-        return 0.55          # sous-qualifié pour un poste d'encadrement
+        return 0.55
     return 1.0
 
 
 def _geo_score(channel: Channel, wilaya: str) -> float:
     if channel.is_national:
-        return 0.72          # accessible partout, sans ancrage local
+        return 0.72
     if channel.wilaya == wilaya:
         return 1.0
     if region_of(channel.wilaya) == region_of(wilaya):
-        return 0.55          # même région : mobilité réaliste
-    return 0.18              # autre région : la mobilité fait échouer l'embauche
+        return 0.55
+    return 0.18
 
 
-def rank_channels(
-    role_key: str,
-    wilaya: str,
-    headcount: int = 10,
-    *,
-    urgency_days: int = 45,
-    budget_dzd: Optional[int] = None,
-) -> list:
-    """
-    Classer les canaux de sourcing pour un poste, une wilaya et un volume.
-
-    Déterministe : mêmes entrées, même classement. Les volumes et coûts sont
-    des hypothèses de cadrage (voir le docstring du module).
-    """
+def rank_channels(role_key: str, wilaya: str, headcount: int = 10, *,
+                  urgency_days: int = 45, budget_dzd: Optional[int] = None) -> list:
+    """Rank sourcing channels for a role, wilaya and volume. Deterministic."""
     family = ROLE_FAMILY.get(role_key, "operations")
     out = []
 
@@ -429,11 +363,7 @@ def rank_channels(
         geo = _geo_score(ch, wilaya)
         level = _level_score(ch, family)
 
-        # Volume attendu : le vivier du canal, dégradé par l'adéquation métier
-        # et la distance (un candidat lointain postule moins et vient moins).
         applicants = ch.volume * fit * (0.55 + 0.45 * geo)
-        # La qualité effective intègre le niveau : un profil surqualifié compte
-        # comme une embauche fragile, pas comme une embauche.
         effective_quality = ch.quality * (0.6 + 0.4 * fit) * level
         hires = 0.0
         if effective_quality >= QUALITY_FLOOR:
@@ -442,11 +372,9 @@ def rank_channels(
         cost_per_hire = int(ch.cost_dzd / hires) if hires >= 0.5 and ch.cost_dzd else (
             0 if ch.cost_dzd == 0 and hires >= 0.5 else None)
 
-        # Vitesse : pénalise un canal plus lent que l'urgence du besoin.
         speed = 1.0 if ch.lead_days <= urgency_days else max(
             0.0, 1.0 - (ch.lead_days - urgency_days) / max(urgency_days, 1))
 
-        # Efficacité coût, normalisée sur une échelle 0..1 (gratuit = 1).
         cph = cost_per_hire if cost_per_hire is not None else 400_000
         cost_eff = max(0.0, 1.0 - min(cph, 400_000) / 400_000)
 
@@ -454,27 +382,27 @@ def rank_channels(
                  + 0.12 * speed + 0.10 * cost_eff) * 100
 
         if budget_dzd is not None and ch.cost_dzd > budget_dzd:
-            score *= 0.55      # hors budget : rétrogradé, pas supprimé
+            score *= 0.55      # over budget: demoted, not removed
 
         reasons = []
         if fit >= 1.0:
-            reasons.append(f"Alimente directement la famille « {FAMILIES[family]} »")
+            reasons.append(f"Feeds the \"{FAMILIES[family]}\" family directly")
         elif fit > 0:
-            reasons.append("Famille de métiers voisine, vivier partiellement adapté")
+            reasons.append("Neighbouring job family, pool partly suited")
         if ch.wilaya == wilaya:
-            reasons.append(f"Implanté à {wilaya} , pas de problème de mobilité")
+            reasons.append(f"Based in {wilaya}: no mobility problem")
         elif not ch.is_national and region_of(ch.wilaya) != region_of(wilaya):
-            reasons.append(f"Hors région ({ch.wilaya}) , mobilité à vérifier avant contact")
+            reasons.append(f"Out of region ({ch.wilaya}): check mobility before contact")
         if ch.lead_days > urgency_days:
-            reasons.append(f"Délai {ch.lead_days} j, au-delà du besoin ({urgency_days} j)")
+            reasons.append(f"Lead time {ch.lead_days} d, beyond the need ({urgency_days} d)")
         if ch.cost_dzd == 0:
-            reasons.append("Canal gratuit")
+            reasons.append("Free channel")
         if level < 1.0 and ch.kind == "universite":
-            reasons.append("Profil surqualifié pour ce poste , risque de départ rapide")
+            reasons.append("Overqualified for this role: risk of a quick departure")
         elif level < 1.0:
-            reasons.append("Niveau de formation en deçà du poste visé")
+            reasons.append("Training level below the target role")
         if budget_dzd is not None and ch.cost_dzd > budget_dzd:
-            reasons.append("Au-dessus du budget indiqué")
+            reasons.append("Above the stated budget")
 
         out.append(ScoredChannel(
             channel=ch, fit=round(fit, 2), geo=round(geo, 2), score=int(round(score)),
@@ -487,10 +415,7 @@ def rank_channels(
 
 
 def build_plan(scored: list, headcount: int) -> dict:
-    """
-    Composer le plan minimal : empiler les meilleurs canaux jusqu'à couvrir le
-    besoin, puis chiffrer coût total, délai et coût par embauche.
-    """
+    """Stack the best channels until the need is covered, then cost the plan."""
     picked, hires, cost = [], 0.0, 0
     for s in scored:
         if hires >= headcount:
@@ -513,115 +438,89 @@ def build_plan(scored: list, headcount: int) -> dict:
     }
 
 
+_KIND_LABEL = {"universite": "University", "formation": "Vocational",
+               "emploi": "Job site", "institution": "Institution"}
+
+
 def rank_frame(scored: list) -> pd.DataFrame:
-    """Le classement en table française, prête pour l'UI et l'export."""
-    rows = []
-    for i, s in enumerate(scored, 1):
-        rows.append({
-            "Rang": i,
-            "Canal": s.channel.name,
-            "Type": {"universite": "Université", "formation": "Formation pro",
-                     "emploi": "Site d'emploi", "institution": "Institution"}[s.channel.kind],
-            "Wilaya": s.channel.wilaya,
-            "Score": s.score,
-            "Candidatures attendues": s.expected_applicants,
-            "Embauches attendues": s.expected_hires,
-            "Coût campagne (DZD)": s.channel.cost_dzd,
-            "Coût par embauche (DZD)": s.cost_per_hire if s.cost_per_hire is not None else 0,
-            "Délai (j)": s.channel.lead_days,
-        })
-    return pd.DataFrame(rows)
+    """The ranking as a table, ready for the UI and export."""
+    return pd.DataFrame([{
+        "Rank": i,
+        "Channel": s.channel.name,
+        "Type": _KIND_LABEL[s.channel.kind],
+        "Wilaya": s.channel.wilaya,
+        "Score": s.score,
+        "Expected applications": s.expected_applicants,
+        "Expected hires": s.expected_hires,
+        "Campaign cost (DZD)": s.channel.cost_dzd,
+        "Cost per hire (DZD)": s.cost_per_hire if s.cost_per_hire is not None else 0,
+        "Lead time (d)": s.channel.lead_days,
+    } for i, s in enumerate(scored, 1)])
 
 
 def partner_profiles_for(role_key: str) -> list:
-    """Les profils de partenaires pertinents pour la famille du poste."""
+    """Partner profiles relevant to the role's family."""
     family = ROLE_FAMILY.get(role_key, "operations")
     return [p for p in PARTNER_PROFILES if family in p.families]
 
 
-# ---------------------------------------------------------------------------
-# Rédaction de l'approche (couche IA, facultative)
-# ---------------------------------------------------------------------------
-
 _SYSTEM = (
-    "Tu es responsable du recrutement d'une entreprise algérienne. Tu écris en "
-    "français professionnel, direct et court. Tu ne promets jamais de salaire, "
-    "d'effectif ni de date que l'on ne t'a pas donnés. Tu n'inventes aucun nom "
-    "de personne. Pas de superlatifs, pas de formules creuses."
+    "You are the recruitment lead of an Algerian company. You write professional, "
+    "direct, short English. You never promise a salary, headcount or date you were "
+    "not given. You invent no person's name. No superlatives, no empty phrases."
 )
 
 
 def _fallback_message(channel: Channel, role_label: str, company: str,
                       headcount: int, wilaya: str) -> str:
-    """Modèle déterministe, utilisé sans clé IA (l'app ne doit jamais bloquer)."""
+    """Deterministic template, used without an AI key."""
     return (
-        f"Objet : Partenariat recrutement , {role_label} ({wilaya})\n\n"
-        f"Madame, Monsieur,\n\n"
-        f"{company} recrute {headcount} {role_label.lower()} sur son site de "
-        f"{wilaya} et souhaite établir un contact avec {channel.name}.\n\n"
-        f"Concrètement, nous proposons :\n"
-        f"- une présentation du métier et du site auprès de vos sortants ;\n"
-        f"- une session de recrutement sur place, dates à convenir ;\n"
-        f"- un retour individuel à chaque candidat rencontré.\n\n"
-        f"Pourriez-vous nous indiquer la personne en charge des relations "
-        f"entreprises, ainsi que le calendrier de vos prochaines sorties de "
-        f"promotion ?\n\n"
-        f"Cordialement,\n{company} , Ressources Humaines"
+        f"Subject: Recruitment partnership, {role_label} ({wilaya})\n\n"
+        f"Dear Sir or Madam,\n\n"
+        f"{company} is hiring {headcount} {role_label.lower()} at its {wilaya} "
+        f"site and would like to establish contact with {channel.name}.\n\n"
+        f"Concretely, we offer:\n"
+        f"- a presentation of the job and the site to your graduates;\n"
+        f"- an on-site recruitment session, dates to agree;\n"
+        f"- individual feedback to every candidate we meet.\n\n"
+        f"Could you tell us who handles business relations, and the calendar of "
+        f"your next graduating classes?\n\n"
+        f"Kind regards,\n{company}, Human Resources"
     )
 
 
-def draft_outreach(
-    channel: Channel,
-    role_key: str,
-    company: str,
-    headcount: int,
-    wilaya: str,
-    *,
-    use_ai: bool = True,
-) -> dict:
-    """
-    Rédiger le message d'approche pour un canal donné.
-
-    Retourne toujours un message : sans clé IA, un modèle déterministe.
-    """
+def draft_outreach(channel: Channel, role_key: str, company: str, headcount: int,
+                   wilaya: str, *, use_ai: bool = True) -> dict:
+    """Write the outreach message for a channel. Always returns a message."""
     role_label = labour_dz.ROLES[role_key].label if role_key in labour_dz.ROLES else role_key
     fallback = _fallback_message(channel, role_label, company, headcount, wilaya)
 
     if not use_ai or not any(ai.providers_available().values()):
-        return {"text": fallback, "method": "modèle"}
+        return {"text": fallback, "method": "template"}
 
     prompt = (
-        f"Rédige un e-mail de prise de contact, 150 mots maximum, de la part de "
-        f"l'entreprise « {company} » vers « {channel.name} » "
-        f"({channel.kind}, {channel.wilaya}).\n"
-        f"Objectif : recruter {headcount} personnes au poste de « {role_label} » "
-        f"sur le site de {wilaya}.\n"
-        f"Contexte sur ce canal : {channel.note or 'aucun'}\n\n"
-        f"Contraintes : commence par une ligne « Objet : ». Propose une action "
-        f"précise et réalisable. Termine par une question qui appelle une réponse. "
-        f"N'invente ni salaire, ni date, ni nom de personne."
+        f"Write an outreach email, 150 words max, from the company \"{company}\" "
+        f"to \"{channel.name}\" ({_KIND_LABEL[channel.kind]}, {channel.wilaya}).\n"
+        f"Goal: hire {headcount} people as \"{role_label}\" at the {wilaya} site.\n"
+        f"Context on this channel: {channel.note or 'none'}\n\n"
+        f"Constraints: start with a \"Subject:\" line. Propose one precise, doable "
+        f"action. End with a question that invites a reply. Invent no salary, date "
+        f"or person's name."
     )
     res = ai.chat(_SYSTEM, prompt, max_tokens=420, temperature=0.4)
     if res.ok and res.text.strip():
-        return {"text": res.text.strip(), "method": f"IA ({res.model})"}
-    return {"text": fallback, "method": "modèle (IA indisponible)"}
+        return {"text": res.text.strip(), "method": f"AI ({res.model})"}
+    return {"text": fallback, "method": "template (AI unavailable)"}
 
 
 if __name__ == "__main__":
-    print("Sourcing & marque employeur , auto-contrôle\n")
+    print("Sourcing and employer brand, self check\n")
     ranked = rank_channels("sorter", "Alger", headcount=25, urgency_days=30)
     print(rank_frame(ranked).head(8).to_string(index=False))
-
     plan = build_plan(ranked, 25)
-    print(f"\n  Plan : {len(plan['channels'])} canaux, couverture {plan['coverage_pct']}%, "
-          f"coût {plan['total_cost']:,} DZD, "
-          f"coût/embauche {plan['cost_per_hire']:,} DZD, délai {plan['lead_days']} j")
-
-    print("\n  Un poste d'encadrement à Ouargla classe différemment :")
+    assert plan["channels"] and plan["coverage_pct"] > 0
+    print(f"\n  Plan: {len(plan['channels'])} channels, coverage {plan['coverage_pct']}%, "
+          f"cost {plan['total_cost']:,} DZD, lead {plan['lead_days']} d")
     print(rank_frame(rank_channels("supervisor", "Ouargla", 4)).head(4).to_string(index=False))
-
-    print(f"\n  Profils de partenaires (agent de tri) : "
-          f"{[p.label for p in partner_profiles_for('sorter')]}")
-    print("\n  Message (sans IA) :\n")
-    print(draft_outreach(CHANNELS["cfpa_local"], "sorter", "Ooredoo", 25, "Alger",
-                         use_ai=False)["text"][:400])
+    print(draft_outreach(CHANNELS["cfpa_local"], "sorter", "Demo company", 25, "Alger",
+                         use_ai=False)["text"][:300])

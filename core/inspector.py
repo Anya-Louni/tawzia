@@ -149,7 +149,7 @@ def report(result: dict, lang: str = "en") -> str:
     return _template_report(result, lang)
 
 
-def _template_report(result: dict, lang: str = "fr") -> str:
+def _template_report(result: dict, lang: str = "en") -> str:
     if lang == "en":
         lines = [f"Inspection risk {result['score']}/100 - {result['label']}.",
                  f"Estimated exposure {result['exposure_low']:,} to {result['exposure_high']:,} DZD.", ""]

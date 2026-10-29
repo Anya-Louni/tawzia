@@ -27,7 +27,7 @@ def _call(name, **params):
 def test_tools_listed_and_safe():
     tools = asyncio.run(mcp.list_tools())
     names = {t.name for t in tools}
-    assert len(names) == 9, names
+    assert len(names) == 10, names
     assert not [n for n in names if any(f in n for f in FORBIDDEN)]
     assert all(t.annotations.read_only_hint and not t.annotations.destructive_hint for t in tools)
 
@@ -61,8 +61,16 @@ def test_calendar_and_holidays():
 
 
 def test_law_search():
-    r = _call("tawzia_search_labour_law", query="heures supplémentaires")
+    r = _call("tawzia_search_labour_law", query="overtime")
     assert r["articles"][0]["article"] == "art. 31"
+
+
+def test_pdf_tool():
+    import base64
+    from core import pdf_ingest
+    pdf = pdf_ingest._demo_pdf([["TITLE ONE", "Some body text here."]])
+    r = _call("tawzia_pdf_to_text", pdf_base64=base64.b64encode(pdf).decode())
+    assert r["stats"]["pages"] == 1 and "Some body text" in r["markdown"]
 
 
 if __name__ == "__main__":

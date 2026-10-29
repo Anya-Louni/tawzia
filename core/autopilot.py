@@ -1,27 +1,30 @@
 """
 core/autopilot.py
 -----------------
-L'autopilote RH : chaque moteur de la plateforme passe sur les données du jour,
-fait le travail, et ne laisse au responsable que les décisions.
+The HR autopilot: every engine of the platform goes over today's data, does the
+work, and leaves only the decisions to the manager.
 
-Le principe
-===========
-Un logiciel RH classique attend qu'on ouvre ses écrans. Ici, les agents tournent
-d'abord (présence, paie, conformité, déclarations, rétention, recrutement,
-guichet salarié) et produisent une **boîte de décisions** : chaque carte dit ce
-qui a été fait, pourquoi, ce que l'approbation déclenche et l'argent en jeu.
+The principle
+=============
+Classic HR software waits for someone to open its screens. Here the agents run
+first (attendance, payroll, compliance, filings, retention, hiring, employee
+desk) and produce a **decision inbox**: each card says what was done, why, what
+approval triggers and the money at stake.
 
-Aucun agent n'envoie, ne dépose, ne paie ni ne refuse sans un clic humain.
-Ce qui est conforme à la loi et sans risque opérationnel (`auto=True`) est
-regroupé pour être signé d'un seul clic ; le reste a sa propre carte. Le moteur
-prépare et recommande, l'humain signe.
+No agent sends, files, pays or rejects anything without a human click. What is
+lawful and carries no operational risk (`auto=True`) is grouped so it can be
+signed with one click; everything else gets its own card. The engine prepares
+and recommends, the human signs.
 
-Les minutes « économisées » sont une **hypothèse** (temps manuel moyen par
-tâche, `MANUAL_MINUTES`) et sont présentées comme telle.
+The "minutes saved" are an **assumption** (average manual time per task,
+`MANUAL_MINUTES`) and are presented as such.
+
+Agent names ("Présence", "Paie"...) are internal ids; core/i18n.py displays them.
 """
 
 from __future__ import annotations
 
+import calendar
 import datetime as _dt
 from dataclasses import dataclass, field
 from typing import Optional
@@ -31,24 +34,24 @@ import pandas as pd
 from . import (anomalies as anom_mod, attendance, compliance, cv_screen,
                deadlines_dz as dl, retention, talent)
 
-# Temps manuel moyen par tâche, en minutes. Hypothèse, pas une mesure : ce
-# qu'un gestionnaire RH passe à vérifier une demande, recalculer un bulletin,
-# préparer une déclaration. Un pilote le remplace par le chronométrage réel.
+# Average manual time per task, in minutes. An assumption, not a measurement:
+# what an HR officer spends checking a request, recomputing a payslip, preparing
+# a filing. A pilot replaces it with real timings.
 MANUAL_MINUTES = {
-    "request": 8,        # vérifier solde, préavis, planning, répondre
-    "anomaly": 25,       # retrouver l'écart, recalculer, corriger
-    "deadline": 90,      # préparer une déclaration CNAS / G50 / DAS
-    "compliance": 30,    # lire le texte, vérifier le dossier
-    "retention": 45,     # analyser un départ probable, préparer l'entretien
-    "shortlist": 120,    # trier les CV reçus pour un poste
-    "ticket": 12,        # attestation, solde, copie de bulletin
-    "payroll": 240,      # clôture de paie mensuelle, contrôles compris
-    "anem": 40,          # suivi de l'offre ANEM et compte rendu par candidat
-    "affiliation": 30,   # dossier d'affiliation CNAS d'un nouvel embauché
+    "request": 8,        # check balance, notice, schedule, reply
+    "anomaly": 25,       # find the gap, recompute, correct
+    "deadline": 90,      # prepare a CNAS / G50 / DAS filing
+    "compliance": 30,    # read the text, check the file
+    "retention": 45,     # analyse a likely departure, prepare the meeting
+    "shortlist": 120,    # sort the CVs received for a post
+    "ticket": 12,        # certificate, balance, payslip copy
+    "payroll": 240,      # monthly payroll close, checks included
+    "anem": 40,          # follow the ANEM vacancy and report per candidate
+    "affiliation": 30,   # CNAS affiliation file for a new hire
 }
 
-# Fenêtre ANEM : jours ouvrés laissés à l'agence pour proposer des candidats
-# avant tout recrutement direct (loi 04-19 modifiée par la loi 20-03).
+# ANEM window: working days left to the agency to refer candidates before any
+# direct hire (law 04-19 amended by law 20-03).
 ANEM_WINDOW_DAYS = 5
 CNAS_AFFILIATION_DAYS = 10
 
@@ -57,7 +60,7 @@ AGENTS = ("Présence", "Paie", "Conformité", "Déclarations", "Rétention",
 
 
 def working_days_between(a: _dt.date, b: _dt.date) -> int:
-    """Jours ouvrés de a (exclu) à b (inclus), hors week-end vendredi-samedi."""
+    """Working days from a (excluded) to b (included), outside the Friday-Saturday weekend."""
     n, d = 0, a
     while d < b:
         d += _dt.timedelta(days=1)
@@ -68,24 +71,24 @@ def working_days_between(a: _dt.date, b: _dt.date) -> int:
 
 @dataclass
 class Action:
-    key: str                 # identifiant stable, pour mémoriser la décision
-    agent: str               # l'agent qui a produit la carte
-    title: str               # la décision, en une ligne
-    detail: str              # ce que l'agent a constaté et fait
-    decision: str            # ce que « Approuver » déclenche
-    urgency: int             # 0 critique, 1 haute, 2 normale, 3 info
-    minutes: float           # temps manuel évité (hypothèse)
-    stakes_dzd: float = 0.0  # argent en jeu, si chiffrable
-    auto: bool = False       # conforme et sans arbitrage : signable en lot
-    page: str = ""           # écran de détail (chemin app_pages/...)
-    law: str = ""            # le texte ou la source appliquée
+    key: str                 # stable id, to remember the decision
+    agent: str               # the agent that produced the card
+    title: str               # the decision, in one line
+    detail: str              # what the agent found and did
+    decision: str            # what "Approve" triggers
+    urgency: int             # 0 critical, 1 high, 2 normal, 3 info
+    minutes: float           # manual time avoided (assumption)
+    stakes_dzd: float = 0.0  # money at stake, when it can be costed
+    auto: bool = False       # lawful and needs no judgement: can be signed in a batch
+    page: str = ""           # detail screen (app_pages/... path)
+    law: str = ""            # the rule or source applied
     payload: dict = field(default_factory=dict)
 
 
 @dataclass
 class Run:
-    actions: list            # toutes les cartes produites
-    log: list                # (agent, ce qui a été traité) pour le journal
+    actions: list            # every card produced
+    log: list                # (agent, what was processed) for the log
 
     def pending(self, decided: dict) -> list:
         return [a for a in self.actions if a.key not in decided]
@@ -95,14 +98,18 @@ class Run:
 
 
 # ---------------------------------------------------------------------------
-# Les agents
+# The agents
 # ---------------------------------------------------------------------------
 
-_REC_FR = {
-    "approve": "approuver", "approve_with_cover": "approuver avec remplacement",
-    "approve_with_note": "approuver avec réserve", "reject": "refuser",
-    "record": "enregistrer", "review": "revue manuelle",
+_REC = {
+    "approve": "approve", "approve_with_cover": "approve with cover",
+    "approve_with_note": "approve with a note", "reject": "decline",
+    "record": "record", "review": "manual review",
 }
+
+
+def _n(v: float) -> str:
+    return f"{v:,.0f}"
 
 
 def _requests_agent(requests, people, forecast, as_of) -> tuple[list, str]:
@@ -114,48 +121,44 @@ def _requests_agent(requests, people, forecast, as_of) -> tuple[list, str]:
             continue
         d = attendance.decide_request(r, emp, as_of=as_of, forecast=forecast)
         rec = d["recommend"]
-        span = (f"le {r.start:%d/%m}" if r.is_sortie
-                else f"du {r.start:%d/%m} au {r.end:%d/%m}")
+        span = (f"on {r.start:%d/%m}" if r.is_sortie
+                else f"from {r.start:%d/%m} to {r.end:%d/%m}")
         why = " ".join((d["warnings"] or d["reasons"])[:1])
         out.append(Action(
             key=f"req:{r.req_id}", agent="Présence",
-            title=f"{r.kind_label} de {r.emp_name} {span} : {_REC_FR.get(rec, rec)}",
-            detail=f"« {r.reason} ». {why}",
-            decision=("Réponse envoyée au salarié, planning mis à jour."
+            title=f"{r.kind_label} for {r.emp_name} {span}: {_REC.get(rec, rec)}",
+            detail=f"“{r.reason}”. {why}",
+            decision=("Reply sent to the employee, schedule updated."
                       if rec != "reject" else
-                      "Refus motivé envoyé au salarié, avec les dates possibles."),
+                      "Reasoned refusal sent to the employee, with possible dates."),
             urgency=1 if rec in ("reject", "approve_with_cover") else 2,
             minutes=MANUAL_MINUTES["request"],
-            # Conforme et sans pic : rien à arbitrer, l'agent répond seul.
+            # Lawful and no peak: nothing to judge, the agent replies on its own.
             auto=rec in ("approve", "record"),
             page="app_pages/requests_view.py",
-            law=("Loi 83-11, assurances sociales" if r.kind == "sick" else
-                 "Loi 90-11, art. 54 (absences spéciales)" if r.kind == "family" else
-                 "Loi 90-11, art. 39 à 42 (congé annuel)" if r.kind == "annual" else
-                 "Règlement intérieur, demandes de sortie"),
+            law=("Law 83-11, social insurance" if r.kind == "sick" else
+                 "Law 90-11, art. 54 (special leave)" if r.kind == "family" else
+                 "Law 90-11, art. 39 to 42 (annual leave)" if r.kind == "annual" else
+                 "Internal rules, short absences"),
             payload={"recommend": rec, "req_id": r.req_id},
         ))
-    return out, f"{len(out)} demandes de congé et de sortie vérifiées (solde, préavis, charge prévue)"
-
-
-_MONTHS_FR = ("janvier", "février", "mars", "avril", "mai", "juin", "juillet",
-              "août", "septembre", "octobre", "novembre", "décembre")
+    return out, f"{len(out)} leave and short-absence requests checked (balance, notice, forecast load)"
 
 
 def _payroll_agent(people, records, as_of) -> tuple[list, str]:
-    """La paie du mois, recalculée et contrôlée : une seule carte à signer."""
+    """The month's payroll, recomputed and checked: one card to sign."""
     res = anom_mod.detect(people, records, as_of)
     pay = res["payroll_frame"]
     issues, seen = [], set()
     for a in res["anomalies"]:
-        # Seules les règles de paie violées comptent ici. Les profils
-        # « atypiques » du modèle et la présence restent dans l'écran de détail.
-        if a.domain != "paie" or a.detail.startswith("Profil") or a.emp_id in seen:
+        # Only broken payroll rules count here. The model's "unusual profiles"
+        # and attendance signals stay on the detail screen.
+        if a.domain != "paie" or a.kind == "profil_atypique" or a.emp_id in seen:
             continue
         seen.add(a.emp_id)
-        issues.append(f"{a.name} : {a.detail.rstrip('.')}")
-    # Heures sup. du mois contre le plafond de 20 % de la durée légale (art. 31),
-    # ramené au mois : 8 h par semaine x 52 / 12.
+        issues.append(f"{a.name}: {a.detail.rstrip('.')}")
+    # The month's overtime against the 20% cap on legal hours (art. 31),
+    # brought to the month: 8 h a week x 52 / 12.
     from . import rules
     h = rules.payroll()["hours"]
     cap_month = h["legal_week"] * h["overtime_cap_fraction"] * 52 / 12
@@ -163,46 +166,43 @@ def _payroll_agent(people, records, as_of) -> tuple[list, str]:
         ot = getattr(e, "overtime_hours_month", 0) or 0
         if ot > cap_month and e.emp_id not in seen:
             seen.add(e.emp_id)
-            issues.insert(0, f"{e.name} : {ot:.0f} h sup. ce mois, au-delà du plafond "
-                             f"de {cap_month:.0f} h (loi 90-11, art. 31)")
+            issues.insert(0, f"{e.name}: {ot:.0f} h overtime this month, above the "
+                             f"{cap_month:.0f} h cap (Law 90-11, art. 31)")
     if pay.empty:
-        return [], "aucun bulletin à calculer"
+        return [], "no payslip to compute"
     net = float(pay["net"].sum()) if "net" in pay else 0.0
-    month = _MONTHS_FR[as_of.month - 1]
-    found = (f"{len(issues)} point(s) à corriger : " + " ; ".join(issues[:3])
+    month = calendar.month_name[as_of.month]
+    found = (f"{len(issues)} item(s) to fix: " + "; ".join(issues[:3])
              + ("…" if len(issues) > 3 else "")) if issues else \
-        "Aucun écart avec le SNMG, la CNAS ou le barème IRG."
+        "No gap with the SNMG, CNAS or the IRG scale."
     return [Action(
         key=f"pay:{as_of:%Y-%m}", agent="Paie",
-        title=(f"Paie {'d' + chr(39) if month[0] in 'aeiouéèâ' else 'de '}{month} prête : "
-               f"{len(pay)} salariés, net total "
-               + f"{net:,.0f}".replace(",", " ")
-               + f" DZD, {len(issues)} point(s) à vérifier"),
-        detail=f"{len(pay)} bulletins recalculés : brut, CNAS, IRG, net. {found}",
-        decision="Bulletins publiés, fichier de virement et écritures générés.",
+        title=(f"{month} payroll ready: {len(pay)} employees, total net "
+               f"{_n(net)} DZD, {len(issues)} item(s) to check"),
+        detail=f"{len(pay)} payslips recomputed: gross, CNAS, IRG, net. {found}",
+        decision="Payslips published, bank transfer file and journal entries generated.",
         urgency=1 if issues else 2, minutes=MANUAL_MINUTES["payroll"],
         page="app_pages/payroll_view.py",
-        law="SNMG (décret 26-01), CNAS, IRG barème art. 104, heures sup. art. 31",
+        law="SNMG (decree 26-01), CNAS, IRG scale art. 104, overtime art. 31",
         payload={"issues": issues},
-    )], f"{len(pay)} bulletins recalculés, {len(issues)} écarts de paie"
+    )], f"{len(pay)} payslips recomputed, {len(issues)} payroll gaps"
 
 
 def _draft_figure(o, people) -> str:
-    """Le montant du brouillon préparé pour cette échéance, s'il se calcule."""
+    """The amount of the draft prepared for this deadline, when it can be computed."""
     from . import filings
     parts = o.key.split("_")
-    n = lambda v: f"{v:,.0f}".replace(",", " ")  # noqa: E731
     try:
         if o.key.startswith("g50_"):
             d = filings.g50_draft(people, int(parts[1]), int(parts[2]))
-            return f" Brouillon prêt : IRG retenu {n(d['irg_total'])} DZD sur {d['employees']} salariés."
+            return f" Draft ready: IRG withheld {_n(d['irg_total'])} DZD across {d['employees']} employees."
         if o.key.startswith("cnas_mensuel_"):
             d = filings.cnas_draft(people, int(parts[2]), int(parts[3]))
-            return (f" Brouillon prêt : {n(d['total_due'])} DZD à verser "
-                    f"(patronal {n(d['employer_total'])}, salarial {n(d['employee_total'])}).")
+            return (f" Draft ready: {_n(d['total_due'])} DZD to pay "
+                    f"(employer {_n(d['employer_total'])}, employee {_n(d['employee_total'])}).")
         if o.key.startswith("das_"):
             d = filings.das_draft(people, int(parts[1]))
-            return f" Brouillon prêt : {d['employees']} lignes salariés."
+            return f" Draft ready: {d['employees']} employee lines."
     except (ValueError, IndexError):
         pass
     return ""
@@ -216,44 +216,43 @@ def _deadlines_agent(headcount, as_of, people=()) -> tuple[list, str]:
         if st not in ("en_retard", "urgent", "a_venir"):
             continue
         days = o.days_left(as_of)
-        when = ("en retard, à régulariser" if days < 0 else
-                "à déposer aujourd'hui" if days == 0 else f"à déposer dans {days} j")
+        when = ("overdue, settle it now" if days < 0 else
+                "file today" if days == 0 else f"file within {days} days")
         out.append(Action(
             key=f"dl:{o.key}:{o.due.isoformat()}", agent="Déclarations",
-            title=f"{o.label} · {o.body} : {when}",
-            detail=(f"{o.period}. {o.what}"
-                    + (_draft_figure(o, people).replace(",", "\u202f") if people else "")),
-            decision=f"Brouillon validé et transmis au comptable, qui dépose sur "
-                     f"{o.portal}. Rappel J-3 dans l'agenda. L'agent ne dépose rien.",
+            title=f"{o.label} · {o.body}: {when}",
+            detail=f"{o.period}. {o.what}" + (_draft_figure(o, people) if people else ""),
+            decision=f"Draft approved and sent to the accountant, who files on "
+                     f"{o.portal}. Calendar reminder 3 days before. The agent files nothing.",
             urgency=0 if st in ("en_retard", "urgent") else 2,
             minutes=MANUAL_MINUTES["deadline"],
             page="app_pages/deadlines_view.py", law=o.source,
             payload={"penalty": o.penalty},
         ))
-    return out, f"{len(items)} échéances CNAS, G50 et DAS calculées sur 45 jours"
+    return out, f"{len(items)} CNAS, G50 and DAS deadlines computed over 45 days"
 
 
 def _compliance_agent(people, as_of) -> tuple[list, str]:
     alerts = compliance.scan(people=people, as_of=as_of)
     out = []
-    for i, a in enumerate(alerts):
+    for a in alerts:
         if a.severity == "info":
             continue
         out.append(Action(
             key=f"comp:{a.category}:{a.message[:60]}", agent="Conformité",
             title=a.message, detail=a.action, law=a.rule,
-            decision="Le dossier est mis en conformité et la pièce archivée.",
+            decision="The file is brought into compliance and the document archived.",
             urgency=0 if a.severity == "critical" else 1,
             minutes=MANUAL_MINUTES["compliance"],
             page="app_pages/inspector_sim.py",
         ))
-    return out, f"{len(people)} dossiers passés au crible du code du travail"
+    return out, f"{len(people)} files checked against the labour code"
 
 
 def _retention_agent(attrition_df, people, records, as_of, top: int = 3) -> tuple[list, str]:
     out = []
     if attrition_df is None or attrition_df.empty:
-        return out, "aucun effectif à analyser"
+        return out, "no workforce to analyse"
     high = attrition_df[attrition_df["Band"] == "high"].head(top)
     for _, row in high.iterrows():
         plan = retention.plan_for_employee(people, records, row["ID"], as_of)
@@ -262,19 +261,19 @@ def _retention_agent(attrition_df, people, records, as_of, top: int = 3) -> tupl
         b = plan.best
         out.append(Action(
             key=f"ret:{row['ID']}", agent="Rétention",
-            title=f"Garder {row['Name']} : {b.label[0].lower()}{b.label[1:]}",
-            detail=(f"Risque de départ {plan.base_risk * 100:.0f}% (cause principale : "
-                    f"{plan.top_driver.lower()}). L'action le ramène à "
+            title=f"Keep {row['Name']}: {b.label[0].lower()}{b.label[1:]}",
+            detail=(f"Leaving risk {plan.base_risk * 100:.0f}% (main cause: "
+                    f"{plan.top_driver.lower()}). The action brings it to "
                     f"{b.new_risk * 100:.0f}% "
-                    + (f"pour {b.cost_dzd:,.0f} DZD par an." if b.cost_dzd > 0
-                       else "sans coût direct.")),
-            decision="Entretien planifié avec le manager, script d'entretien joint.",
+                    + (f"for {_n(b.cost_dzd)} DZD a year." if b.cost_dzd > 0
+                       else "at no direct cost.")),
+            decision="Meeting booked with the manager, talking points attached.",
             urgency=1, minutes=MANUAL_MINUTES["retention"], stakes_dzd=b.net_dzd,
             page="app_pages/retention_negotiator.py",
-            law="Alerte précoce par règles (pas encore entraînée sur vos départs)",
+            law="Rule-based early warning (not yet trained on your departures)",
         ))
-    return out, (f"{len(attrition_df)} salariés scorés, {int((attrition_df['Band'] == 'high').sum())} "
-                 f"à risque élevé")
+    return out, (f"{len(attrition_df)} employees scored, {int((attrition_df['Band'] == 'high').sum())} "
+                 f"at high risk")
 
 
 def _recruiting_agent(role_key: str) -> tuple[list, str]:
@@ -288,48 +287,47 @@ def _recruiting_agent(role_key: str) -> tuple[list, str]:
         out.append(Action(
             key=f"rec:{key}:{'|'.join(s.candidate.name for s in strong)}",
             agent="Recrutement",
-            title=f"Inviter {len(strong)} candidats en entretien ({job.title})",
-            detail=(f"{len(ranked)} candidatures lues et classées. Retenus : {names}. "
-                    f"Chaque classement est explicable dans le vivier."),
-            decision="Invitations envoyées avec trois créneaux proposés.",
+            title=f"Invite {len(strong)} candidates to interview ({job.title})",
+            detail=(f"{len(ranked)} applications read and ranked. Shortlisted: {names}. "
+                    f"Every ranking is explained in the candidate pool."),
+            decision="Invitations sent with three proposed slots.",
             urgency=2, minutes=MANUAL_MINUTES["shortlist"],
             page="app_pages/talent_pool.py",
-            law="Score par règles explicables : formation, expérience, langues, permis",
+            law="Explainable rule-based score: education, experience, languages, licence",
         ))
-    return out, f"{len(ranked)} CV lus et classés pour le poste {job.title}"
+    return out, f"{len(ranked)} CVs read and ranked for {job.title}"
 
 
 def _anem_agent(role_title: str, filed_on: _dt.date, as_of: _dt.date) -> tuple[list, str]:
-    """La fenêtre ANEM de l'offre ouverte : le compte à rebours, et la suite."""
+    """The ANEM window of the open vacancy: the countdown, and what comes next."""
     used = working_days_between(filed_on, as_of)
     left = ANEM_WINDOW_DAYS - used
-    law = "Loi 04-19 modifiée par la loi 20-03 (délai de 5 jours ouvrés)"
+    law = "Law 04-19 amended by law 20-03 (5 working days)"
     if left > 0:
         act = Action(
             key=f"anem:{filed_on.isoformat()}:{used}", agent="Recrutement",
-            title=(f"Offre {role_title} à l'ANEM : jour {used} sur {ANEM_WINDOW_DAYS}, "
-                   f"{left} jour(s) ouvré(s) restant(s)"),
-            detail=(f"Offre déposée le {filed_on:%d/%m}. Chaque candidat orienté par "
-                    "l'agence est contacté et son résultat noté pour le compte rendu "
-                    "nominatif."),
-            decision="Compte rendu par candidat envoyé à l'ANEM.",
+            title=(f"{role_title.capitalize()} vacancy at ANEM: day {used} of {ANEM_WINDOW_DAYS}, "
+                   f"{left} working day(s) left"),
+            detail=(f"Filed on {filed_on:%d/%m}. Every candidate the agency refers is "
+                    "contacted and the outcome recorded for the per-candidate report."),
+            decision="Per-candidate report sent to ANEM.",
             urgency=1 if left <= 1 else 2, minutes=MANUAL_MINUTES["anem"],
             page="app_pages/job_post_view.py", law=law)
     else:
         act = Action(
             key=f"anem:{filed_on.isoformat()}:open", agent="Recrutement",
-            title=f"Fenêtre ANEM close pour {role_title} : recrutement direct autorisé",
-            detail="Cinq jours ouvrés écoulés sans placement. Le vivier interne et "
-                   "les autres canaux peuvent être ouverts.",
-            decision="Recrutement direct ouvert, l'ANEM sera informée de l'embauche.",
+            title=f"ANEM window closed for {role_title}: direct hiring allowed",
+            detail="Five working days passed without a placement. The internal pool "
+                   "and the other channels can be opened.",
+            decision="Direct hiring opened; ANEM will be told of the hire.",
             urgency=1, minutes=MANUAL_MINUTES["anem"],
             page="app_pages/sourcing_view.py", law=law)
-    return [act], (f"offre {role_title} suivie à l'ANEM, jour "
-                   f"{min(used, ANEM_WINDOW_DAYS)} sur {ANEM_WINDOW_DAYS}")
+    return [act], (f"{role_title} vacancy tracked at ANEM, day "
+                   f"{min(used, ANEM_WINDOW_DAYS)} of {ANEM_WINDOW_DAYS}")
 
 
 def _affiliation_agent(people, as_of) -> tuple[list, str]:
-    """Chaque nouvel embauché doit être affilié à la CNAS sous dix jours."""
+    """Every new hire must be affiliated with CNAS within ten days."""
     out = []
     for e in people:
         age = (as_of - e.hire_date).days
@@ -337,14 +335,14 @@ def _affiliation_agent(people, as_of) -> tuple[list, str]:
             left = CNAS_AFFILIATION_DAYS - age
             out.append(Action(
                 key=f"aff:{e.emp_id}", agent="Déclarations",
-                title=f"Affiliation CNAS de {e.name} : {left} jour(s) restant(s)",
-                detail=(f"Embauché le {e.hire_date:%d/%m}. Formulaire, contrat et "
-                        f"copie de la pièce d'identité rassemblés."),
-                decision="Dossier d'affiliation prêt à déposer sur le portail CNAS.",
+                title=f"CNAS affiliation for {e.name}: {left} day(s) left",
+                detail=(f"Hired on {e.hire_date:%d/%m}. Form, contract and a copy of the "
+                        f"ID document gathered."),
+                decision="Affiliation file ready to submit on the CNAS portal.",
                 urgency=0 if left <= 3 else 1, minutes=MANUAL_MINUTES["affiliation"],
                 page="app_pages/people.py",
-                law="Affiliation CNAS sous 10 jours suivant l'embauche"))
-    return out, f"{len(out)} nouvel(s) embauché(s) à affilier"
+                law="CNAS affiliation within 10 days of hiring"))
+    return out, f"{len(out)} new hire(s) to affiliate"
 
 
 def _tickets_agent(tickets: list) -> tuple[list, str]:
@@ -354,24 +352,24 @@ def _tickets_agent(tickets: list) -> tuple[list, str]:
             continue
         out.append(Action(
             key=f"tk:{t['id']}", agent="Guichet",
-            title=(f"{t['label']} pour {t['emp_name']} : prête à signer"
-                   if t.get("document") else f"{t['label']} de {t['emp_name']}"),
-            detail=f"Demandée au guichet : « {t['text']} ». Rédigée sur le dossier du salarié.",
-            decision=t.get("decision", "Document signé et remis au salarié."),
+            title=(f"{t['label']} for {t['emp_name']}: ready to sign"
+                   if t.get("document") else f"{t['label']} from {t['emp_name']}"),
+            detail=f"Asked at the employee desk: “{t['text']}”. Written from the employee's file.",
+            decision=t.get("decision", "Document signed and handed to the employee."),
             urgency=2, minutes=MANUAL_MINUTES["ticket"],
-            # Un document signé au nom de l'entreprise a sa propre carte.
+            # A document signed on behalf of the company gets its own card.
             auto=False, page="app_pages/self_service.py",
-            law="Faits du dossier salarié", payload={"ticket": t["id"]},
+            law="Facts from the employee file", payload={"ticket": t["id"]},
         ))
     answered = sum(1 for t in tickets if not t.get("needs_signature"))
-    return out, f"{len(tickets)} demandes de salariés reçues, {answered} répondues seules"
+    return out, f"{len(tickets)} employee requests received, {answered} answered automatically"
 
 
 def run(*, people: list, records: list, requests: list, attrition_df: pd.DataFrame,
         forecast: Optional[pd.DataFrame], headcount: int, role_key: str,
         tickets: Optional[list] = None, as_of: Optional[_dt.date] = None,
         anem_filed: Optional[_dt.date] = None, open_role_title: str = "") -> Run:
-    """Faire passer chaque agent, dans l'ordre où un responsable le ferait."""
+    """Run every agent, in the order a manager would."""
     as_of = as_of or _dt.date.today()
     steps = [
         ("Présence", lambda: _requests_agent(requests, people, forecast, as_of)),
@@ -381,7 +379,7 @@ def run(*, people: list, records: list, requests: list, attrition_df: pd.DataFra
         ("Conformité", lambda: _compliance_agent(people, as_of)),
         ("Rétention", lambda: _retention_agent(attrition_df, people, records, as_of)),
         ("Recrutement", lambda: _recruiting_agent(role_key)),
-        ("ANEM", lambda: _anem_agent(open_role_title or "ouverte",
+        ("ANEM", lambda: _anem_agent(open_role_title or "open",
                                      anem_filed or as_of - _dt.timedelta(days=6), as_of)),
         ("Guichet", lambda: _tickets_agent(tickets or [])),
     ]
@@ -389,8 +387,8 @@ def run(*, people: list, records: list, requests: list, attrition_df: pd.DataFra
     for agent, fn in steps:
         try:
             acts, note = fn()
-        except Exception as exc:  # noqa: BLE001 , un agent en panne ne bloque pas les autres
-            acts, note = [], f"indisponible ({type(exc).__name__})"
+        except Exception as exc:  # noqa: BLE001 , one failing agent does not block the others
+            acts, note = [], f"unavailable ({type(exc).__name__})"
         actions += acts
         log.append((agent, note))
     actions.sort(key=lambda a: (a.urgency, -a.stakes_dzd))
@@ -413,16 +411,16 @@ if __name__ == "__main__":
             requests=attendance.sample_requests(people),
             attrition_df=attrition.score_workforce(people, records),
             forecast=None, headcount=60, role_key="sorter",
-            tickets=[{"id": "t1", "label": "Attestation de travail",
+            tickets=[{"id": "t1", "label": "Work certificate",
                       "emp_name": "Test", "text": "attestation",
                       "needs_signature": True}])
     for agent, note in r.log:
         print(f"  {agent:12s} {note}")
-    assert r.actions, "l'autopilote doit produire au moins une carte"
+    assert r.actions, "the autopilot must produce at least one card"
     assert all(a.agent in AGENTS for a in r.actions)
-    assert {a.key for a in r.actions}.__len__() == len(r.actions), "clés en double"
+    assert len({a.key for a in r.actions}) == len(r.actions), "duplicate keys"
     batch = [a for a in r.pending({}) if a.auto]
-    assert batch, "les demandes conformes doivent pouvoir se signer en lot"
-    assert not any(a.agent == "Guichet" for a in batch), "un document signé a sa carte"
-    print(f"  {len(r.actions)} cartes, dont {len(batch)} signables en un clic")
+    assert batch, "compliant requests must be signable in a batch"
+    assert not any(a.agent == "Guichet" for a in batch), "a signed document has its own card"
+    print(f"  {len(r.actions)} cards, {len(batch)} signable in one click")
     print("  ok")

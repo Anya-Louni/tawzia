@@ -38,7 +38,7 @@ class KPI:
     unit: str
     help: str
     band: str          # "bon" | "surveiller" | "critique" | "neutre"
-    group: str         # "Effectif" | "Coût" | "Présence" | "Risque"
+    group: str         # "Headcount" | "Cost" | "Attendance" | "Risk"
 
 
 def _band(value, good_below=None, warn_below=None, good_above=None,
@@ -68,7 +68,7 @@ def compute(people: list, records: list, as_of: Optional[_dt.date] = None) -> di
     if n == 0:
         return {"kpis": [], "extras": {}}
 
-    # --- Effectif ----------------------------------------------------------
+    # --- Headcount ----------------------------------------------------------
     cdd = sum(1 for e in people if e.contract == "CDD")
     cdd_pct = cdd / n * 100
     seniority = [e.seniority_years(as_of) for e in people]
@@ -76,23 +76,22 @@ def compute(people: list, records: list, as_of: Optional[_dt.date] = None) -> di
     first_year = sum(1 for e in people if e.months_of_service(as_of) < 12)
     first_year_pct = first_year / n * 100
 
-    kpis.append(KPI("headcount", "Effectif", n, f"{n}", "employés",
-                    "Nombre d'employés dans le périmètre.", "neutre", "Effectif"))
-    kpis.append(KPI("cdd_pct", "Part de CDD", cdd_pct, f"{cdd_pct:.0f}%", "%",
-                    "Part de contrats à durée déterminée : au-delà de 25% la "
-                    "précarité pèse sur la fidélisation.",
-                    _band(cdd_pct, good_below=15, warn_below=25), "Effectif"))
-    kpis.append(KPI("avg_seniority", "Ancienneté moyenne", avg_sen,
-                    f"{avg_sen:.1f}", "ans",
-                    "Ancienneté moyenne de l'équipe.",
-                    _band(avg_sen, good_above=3, warn_above=1.5), "Effectif"))
-    kpis.append(KPI("first_year_pct", "Effectif < 1 an", first_year_pct,
+    kpis.append(KPI("headcount", "Headcount", n, f"{n}", "employees",
+                    "Number of employees in scope.", "neutre", "Headcount"))
+    kpis.append(KPI("cdd_pct", "CDD share", cdd_pct, f"{cdd_pct:.0f}%", "%",
+                    "Share of fixed-term contracts: above 25%, insecurity weighs "
+                    "on retention.",
+                    _band(cdd_pct, good_below=15, warn_below=25), "Headcount"))
+    kpis.append(KPI("avg_seniority", "Average seniority", avg_sen,
+                    f"{avg_sen:.1f}", "years",
+                    "Average team seniority.",
+                    _band(avg_sen, good_above=3, warn_above=1.5), "Headcount"))
+    kpis.append(KPI("first_year_pct", "Staff under 1 year", first_year_pct,
                     f"{first_year_pct:.0f}%", "%",
-                    "Part d'employés en première année : là où le turnover est "
-                    "le plus fort.",
-                    _band(first_year_pct, good_below=20, warn_below=35), "Effectif"))
+                    "Share of first-year employees: where turnover is highest.",
+                    _band(first_year_pct, good_below=20, warn_below=35), "Headcount"))
 
-    # --- Coût (paie sur la vraie pile SNMG + CNAS + IRG) -------------------
+    # --- Cost (payroll on the real SNMG + CNAS + IRG stack) -------------------
     slips = [payroll_dz.payslip(e.monthly_gross(), e.role_key, e.dependants, e.spouse)
              for e in people]
     gross = sum(s.gross for s in slips)
@@ -102,27 +101,27 @@ def compute(people: list, records: list, as_of: Optional[_dt.date] = None) -> di
     net_total = sum(s.net for s in slips)
     load_pct = (employer_cost / gross - 1) * 100 if gross else 0
 
-    kpis.append(KPI("wage_bill", "Masse salariale (brut)", gross,
-                    _dzd(gross), "DZD/mois",
-                    "Total des salaires bruts mensuels.", "neutre", "Coût"))
-    kpis.append(KPI("employer_cost", "Coût employeur total", employer_cost,
-                    _dzd(employer_cost), "DZD/mois",
-                    f"Brut + charges patronales CNAS ({labour_dz.CNAS_EMPLOYER:.1%}). Le vrai coût mensuel.",
-                    "neutre", "Coût"))
-    kpis.append(KPI("charges_load", "Charges patronales", load_pct,
+    kpis.append(KPI("wage_bill", "Wage bill (gross)", gross,
+                    _dzd(gross), "DZD/month",
+                    "Total monthly gross salaries.", "neutre", "Cost"))
+    kpis.append(KPI("employer_cost", "Total employer cost", employer_cost,
+                    _dzd(employer_cost), "DZD/month",
+                    f"Gross + CNAS employer share ({labour_dz.CNAS_EMPLOYER:.1%}). The real monthly cost.",
+                    "neutre", "Cost"))
+    kpis.append(KPI("charges_load", "Employer contributions", load_pct,
                     f"+{load_pct:.0f}%", "%",
-                    "Surcoût des charges patronales au-dessus du brut.",
-                    "neutre", "Coût"))
-    kpis.append(KPI("cnas_due", "CNAS à verser (35%)", cnas_total,
-                    _dzd(cnas_total), "DZD/mois",
-                    f"Cotisations CNAS salarié {labour_dz.CNAS_EMPLOYEE:.0%} + employeur {labour_dz.CNAS_EMPLOYER:.1%}.",
-                    "neutre", "Coût"))
-    kpis.append(KPI("irg_due", "IRG retenu (G50)", irg_total,
-                    _dzd(irg_total), "DZD/mois",
-                    "Impôt sur le revenu retenu à la source à reverser.",
-                    "neutre", "Coût"))
+                    "Employer contributions on top of gross.",
+                    "neutre", "Cost"))
+    kpis.append(KPI("cnas_due", "CNAS due", cnas_total,
+                    _dzd(cnas_total), "DZD/month",
+                    f"CNAS contributions, employee {labour_dz.CNAS_EMPLOYEE:.0%} + employer {labour_dz.CNAS_EMPLOYER:.1%}.",
+                    "neutre", "Cost"))
+    kpis.append(KPI("irg_due", "IRG withheld (G50)", irg_total,
+                    _dzd(irg_total), "DZD/month",
+                    "Income tax withheld at source, to pay over.",
+                    "neutre", "Cost"))
 
-    # --- Présence ----------------------------------------------------------
+    # --- Attendance ----------------------------------------------------------
     summ = att_mod.lateness_summary(records)
     if not summ.empty:
         absent = float(summ["Absent %"].mean())
@@ -133,42 +132,41 @@ def compute(people: list, records: list, as_of: Optional[_dt.date] = None) -> di
     else:
         absent = late = abs_cost = 0.0
 
-    kpis.append(KPI("absenteeism", "Taux d'absentéisme", absent,
+    kpis.append(KPI("absenteeism", "Absenteeism", absent,
                     f"{absent:.1f}%", "%",
-                    "Part des shifts en absence. Au-delà de 8% le service et le "
-                    "coût de remplacement décrochent.",
-                    _band(absent, good_below=5, warn_below=8), "Présence"))
-    kpis.append(KPI("lateness", "Taux de retard", late,
+                    "Share of shifts missed. Above 8%, service and backfill cost "
+                    "break down.",
+                    _band(absent, good_below=5, warn_below=8), "Attendance"))
+    kpis.append(KPI("lateness", "Lateness", late,
                     f"{late:.1f}%", "%",
-                    "Part des shifts commencés en retard.",
-                    _band(late, good_below=10, warn_below=20), "Présence"))
-    kpis.append(KPI("absence_cost", "Coût mensuel de l'absentéisme", abs_cost,
-                    _dzd(abs_cost), "DZD/mois",
-                    "Shifts absents valorisés au coût chargé, remplacement "
-                    "intérim inclus.", "neutre", "Présence"))
+                    "Share of shifts started late.",
+                    _band(late, good_below=10, warn_below=20), "Attendance"))
+    kpis.append(KPI("absence_cost", "Monthly cost of absence", abs_cost,
+                    _dzd(abs_cost), "DZD/month",
+                    "Missed shifts at loaded cost, temp backfill included.", "neutre", "Attendance"))
 
-    # --- Risque (attrition + passif congés) --------------------------------
+    # --- Risk (attrition + leave liability) --------------------------------
     risk_df = attr_mod.score_workforce(people, records, as_of)
     risk = attr_mod.summary(risk_df)
     leave_liab = _leave_liability(people, as_of)
 
-    kpis.append(KPI("attrition_risk", "Risque de départ moyen", risk["avg_risk"],
+    kpis.append(KPI("attrition_risk", "Average leaving risk", risk["avg_risk"],
                     f"{risk['avg_risk']:.0f}%", "%",
-                    "Probabilité moyenne de départ à 6 mois (modèle attrition).",
-                    _band(risk["avg_risk"], good_below=15, warn_below=25), "Risque"))
-    kpis.append(KPI("high_risk", "Employés à haut risque", risk["high"],
-                    f"{risk['high']}", "employés",
-                    "Employés en bande de risque élevé, à traiter en priorité.",
+                    "Average 6-month leaving probability (attrition model).",
+                    _band(risk["avg_risk"], good_below=15, warn_below=25), "Risk"))
+    kpis.append(KPI("high_risk", "High-risk employees", risk["high"],
+                    f"{risk['high']}", "employees",
+                    "Employees in the high-risk band, to handle first.",
                     _band(risk["high"], good_below=max(1, n * 0.05),
-                          warn_below=max(2, n * 0.12)), "Risque"))
-    kpis.append(KPI("cost_at_risk", "Coût de rotation à risque", risk["cost_at_risk"],
+                          warn_below=max(2, n * 0.12)), "Risk"))
+    kpis.append(KPI("cost_at_risk", "Turnover cost at risk", risk["cost_at_risk"],
                     _dzd(risk["cost_at_risk"]), "DZD",
-                    "Coût de remplacement pondéré par le risque de départ.",
-                    "neutre", "Risque"))
-    kpis.append(KPI("leave_liability", "Passif congés (solde acquis)", leave_liab,
+                    "Replacement cost weighted by leaving risk.",
+                    "neutre", "Risk"))
+    kpis.append(KPI("leave_liability", "Leave liability (accrued balance)", leave_liab,
                     _dzd(leave_liab), "DZD",
-                    "Valeur des congés acquis non pris — un engagement au bilan.",
-                    "neutre", "Risque"))
+                    "Value of accrued, untaken leave: a balance-sheet liability.",
+                    "neutre", "Risk"))
 
     return {
         "kpis": kpis,
@@ -222,19 +220,19 @@ def _leave_liability(people: list, as_of: _dt.date) -> float:
 
 def kpi_frame(kpis: list) -> pd.DataFrame:
     return pd.DataFrame([{
-        "Groupe": k.group, "Indicateur": k.label, "Valeur": k.display,
-        "État": k.band,
+        "Group": k.group, "Indicator": k.label, "Value": k.display,
+        "Status": k.band,
     } for k in kpis])
 
 
 if __name__ == "__main__":
     from . import hr
 
-    print("Tableau de KPI — self check\n")
+    print("KPI board, self check\n")
     people = hr.sample_workforce("sorter", 60, "Alger")
     records = att_mod.sample_attendance(people, days=20)
     res = compute(people, records)
-    for g in ["Effectif", "Coût", "Présence", "Risque"]:
+    for g in ["Headcount", "Cost", "Attendance", "Risk"]:
         print(f"— {g} —")
         for k in res["kpis"]:
             if k.group == g:

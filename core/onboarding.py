@@ -1,21 +1,21 @@
 """
 core/onboarding.py
 ------------------
-De « offre acceptée » à « pleinement opérationnel », sans que le RH tape rien
+From "offer accepted" to "fully productive", without HR typing anything
 (brief §6.6).
 
-1. Le nouvel embauché remplit son dossier depuis son téléphone (lien à usage
-   unique, 7 jours). En démo, la lecture des pièces (OCR) est **simulée** à
-   partir du dossier fictif : l'interface le dit.
-2. L'agent vérifie : pièce non expirée, noms identiques d'un document à l'autre,
-   format du NIN et du RIB, âge minimum, moins de 19 ans (pas de nuit, art. 28),
-   pièce floue ou manquante. Ce qui ne va pas repart au salarié, pas au RH.
-3. Une seule carte pour le RH. À l'approbation, tout part en parallèle :
-   contrat, affiliation CNAS, avis ANEM, paie, planning, accès et matériel,
-   message d'accueil, puis le parcours (J1, semaine 1, J30/60/90, fin d'essai).
+1. The new hire fills their file from their phone (one-time link, 7 days). In
+   the demo, document reading (OCR) is **simulated** from the fictional file:
+   the interface says so.
+2. The agent checks: ID not expired, names identical across documents, NIN and
+   RIB format, minimum age, under 19 (no nights, art. 28), blurry or missing
+   documents. Whatever is wrong goes back to the new hire, not to HR.
+3. One card for HR. On approval, everything launches in parallel: contract,
+   CNAS affiliation, ANEM notice, payroll, schedule, access and equipment,
+   welcome message, then the journey (day 1, week 1, day 30/60/90, end of trial).
 
-Un poste marqué sensible ajoute de lui-même références, enquête et revue des
-accès. Rien n'est envoyé ni déposé sans clic humain : l'agent prépare.
+A role marked sensitive adds references, background check and access review on
+its own. Nothing is sent or filed without a human click: the agent prepares.
 """
 
 from __future__ import annotations
@@ -30,16 +30,16 @@ _C = rules.payroll()["onboarding"]
 _WT = rules.payroll()["work_time"]
 
 DOC_LABELS = {
-    "cni": "Carte d'identité (recto, verso)", "extrait_naissance": "Extrait de naissance",
-    "photo": "Photo d'identité", "rib": "RIB ou CCP", "diplome": "Diplôme",
-    "certificat_travail": "Certificats de travail antérieurs",
-    "aptitude_medicale": "Certificat d'aptitude médicale",
-    "service_national": "Situation vis-à-vis du service national",
-    "reglement_interieur_signe": "Règlement intérieur signé",
-    "charte_donnees_25_11": "Notice données personnelles (loi 25-11) signée",
-    "contact_urgence": "Contact en cas d'urgence",
-    "references": "Prise de références", "enquete": "Enquête de moralité (résultat seul)",
-    "revue_acces": "Revue des droits d'accès",
+    "cni": "National ID card (front, back)", "extrait_naissance": "Birth certificate",
+    "photo": "ID photo", "rib": "Bank details (RIB or CCP)", "diplome": "Diploma",
+    "certificat_travail": "Previous work certificates",
+    "aptitude_medicale": "Medical fitness certificate",
+    "service_national": "National service status",
+    "reglement_interieur_signe": "Signed internal rules",
+    "charte_donnees_25_11": "Signed data-protection notice (law 25-11)",
+    "contact_urgence": "Emergency contact",
+    "references": "Reference checks", "enquete": "Background check (result only)",
+    "revue_acces": "Access rights review",
 }
 
 
@@ -57,7 +57,7 @@ class Registration:
 
 def checklist(role_key: str, gender: str) -> list:
     docs = list(_C["documents"])
-    if gender != "M":                          # le service national concerne les hommes
+    if gender != "M":                          # national service concerns men
         docs = [d for d in docs if d != "service_national"]
     if role_key in seed_company.SENSITIVE_ROLES:
         docs += list(_C["sensitive_extra"])
@@ -66,7 +66,7 @@ def checklist(role_key: str, gender: str) -> list:
 
 def simulate_upload(reg: Registration, birth: _dt.date, id_expiry: _dt.date,
                     blurry: tuple = ("diplome",)) -> Registration:
-    """Démo : ce que l'OCR aurait lu sur chaque pièce. Une pièce floue exprès."""
+    """Demo: what OCR would have read on each document. One blurry document on purpose."""
     for code in checklist(reg.role_key, reg.gender):
         if code in _C["sensitive_extra"]:
             continue
@@ -79,41 +79,41 @@ def simulate_upload(reg: Registration, birth: _dt.date, id_expiry: _dt.date,
 
 
 def verify(reg: Registration, today: _dt.date | None = None) -> dict:
-    """Les contrôles de l'agent. `bounce` repart au salarié, `notes` va au RH."""
+    """The agent's checks. `bounce` goes back to the new hire, `notes` go to HR."""
     today = today or _dt.date.today()
     need = [d for d in checklist(reg.role_key, reg.gender) if d not in _C["sensitive_extra"]]
     bounce, notes = [], []
     for d in need:
         st = reg.docs.get(d, {}).get("status")
         if st is None:
-            bounce.append(f"{DOC_LABELS[d]} : pièce manquante, merci de l'ajouter.")
+            bounce.append(f"{DOC_LABELS[d]}: missing, please add it.")
         elif st == "blurry":
-            bounce.append(f"{DOC_LABELS[d]} : la photo est floue, merci de la reprendre.")
+            bounce.append(f"{DOC_LABELS[d]}: the photo is blurry, please retake it.")
     cni = reg.docs.get("cni", {}).get("fields", {})
     names = {v["fields"].get("name") for v in reg.docs.values() if v.get("fields", {}).get("name")}
     if len(names) > 1:
-        bounce.append("Le nom diffère d'une pièce à l'autre : vérifiez l'orthographe.")
+        bounce.append("The name differs between documents: check the spelling.")
     if cni:
         exp = _dt.date.fromisoformat(cni["expiry"])
         if exp < today:
-            bounce.append("La carte d'identité est expirée.")
+            bounce.append("The ID card has expired.")
         elif (exp - today).days < 180:
-            notes.append(f"La pièce d'identité expire dans {(exp - today).days // 30} mois.")
+            notes.append(f"The ID document expires in {(exp - today).days // 30} months.")
         if not re.fullmatch(r"\d{18}", cni.get("nin", "")):
-            bounce.append("Le NIN doit compter 18 chiffres.")
+            bounce.append("The NIN must have 18 digits.")
         b = _dt.date.fromisoformat(cni["birth"])
         age = today.year - b.year - ((today.month, today.day) < (b.month, b.day))
         if age < _C["min_age"]:
-            notes.append(f"Âge {age} ans, sous le minimum de {_C['min_age']} ans (art. 15) [à vérifier].")
+            notes.append(f"Age {age}, below the minimum of {_C['min_age']} (art. 15) [verify].")
         elif age < _WT["night_min_age"]:
-            notes.append(f"{age} ans : aucun shift de nuit possible (art. 28), le planning le sait.")
+            notes.append(f"Aged {age}: no night shift possible (art. 28); the schedule knows.")
     rib = reg.docs.get("rib", {}).get("fields", {}).get("rib", "")
     if rib and not re.fullmatch(r"\d{20}", rib):
-        bounce.append("Le RIB doit compter 20 chiffres.")
+        bounce.append("The RIB must have 20 digits.")
     if reg.contract == "CDD":
         c = legal.check_cdd(reg.cdd_reason, reg.start, reg.start + _dt.timedelta(days=180))
         if not c["valid"]:
-            notes.append("Motif de CDD hors de l'art. 12 : contrat à requalifier en CDI.")
+            notes.append("CDD reason outside art. 12: the contract should be a CDI.")
     done = len(need) - sum(1 for d in need if reg.docs.get(d, {}).get("status") != "ok")
     return {"complete": not bounce, "documents_ok": done, "documents_needed": len(need),
             "bounce": bounce, "notes": notes,
@@ -121,73 +121,73 @@ def verify(reg: Registration, today: _dt.date | None = None) -> dict:
 
 
 def plan(reg: Registration) -> list:
-    """Tout ce qui part à l'approbation, avec un responsable et une date."""
+    """Everything that launches on approval, with an owner and a date."""
     s = reg.start
     d = lambda n: (s + _dt.timedelta(days=n)).isoformat()  # noqa: E731
     trial_months = _WT["trial_max_months"]
     trial_end = s + _dt.timedelta(days=int(trial_months * 30.44))
     tasks = [
-        ("Contrat " + reg.contract + " généré, envoyé en signature (repli : impression et scan, loi 26-02)", "RH", d(-5)),
-        ("Brouillon d'affiliation CNAS, à déposer sur teledeclaration.cnas.dz", "RH", d(10)),
-        ("Avis d'embauche ANEM, brouillon", "RH", d(3)),
-        ("Paie : salaire, primes, statut IRG, RIB (attend la première paie)", "Paie", d(-2)),
-        ("Planning des deux premières semaines, avec un binôme sur les mêmes shifts", "Planning", d(-3)),
-        ("Badge et accès au site", "Sécurité", d(-1)),
-        ("Tenue et équipements de protection", "Logistique", d(-1)),
-        ("Comptes : messagerie et application", "IT", d(-1)),
-        ("Message d'accueil : date, adresse, contact, quoi apporter", "Guichet", d(-2)),
-        ("Préparation du manager (3 jours avant)", "Manager", d(-3)),
-        ("Jour 1 : accueil, consignes de sécurité, binôme", "Manager", d(0)),
-        ("Semaine 1 : formations sécurité, données, conduite, harcèlement, avec quiz", "RH", d(5)),
+        (f"{reg.contract} contract generated, sent for e-signature (fallback: print and scan, law 26-02)", "HR", d(-5)),
+        ("CNAS affiliation draft, to submit on teledeclaration.cnas.dz", "HR", d(10)),
+        ("ANEM hire notice, draft", "HR", d(3)),
+        ("Payroll: salary, allowances, IRG status, RIB (waits for the first payroll)", "Payroll", d(-2)),
+        ("Schedule for the first two weeks, with a buddy on the same shifts", "Planning", d(-3)),
+        ("Badge and site access", "Security", d(-1)),
+        ("Uniform and protective equipment", "Logistics", d(-1)),
+        ("Accounts: email and app", "IT", d(-1)),
+        ("Welcome message: date, address, contact, what to bring", "Employee desk", d(-2)),
+        ("Manager preparation (3 days before)", "Manager", d(-3)),
+        ("Day 1: welcome, safety briefing, buddy", "Manager", d(0)),
+        ("Week 1: safety, data protection, conduct and anti-harassment training, with quiz", "HR", d(5)),
     ]
-    tasks += [(f"Point J{n} dans le guichet", "Guichet", d(n)) for n in _C["checkins_days"]]
-    tasks.append((f"Fin d'essai le {trial_end:%d/%m/%Y} : confirmer, prolonger ou mettre fin "
-                  f"(art. 18, 20), rappel {_C['trial_reminder_days_before']} j avant", "Manager",
+    tasks += [(f"Day {n} check-in in the employee desk", "Employee desk", d(n)) for n in _C["checkins_days"]]
+    tasks.append((f"End of trial on {trial_end:%d/%m/%Y}: confirm, extend or end "
+                  f"(art. 18, 20), reminder {_C['trial_reminder_days_before']} days before", "Manager",
                   (trial_end - _dt.timedelta(days=_C["trial_reminder_days_before"])).isoformat()))
     if reg.role_key in seed_company.SENSITIVE_ROLES:
-        tasks += [("Prise de références : courriels préparés, envoi par le RH", "RH", d(-7)),
-                  ("Enquête de moralité : résultat, date, auteur (jamais le document)", "Sécurité", d(-3)),
-                  ("Revue des droits d'accès : bâtiments et systèmes", "Sécurité", d(-1))]
+        tasks += [("Reference checks: emails drafted, sent by HR", "HR", d(-7)),
+                  ("Background check: result, date, by whom (never the document)", "Security", d(-3)),
+                  ("Access rights review: buildings and systems", "Security", d(-1))]
     return [{"task": t, "owner": o, "due": due} for t, o, due in tasks]
 
 
 def offboarding(emp, last_day: _dt.date) -> list:
-    """Le parcours miroir du départ."""
+    """The mirror journey for a departure."""
     return [{"task": t, "owner": o, "due": last_day.isoformat()} for t, o in (
-        ("Certificat de travail", "RH"),
-        ("Solde de tout compte, congés restants payés", "Paie"),
-        ("Restitution du badge et du matériel", "Logistique"),
-        ("Fermeture des comptes et révocation des accès", "IT"),
-        ("Mises à jour CNAS et ANEM", "RH"),
-        ("Questionnaire de départ", "Guichet"),
+        ("Certificate of employment (certificat de travail)", "HR"),
+        ("Final settlement, remaining leave paid", "Payroll"),
+        ("Badge and equipment returned", "Logistics"),
+        ("Accounts closed and access revoked", "IT"),
+        ("CNAS and ANEM updates", "HR"),
+        ("Exit survey", "Employee desk"),
     )]
 
 
 def approval_card(reg: Registration, v: dict) -> dict:
-    notes = " ".join(v["notes"]) if v["notes"] else "Aucune remarque."
+    notes = " ".join(v["notes"]) if v["notes"] else "No remarks."
     return {
         "agent": "Intégration",
-        "title": (f"Dossier de {reg.candidate} complet et vérifié : "
-                  f"{v['documents_ok']}/{v['documents_needed']} pièces"),
-        "detail": notes + (" Poste sensible : références, enquête et revue des accès "
-                           "ajoutées d'office." if v["sensitive"] else ""),
-        "law": "Affiliation CNAS sous 10 jours · loi 90-11 art. 12, 18, 28 · loi 25-11",
-        "decision": f"Embauche validée : {len(plan(reg))} tâches lancées en parallèle.",
+        "title": (f"{reg.candidate}'s file is complete and verified: "
+                  f"{v['documents_ok']}/{v['documents_needed']} documents"),
+        "detail": notes + (" Sensitive role: references, background check and access "
+                           "review added automatically." if v["sensitive"] else ""),
+        "law": "CNAS affiliation within 10 days · Law 90-11 art. 12, 18, 28 · law 25-11",
+        "decision": f"Hire approved: {len(plan(reg))} tasks launched in parallel.",
     }
 
 
 def launch(con, reg: Registration, emp_id: str) -> int:
-    """Après le clic « Approuver l'embauche » : les tâches entrent en base."""
+    """After the "Approve hire" click: the tasks go into the database."""
     from . import db
     for t in plan(reg):
         con.execute("INSERT INTO onboarding_tasks (employee_id, task, owner, due, status) "
-                    "VALUES (?,?,?,?, 'à faire')", (emp_id, t["task"], t["owner"], t["due"]))
+                    "VALUES (?,?,?,?, 'to do')", (emp_id, t["task"], t["owner"], t["due"]))
     for code, d in reg.docs.items():
         con.execute("INSERT INTO documents (employee_id, kind, status, created) VALUES (?,?,?,?)",
-                    (emp_id, code, "vérifié" if d["status"] == "ok" else d["status"],
+                    (emp_id, code, "verified" if d["status"] == "ok" else d["status"],
                      _dt.date.today().isoformat()))
     con.commit()
-    db.log(con, "hr", "hr", "embauche_approuvee", emp_id, reg.candidate)
+    db.log(con, "hr", "hr", "hire_approved", emp_id, reg.candidate)
     return len(plan(reg))
 
 
@@ -197,14 +197,14 @@ if __name__ == "__main__":
                        gender="F")
     simulate_upload(reg, birth=_dt.date(2000, 3, 4), id_expiry=today + _dt.timedelta(days=120))
     v = verify(reg, today)
-    assert not v["complete"] and any("floue" in b for b in v["bounce"])
-    reg.docs["diplome"]["status"] = "ok"          # le salarié reprend la photo
+    assert not v["complete"] and any("blurry" in b for b in v["bounce"])
+    reg.docs["diplome"]["status"] = "ok"          # the new hire retakes the photo
     v = verify(reg, today)
-    assert v["complete"] and v["sensitive"] and any("expire" in n for n in v["notes"])
+    assert v["complete"] and v["sensitive"] and any("expires" in n for n in v["notes"])
     tasks = plan(reg)
-    assert any("Enquête" in t["task"] for t in tasks) and any("J90" in t["task"] for t in tasks)
+    assert any("Background check" in t["task"] for t in tasks) and any("Day 90" in t["task"] for t in tasks)
     assert "service_national" not in checklist("ramp_agent", "F")
     young = Registration("Test", "sorter", "ALG", today, gender="M")
     simulate_upload(young, birth=_dt.date(2008, 1, 1), id_expiry=today.replace(year=2030), blurry=())
     assert any("art. 28" in n for n in verify(young, today)["notes"])
-    print(f"  intégration : {len(tasks)} tâches pour un poste sensible : ok")
+    print(f"  onboarding: {len(tasks)} tasks for a sensitive role: ok")

@@ -1,15 +1,12 @@
 """
-Tableau de bord , l'écran qu'un responsable ouvre chaque matin.
+Dashboard: the screen a manager opens every morning.
 
-L'ordre de lecture est délibéré : d'abord ce qui se passe aujourd'hui (présence,
-absences, demandes qui attendent une décision), ensuite ce qui arrive (calendrier
-algérien, charge prévue), enfin le planning recommandé et son coût. Un
-responsable qui n'a que trente secondes ne lit que la première bande, et elle
-suffit à savoir s'il doit agir.
+Reading order is deliberate: first what is happening today (attendance,
+absences, requests waiting for a decision), then what is coming (Algerian
+calendar, forecast load), then the recommended schedule and its cost.
 
-Toutes les évolutions affichées sont comparées à une base réelle et nommée , la
-moyenne de la fenêtre de pointage chargée , jamais à un « mois dernier » qui
-n'existe pas dans les données.
+Every change shown is compared with a real, named baseline (the mean of the
+loaded clock window), never with a "last month" that is not in the data.
 """
 
 import datetime as _dt
@@ -28,42 +25,35 @@ profile = demand_mod.PROFILES[st.session_state["profile_key"]]
 wilaya = st.session_state["wilaya"]
 horizon = st.session_state["horizon"]
 
-_MONTHS_FR = ("janvier", "février", "mars", "avril", "mai", "juin", "juillet",
-              "août", "septembre", "octobre", "novembre", "décembre")
+_MONTHS = ("January", "February", "March", "April", "May", "June", "July",
+           "August", "September", "October", "November", "December")
 
-# Couleurs de la présence : le bleu de marque pour ce qui va bien, deux tons
-# chauds pour les deux problèmes. Le modèle de référence empilait trois bleus ;
-# une absence rendue en nuance de bleu se lit comme une variante de présence, ce
-# qui est exactement l'erreur qu'un tableau de bord RH ne peut pas faire.
+# Brand blue for what is fine, two warm tones for the two problems.
 C_OK, C_LATE, C_ABS = brand.BLUE, "#E4A13B", "#DE5B4F"
 
 
-def _date_fr(d: _dt.date) -> str:
+def _date_en(d: _dt.date) -> str:
     return (f"{calendar_dz.WEEKDAY_NAMES_FR[d.weekday()]} {d.day} "
-            f"{_MONTHS_FR[d.month - 1]} {d.year}")
+            f"{_MONTHS[d.month - 1]} {d.year}")
 
 
-def _hijri_fr(d: _dt.date) -> str:
+def _hijri(d: _dt.date) -> str:
     hy, hm, hd = calendar_dz.to_hijri(d)
     return f"{hd} {calendar_dz.HIJRI_MONTHS[hm]} {hy}"
 
 
-# ---------------------------------------------------------------------------
-# Les données du jour : effectif, pointage, demandes, risque de départ
-# ---------------------------------------------------------------------------
+# Today: headcount, clock-ins, requests, leaving risk
 people = appdata.hr_people()
 records = appdata.hr_attendance()
 requests = appdata.hr_requests()
 risk = appdata.hr_attrition()
 
 adf = pd.DataFrame([{"date": r.date, "flag": r.flag} for r in records])
-# Deux dates différentes, et l'écran doit le dire : la journée réelle, et le
-# dernier jour effectivement pointé. Le journal de pointage s'arrête à la
-# veille, donc appeler « aujourd'hui » le dernier pointage serait faux.
+# The clock log stops the day before, so the last clocked day is not "today".
 now = _dt.date.today()
 last_clocked = adf["date"].max() if not adf.empty else now
 day = adf[adf["date"] == last_clocked] if not adf.empty else adf
-clocked_label = f"{last_clocked.day} {_MONTHS_FR[last_clocked.month - 1]}"
+clocked_label = f"{last_clocked.day} {_MONTHS[last_clocked.month - 1]}"
 is_today = last_clocked == now
 
 planned_today = len(day)
@@ -71,7 +61,6 @@ absent_today = int((day["flag"] == "absent").sum()) if planned_today else 0
 late_today = int((day["flag"] == "late").sum()) if planned_today else 0
 present_today = planned_today - absent_today
 
-# Base de comparaison : la même mesure, moyennée sur toute la fenêtre chargée.
 n_days = adf["date"].nunique() if not adf.empty else 0
 mean_absent = (adf["flag"] == "absent").sum() / n_days if n_days else 0.0
 present_rate = present_today / planned_today * 100 if planned_today else 0.0
@@ -87,9 +76,7 @@ cdd_share = cdd / len(people) * 100 if people else 0.0
 
 high_risk = int((risk["Band"] == "high").sum()) if not risk.empty else 0
 
-# ---------------------------------------------------------------------------
-# Le planning : prévision de charge et roster recommandé
-# ---------------------------------------------------------------------------
+# Schedule: forecast load and recommended roster
 plan = appdata.load_forward_plan(
     st.session_state["profile_key"],
     wilaya,
@@ -108,15 +95,11 @@ daily_staff = roster.groupby("date", as_index=False).agg(
     staff=("total_staff", "sum"), cost=("planned_cost", "sum")
 )
 peak_row = daily.loc[daily["forecast"].idxmax()]
-# La fenêtre est nommée par ses dates réelles, jamais par « les N prochains
-# jours ». La prévision part du lendemain du dernier jour d'historique, et
-# l'historique s'arrête au dernier jour où la météo réelle est publiée (ERA5
-# a quelques jours de retard). Dire « prochains jours » alors que la fenêtre
-# est déjà passée est le genre de détail qu'un client repère en réunion.
+# Name the window by its real dates: history stops where ERA5 weather does.
 win_start = pd.to_datetime(daily["date"].min()).date()
 win_end = pd.to_datetime(daily["date"].max()).date()
-win_label = (f"du {win_start.day} {_MONTHS_FR[win_start.month - 1]} "
-             f"au {win_end.day} {_MONTHS_FR[win_end.month - 1]}")
+win_label = (f"{win_start.day} {_MONTHS[win_start.month - 1]} "
+             f"to {win_end.day} {_MONTHS[win_end.month - 1]}")
 win_stale = win_end < now
 total_cost = float(daily_staff["cost"].sum())
 peak_staff = int(roster.groupby("date")["total_staff"].sum().max())
@@ -125,14 +108,11 @@ temp_share = (
     if roster["total_staff"].sum() else 0
 )
 
-# ---------------------------------------------------------------------------
-# Bandeau d'accueil : la date du jour, la date hijri, le contexte
-# ---------------------------------------------------------------------------
 st.markdown(
     f'<div class="tz-hero"><div>'
-    f'<h1 class="tz-hero-h">Tableau de bord</h1>'
-    f'<div class="tz-hero-s">{_date_fr(now)} · {_hijri_fr(now)} · '
-    f'<b>{profile.label}</b> · {wilaya} · charge mesurée en '
+    f'<h1 class="tz-hero-h">Dashboard</h1>'
+    f'<div class="tz-hero-s">{_date_en(now)} · {_hijri(now)} · '
+    f'<b>{profile.label}</b> · {wilaya} · load measured in '
     f'{profile.demand_unit}</div></div></div>',
     unsafe_allow_html=True,
 )
@@ -140,79 +120,69 @@ industry.banner()
 
 if plan["infeasible"]:
     st.error(
-        "**Ce site ne peut pas couvrir légalement la prévision.** L'effectif "
-        "permanent plus le plafond d'intérimaires ne suffit pas, dans les limites "
-        "du plafond d'heures supplémentaires et du repos hebdomadaire, à servir la "
-        "demande prévue. C'est un vrai constat, pas une erreur : le site a besoin "
-        "de plus d'effectif. Augmentez l'effectif permanent ou le plafond "
-        "d'intérimaires dans « Réglages » pour voir ce qu'il faudrait.",
+        "**This site cannot legally cover the forecast.** Permanent staff plus "
+        "the temp ceiling is not enough, within the overtime cap and weekly rest, "
+        "to serve forecast demand. This is a finding, not an error: the site needs "
+        "more people. Raise permanent staff or the temp ceiling in Settings to "
+        "see what it would take.",
         icon=":material/warning:",
     )
 
-# ---------------------------------------------------------------------------
-# Première bande : les quatre chiffres du jour
-# ---------------------------------------------------------------------------
+# First band: the four numbers of the day
 k1, k2, k3, k4 = st.columns(4)
 
 with k1, st.container(border=True, height="stretch"):
     appdata.stat_card(
-        "Effectif suivi", f"{len(people)}",
+        "Headcount", f"{len(people)}",
         f"{cdd_share:.0f}% CDD", "flat",
         f"{len(people) - cdd} CDI · {cdd} CDD · {wilaya}",
     )
 with k2, st.container(border=True, height="stretch"):
     appdata.stat_card(
-        "Présents" + ("" if is_today else " au dernier pointage"),
+        "Present" + ("" if is_today else " (last clock day)"),
         f"{present_today}",
         f"{present_rate - mean_present_rate:+.1f} pt",
         "up" if present_rate >= mean_present_rate else "down",
-        f"{clocked_label} · sur {planned_today} postes · moyenne "
-        f"{mean_present_rate:.0f}% sur {n_days} jours",
+        f"{clocked_label} · of {planned_today} shifts · mean "
+        f"{mean_present_rate:.0f}% over {n_days} days",
     )
 with k3, st.container(border=True, height="stretch"):
     appdata.stat_card(
-        "Absents" + ("" if is_today else " au dernier pointage"),
+        "Absent" + ("" if is_today else " (last clock day)"),
         f"{absent_today}",
         (f"{(absent_today - mean_absent) / mean_absent * 100:+.0f}%"
-         if mean_absent else "premier jour"),
+         if mean_absent else "first day"),
         "down" if absent_today > mean_absent else "up",
-        f"{clocked_label} · moyenne {mean_absent:.1f} par jour · "
-        f"{late_today} en retard",
+        f"{clocked_label} · mean {mean_absent:.1f} a day · "
+        f"{late_today} late",
     )
 with k4, st.container(border=True, height="stretch"):
     appdata.stat_card(
-        "Demandes en attente", f"{len(pending)}",
-        f"{len(leave_pending)} congés", "flat",
-        "à arbitrer avec la charge de la semaine",
+        "Pending requests", f"{len(pending)}",
+        f"{len(leave_pending)} leave", "flat",
+        "to weigh against this week's load",
     )
 
-# ---------------------------------------------------------------------------
-# Deuxième bande : présence dans le temps, et ce qui arrive
-# ---------------------------------------------------------------------------
+# Second band: attendance over time, and what is coming
 left, right = st.columns([3, 2])
 
 with left:
     with st.container(border=True):
-        appdata.card_head("Présence par jour",
-                          f"{n_days} derniers jours ouvrés")
-        appdata.legend([("À l'heure", C_OK), ("En retard", C_LATE),
-                        ("Absent", C_ABS)])
+        appdata.card_head("Attendance by day", f"last {n_days} working days")
+        appdata.legend([("On time", C_OK), ("Late", C_LATE), ("Absent", C_ABS)])
         if adf.empty:
-            st.markdown('<div class="tz-empty">Aucun pointage chargé.</div>',
+            st.markdown('<div class="tz-empty">No clock data loaded.</div>',
                         unsafe_allow_html=True)
         else:
-            _FR = {"on_time": "À l'heure", "late": "En retard",
-                   "absent": "Absent"}
-            per_day = (adf.assign(statut=adf["flag"].map(_FR))
+            _LBL = {"on_time": "On time", "late": "Late", "absent": "Absent"}
+            per_day = (adf.assign(statut=adf["flag"].map(_LBL))
                        .groupby(["date", "statut"]).size()
                        .rename("agents").reset_index())
             per_day["jour"] = pd.to_datetime(per_day["date"]).dt.strftime("%d/%m")
-            order = ["À l'heure", "En retard", "Absent"]
+            order = ["On time", "Late", "Absent"]
             chart = (
                 alt.Chart(per_day)
-                # Coins arrondis sur chaque segment : c'est ce qui donne au
-                # graphique empilé son allure de blocs posés, pas de colonne.
-                .mark_bar(cornerRadius=5, size=26)
+                .mark_bar(cornerRadius=2, size=26)
                 .encode(
                     x=alt.X("jour:N", title=None, sort=None,
                             axis=alt.Axis(labelAngle=0, labelColor=brand.MUTED,
@@ -226,14 +196,12 @@ with left:
                     color=alt.Color("statut:N", sort=order, legend=None,
                                     scale=alt.Scale(domain=order,
                                                     range=[C_OK, C_LATE, C_ABS])),
-                    # « À l'heure » repose au sol : c'est la base de la journée.
-                    # Les deux problèmes s'empilent au-dessus, donc leur hauteur
-                    # se compare d'un jour à l'autre sans effort.
+                    # On time sits at the base; the two problems stack above it.
                     order=alt.Order("color_statut_sort_index:Q",
                                     sort="ascending"),
-                    tooltip=[alt.Tooltip("jour:N", title="Jour"),
-                             alt.Tooltip("statut:N", title="Statut"),
-                             alt.Tooltip("agents:Q", title="Agents")],
+                    tooltip=[alt.Tooltip("jour:N", title="Day"),
+                             alt.Tooltip("statut:N", title="Status"),
+                             alt.Tooltip("agents:Q", title="Staff")],
                 )
                 .properties(height=268)
                 .configure_view(strokeWidth=0, fill=None)
@@ -242,18 +210,16 @@ with left:
                                  gridDash=[3, 4])
             )
             st.altair_chart(chart, width="stretch")
-            st.caption(
-                "Pointages simulés pour la démonstration ; en production la "
-                "plateforme lit la pointeuse ou le fichier de présence."
-            )
+            st.caption("Clock-ins simulated for the demo; in production the "
+                       "platform reads the time clock or the attendance file.")
 
 with right:
     with st.container(border=True):
-        appdata.card_head("Ce qui arrive", "calendrier algérien")
+        appdata.card_head("Coming up", "Algerian calendar")
         events = appdata.load_calendar_events(days=max(horizon + 60, 120))
         if events.empty:
-            st.markdown('<div class="tz-empty">Aucun grand événement du '
-                        'calendrier algérien dans cette fenêtre.</div>',
+            st.markdown('<div class="tz-empty">No major Algerian calendar '
+                        'event in this window.</div>',
                         unsafe_allow_html=True)
         else:
             rows = []
@@ -261,169 +227,151 @@ with right:
                 d = pd.to_datetime(e["Date"]).date()
                 delta = (d - now).days
                 rows.append({
-                    "name": f"{d.day} {_MONTHS_FR[d.month - 1]} · {e['Event']}",
+                    "name": f"{d.day} {_MONTHS[d.month - 1]} · {e['Event']}",
                     "sub": e["Impact"],
-                    "meta": f"J+{delta}" if delta > 0 else "aujourd'hui",
+                    "meta": f"D+{delta}" if delta > 0 else "today",
                     "hot": 0 <= delta <= 7,
                 })
             appdata.list_rows(rows, avatars=False, wrap=True)
         st.page_link("app_pages/calendar_view.py",
-                     label="Calendrier complet et vérification",
+                     label="Full calendar and verification",
                      icon=":material/calendar_month:")
 
-# ---------------------------------------------------------------------------
-# Troisième bande : ce qui demande une décision aujourd'hui
-# ---------------------------------------------------------------------------
+# Third band: what needs a decision today
 c1, c2, c3, c4 = st.columns(4)
 
 with c1, st.container(border=True, height="stretch"):
-    appdata.card_head("Demandes à traiter", f"{len(pending)} en attente")
+    appdata.card_head("Requests to handle", f"{len(pending)} pending")
     appdata.list_rows([
         {"name": r.emp_name,
          "sub": f"{r.kind_label} · {r.start:%d/%m}"
-                + (f" au {r.end:%d/%m}" if r.end != r.start else ""),
-         "meta": (f"{(r.end - r.start).days + 1} j" if not r.is_sortie
-                  else f"{r.hours:.0f} h" if r.hours else "sortie"),
+                + (f" to {r.end:%d/%m}" if r.end != r.start else ""),
+         "meta": (f"{(r.end - r.start).days + 1} d" if not r.is_sortie
+                  else f"{r.hours:.0f} h" if r.hours else "short leave"),
          "hot": (r.start - now).days <= 3}
         for r in pending[:4]
-    ], empty="Aucune demande en attente.")
-    st.page_link("app_pages/requests_view.py",
-                 label="Arbitrer les demandes",
+    ], empty="No pending request.")
+    st.page_link("app_pages/requests_view.py", label="Decide on requests",
                  icon=":material/how_to_reg:")
 
 with c2, st.container(border=True, height="stretch"):
-    appdata.card_head("Risque de départ", f"{high_risk} à risque élevé")
+    appdata.card_head("Leaving risk", f"{high_risk} at high risk")
     appdata.list_rows([
         {"name": r["Name"], "sub": r["Top driver"],
          "meta": f"{r['Risk %']:.0f} %", "hot": r["Band"] == "high"}
         for _, r in risk.head(4).iterrows()
-    ], empty="Aucun profil scoré.")
+    ], empty="No scored profile.")
     st.page_link("app_pages/retention_negotiator.py",
-                 label="Voir les causes et le coût",
-                 icon=":material/trending_down:")
+                 label="See causes and cost", icon=":material/trending_down:")
 
 with c3, st.container(border=True, height="stretch"):
-    # L'échéance qui coûte de l'argent si elle passe : elle a sa place ici,
-    # au-dessus du pli, pas seulement dans la page qui lui est dédiée.
-    appdata.card_head("À déclarer", "CNAS et impôts")
+    appdata.card_head("To file", "CNAS and tax")
     _dls = dl.upcoming(now, headcount=len(people), horizon_days=60)
     appdata.list_rows([
         {"name": o.label,
          "sub": f"{o.body} · {o.period}",
-         "meta": (f"en retard" if o.days_left(now) < 0
-                  else f"J+{o.days_left(now)}"),
+         "meta": ("overdue" if o.days_left(now) < 0
+                  else f"D+{o.days_left(now)}"),
          "hot": o.status(now) in ("en_retard", "urgent")}
         for o in _dls[:3]
-    ], empty="Rien à déclarer dans les 60 jours.",
+    ], empty="Nothing to file in the next 60 days.",
         avatars=False, wrap=True)
     st.page_link("app_pages/deadlines_view.py",
-                 label="Toutes les échéances et les portails",
+                 label="All deadlines and portals",
                  icon=":material/event_available:")
 
 with c4, st.container(border=True, height="stretch"):
-    appdata.card_head("Retards et absences",
-                      f"{late_today + absent_today} signalements")
+    appdata.card_head("Lateness and absence",
+                      f"{late_today + absent_today} flags")
     flags = att_mod.todays_flags(records)
     appdata.list_rows([
-        {"name": r["Nom"], "sub": f"{r['Statut']} · prévu {r['Prévu']}",
-         "meta": (f"+{r['Retard (min)']} min" if r["Retard (min)"] != ""
-                  else "absence"),
-         "hot": r["Statut"].startswith("Absent")}
+        {"name": r["Name"], "sub": f"{r['Status']} · due {r['Scheduled']}",
+         "meta": (f"+{r['Late (min)']} min" if r["Late (min)"] != ""
+                  else "absent"),
+         "hot": r["Status"].startswith("Absent")}
         for _, r in flags.head(4).iterrows()
-    ], empty="Tout le monde à l'heure aujourd'hui.")
-    st.page_link("app_pages/requests_view.py", label="Registre de présence",
+    ], empty="Everyone on time today.")
+    st.page_link("app_pages/requests_view.py", label="Attendance register",
                  icon=":material/schedule:")
 
-# ---------------------------------------------------------------------------
-# Quatrième bande : la charge prévue et le planning qui en découle
-# ---------------------------------------------------------------------------
-st.markdown("### Charge prévue et planning")
-st.caption(
-    f"Fenêtre de prévision : **{win_label}** ({horizon} jours), calculée à "
-    f"partir du dernier jour d'historique disponible."
-)
+# Fourth band: forecast load and the schedule it drives
+st.markdown("### Forecast load and schedule")
+st.caption(f"Forecast window: **{win_label}** ({horizon} days), computed from "
+           f"the last day of available history.")
 if win_stale:
     st.warning(
-        "Cette fenêtre est déjà passée : le calcul en cache date d'avant "
-        "aujourd'hui. Relancez le calcul pour prévoir à partir de la date du "
-        "jour (menu « Données », puis décochez et recochez les appels en "
-        "direct pour forcer un recalcul).",
+        "This window is already past: the cached run predates today. Rerun to "
+        "forecast from today (Data menu, then toggle live calls off and on to "
+        "force a recompute).",
         icon=":material/history:",
     )
 
-# Conteneur nommé : deux de ces quatre tuiles portent une courbe et deux non,
-# donc sans hauteur commune la rangée est bancale. La règle est limitée à cette
-# rangée pour ne pas grandir toutes les métriques de l'application.
+# Named container so the four tiles share a height (two carry sparklines).
 with st.container(key="tz_planrow"):
     m1, m2, m3, m4 = st.columns(4)
 m1.metric(
-    f"Charge ({profile.demand_unit})", f"{daily['forecast'].sum():,.0f}",
+    f"Load ({profile.demand_unit})", f"{daily['forecast'].sum():,.0f}",
     border=True, chart_data=daily["forecast"].tolist(), chart_type="line",
-    help=f"Total sur la fenêtre {win_label}.",
+    help=f"Total over {win_label}.",
 )
 m2.metric(
-    "Jour de pic", pd.to_datetime(peak_row["date"]).strftime("%d/%m"),
+    "Peak day", pd.to_datetime(peak_row["date"]).strftime("%d/%m"),
     f"{peak_row['forecast']:,.0f}", border=True,
-    help="Le jour où la charge prévue est la plus forte.",
+    help="The day with the highest forecast load.",
 )
 m3.metric(
-    "Effectif de pic", f"{peak_staff}", border=True,
+    "Peak staff", f"{peak_staff}", border=True,
     chart_data=daily_staff["staff"].tolist(), chart_type="bar",
-    help="Jour le plus chargé, tous shifts confondus.",
+    help="Busiest day, all shifts combined.",
 )
 m4.metric(
-    "Coût planifié", appdata.dzd(total_cost, compact=True), border=True,
-    help="Coût chargé, charges patronales CNAS et primes légales comprises.",
+    "Planned cost", appdata.dzd(total_cost, compact=True), border=True,
+    help="Loaded cost, CNAS employer share and legal premiums included.",
 )
 
 pl, pr = st.columns([3, 2])
 
 with pl:
     with st.container(border=True):
-        appdata.card_head("Demande prévue",
+        appdata.card_head("Forecast demand",
                           f"quantile p{st.session_state['service_level'] * 100:.0f}")
-        st.caption(
-            "La zone entre les deux bornes est l'intervalle p10-p90, dérivé de "
-            "l'erreur réelle du backtest à chaque horizon. Ce n'est pas une "
-            "distribution supposée."
-        )
+        st.caption("The band is the p10-p90 interval, derived from the real "
+                   "backtest error at each horizon. It is not an assumed "
+                   "distribution.")
         chart_df = daily.set_index("date")[["p10", "forecast", "p90"]]
-        chart_df.columns = ["Bas (p10)", "Prévision", "Haut (p90)"]
+        chart_df.columns = ["Low (p10)", "Forecast", "High (p90)"]
         st.line_chart(chart_df, height=272,
                       color=["#C6D2E2", brand.BLUE, "#C6D2E2"])
 
 with pr:
     with st.container(border=True):
-        appdata.card_head("Composition du planning", "sur l'horizon")
+        appdata.card_head("Schedule mix", "over the horizon")
         st.markdown(
             f'<div class="tz-meter"><span style="width:'
             f'{min(temp_share, 100):.1f}%"></span></div>'
-            f'<div class="tz-meter-l"><span>Intérim {temp_share:.0f}%</span>'
-            f'<span>Permanents {100 - temp_share:.0f}%</span></div>',
+            f'<div class="tz-meter-l"><span>Temps {temp_share:.0f}%</span>'
+            f'<span>Permanent {100 - temp_share:.0f}%</span></div>',
             unsafe_allow_html=True,
         )
-        st.caption(
-            "Un intérimaire porte une majoration de 35%. Au-delà d'un quart du "
-            "planning, la question n'est plus le planning mais l'effectif "
-            "permanent."
-        )
+        st.caption("A temp carries a 35% premium. Above a quarter of the "
+                   "schedule, the question is no longer scheduling but "
+                   "permanent headcount.")
         ot = float(roster["overtime"].sum())
         st.markdown(
-            f'<div class="tz-row"><div class="tz-av">HS</div>'
+            f'<div class="tz-row"><div class="tz-av">OT</div>'
             f'<div class="tz-row-txt"><div class="tz-row-t">'
-            f'{ot:,.0f} heures supplémentaires</div>'
-            f'<div class="tz-row-s">dans le plafond légal</div></div></div>'
-            f'<div class="tz-row"><div class="tz-av">SU</div>'
+            f'{ot:,.0f} overtime hours</div>'
+            f'<div class="tz-row-s">within the legal cap</div></div></div>'
+            f'<div class="tz-row"><div class="tz-av">SV</div>'
             f'<div class="tz-row-txt"><div class="tz-row-t">'
-            f'{int(roster["supervisors"].sum())} postes de superviseur</div>'
-            f'<div class="tz-row-s">taux d\'encadrement respecté</div></div></div>',
+            f'{int(roster["supervisors"].sum())} supervisor shifts</div>'
+            f'<div class="tz-row-s">supervision ratio met</div></div></div>',
             unsafe_allow_html=True,
         )
         st.page_link("app_pages/roster_view.py",
-                     label="Planning détaillé et coût",
-                     icon=":material/groups:")
+                     label="Detailed schedule and cost", icon=":material/groups:")
 
-# --- Spotlight secteur : la fonctionnalité propre à l'activité choisie ------
+# Sector spotlight
 try:
     _sfc = appdata.expected_demand(
         st.session_state["profile_key"], wilaya, horizon,
@@ -434,46 +382,41 @@ except Exception:
 _feat = sf.compute(st.session_state["profile_key"], _sec_plan, cd.people())
 if _feat is not None:
     with st.container(border=True):
-        appdata.card_head(f"{_feat.icon} {_feat.title}", "propre à votre activité")
+        appdata.card_head(f"{_feat.icon} {_feat.title}", "specific to your activity")
         cols = st.columns(len(_feat.metrics)) if _feat.metrics else []
         for col, (label, display, help_txt) in zip(cols, _feat.metrics):
             col.metric(label, display, help=help_txt or None)
         if _feat.insight:
             st.caption(f":material/lightbulb: {_feat.insight}")
-        st.page_link("app_pages/sector_view.py", label="Analyse sectorielle",
+        st.page_link("app_pages/sector_view.py", label="Sector analysis",
                      icon=":material/insights:")
 
 with st.container(border=True):
-    appdata.card_head("Planning recommandé", win_label)
-    st.caption(
-        f"Construit au quantile de demande "
-        f"p{st.session_state['service_level'] * 100:.0f}, dans les limites du "
-        f"plafond d'heures supplémentaires et du repos hebdomadaire."
-    )
+    appdata.card_head("Recommended schedule", win_label)
+    st.caption(f"Built at demand quantile "
+               f"p{st.session_state['service_level'] * 100:.0f}, within the "
+               f"overtime cap and weekly rest.")
     show = roster[[
         "date", "shift", "forecast_for_roster", "required_workers",
         "regular", "overtime", "temp", "total_staff", "supervisors", "planned_cost",
     ]].copy()
     show["date"] = pd.to_datetime(show["date"]).dt.strftime("%a %d %b")
     st.dataframe(
-        show,
-        hide_index=True,
-        width="stretch",
+        show, hide_index=True, width="stretch",
         column_config={
             "date": "Date",
             "shift": "Shift",
             "forecast_for_roster": st.column_config.NumberColumn(
-                f"Prévision ({profile.demand_unit})", format="%d"
-            ),
-            "required_workers": st.column_config.NumberColumn("Requis", format="%d"),
-            "regular": st.column_config.NumberColumn("Permanents", format="%d"),
-            "overtime": st.column_config.NumberColumn("Heures sup", format="%d"),
-            "temp": st.column_config.NumberColumn("Intérim", format="%d"),
+                f"Forecast ({profile.demand_unit})", format="%d"),
+            "required_workers": st.column_config.NumberColumn("Required", format="%d"),
+            "regular": st.column_config.NumberColumn("Permanent", format="%d"),
+            "overtime": st.column_config.NumberColumn("Overtime", format="%d"),
+            "temp": st.column_config.NumberColumn("Temps", format="%d"),
             "total_staff": st.column_config.NumberColumn("Total", format="%d"),
-            "supervisors": st.column_config.NumberColumn("Superviseurs", format="%d"),
-            "planned_cost": st.column_config.NumberColumn("Coût (DZD)", format="%.0f"),
+            "supervisors": st.column_config.NumberColumn("Supervisors", format="%d"),
+            "planned_cost": st.column_config.NumberColumn("Cost (DZD)", format="%.0f"),
         },
     )
 
-st.caption(f":material/cloud: Météo de la prévision : {plan['weather_provenance']}")
+st.caption(f":material/cloud: Forecast weather: {plan['weather_provenance']}")
 appdata.data_badge()

@@ -83,47 +83,47 @@ def _levers_for(emp, att_row, as_of) -> RetentionPlan:
         annual_cost = raise_amt * 12 * (1 + labour_dz.CNAS_EMPLOYER)
         f2 = dict(f); f2["low_pay"] = 0.0
         levers.append(_mk(
-            "pay", f"Augmenter le salaire vers {target:,.0f} DZD/mois",
+            "pay", f"Raise pay to {target:,.0f} DZD a month",
             annual_cost, _score_from_features(f2), base_p, repl,
-            f"Relever le salaire de base d'environ {raise_amt:,.0f} DZD/mois. Un "
-            f"salaire proche du plancher SNMG est l'un des plus forts facteurs de départ."))
+            f"Raise base pay by about {raise_amt:,.0f} DZD a month. Pay close to "
+            f"the SNMG floor is one of the strongest drivers of leaving."))
 
     # 2. Convert CDD -> CDI
     if f["cdd"] > 0:
         f2 = dict(f); f2["cdd"] = 0.0
         levers.append(_mk(
-            "cdi", "Convertir le CDD en CDI permanent", 0.0,
+            "cdi", "Convert the CDD to a permanent CDI", 0.0,
             _score_from_features(f2), base_p, repl,
-            "Proposer un contrat permanent. Les CDD partent plus souvent, et cela "
-            "supprime aussi le risque de requalification au-delà de 24 mois."))
+            "Offer a permanent contract. People on CDD leave more often, and it also "
+            "removes the requalification risk beyond 24 months."))
 
     # 3. Book overdue leave (burnout)
     if f["unused_leave"] > 0.3:
         f2 = dict(f); f2["unused_leave"] = f["unused_leave"] * 0.3
         cost = gross / 22.0 * 3.0   # ~3 days of cover
         levers.append(_mk(
-            "leave", "Planifier les congés en retard jamais pris", cost,
+            "leave", "Book the overdue leave never taken", cost,
             _score_from_features(f2), base_p, repl,
-            "Poser les congés annuels non utilisés. Ne jamais prendre de congés "
-            "est un signal de burnout qui précède la démission."))
+            "Schedule the unused annual leave. Never taking leave is a burnout "
+            "signal that comes before resignation."))
 
     # 4. Attendance conversation + schedule fit
     if f["absence"] > 0.1 or f["lateness"] > 0.1:
         f2 = dict(f); f2["absence"] = f["absence"] * 0.5; f2["lateness"] = f["lateness"] * 0.5
         levers.append(_mk(
-            "coach", "Point sur la présence et un shift adapté", 0.0,
+            "coach", "An attendance talk and a better-fitting shift", 0.0,
             _score_from_features(f2), base_p, repl,
-            "Un entretien structuré sur la présence, et un rythme de shift adapté à "
-            "ses vraies contraintes (prière, école des enfants, second emploi)."))
+            "A structured talk about attendance, and a shift pattern that fits "
+            "real constraints (prayer, school runs, a second job)."))
 
     # 5. Onboarding / early-tenure engagement
     if f["short_tenure"] > 0.1:
         f2 = dict(f); f2["short_tenure"] = f["short_tenure"] * 0.5
         levers.append(_mk(
-            "onboard", "Assigner un binôme et un point à 90 jours", 0.0,
+            "onboard", "Assign a buddy and a 90-day check-in", 0.0,
             _score_from_features(f2), base_p, repl,
-            "Le turnover est le plus fort la 1re année. Un onboarding structuré et "
-            "un point précoce le réduisent à faible coût."))
+            "Turnover peaks in the first year. Structured onboarding and an early "
+            "check-in reduce it at low cost."))
 
     levers.sort(key=lambda l: l.net_dzd, reverse=True)
     best = levers[0] if levers else None
@@ -145,7 +145,7 @@ def plan_for_employee(people, records, emp_id, as_of: Optional[_dt.date] = None)
     return _levers_for(emp, att_by_id.get(emp_id), as_of)
 
 
-def write_script(plan: RetentionPlan, lang: str = "fr") -> str:
+def write_script(plan: RetentionPlan, lang: str = "en") -> str:
     if plan is None or plan.best is None:
         return ""
     lang_name = "French" if lang == "fr" else "English"

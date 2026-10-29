@@ -107,7 +107,7 @@ class OperationProfile:
     # Comment la météo se manifeste sur CE métier. Le dernier kilomètre n'existe
     # pas dans une école, et une phrase importée d'un autre secteur suffit à
     # faire croire que l'outil a été conçu pour quelqu'un d'autre.
-    weather_impact: str = "activité ralentie"
+    weather_impact: str = "activity slows"
 
     # --- ce que l'opération vit réellement ---------------------------------
     # Le moteur calcule tous les indicateurs de calendrier pour tous les
@@ -119,7 +119,7 @@ class OperationProfile:
     # ça dit au prospect que le produit n'a pas été pensé pour lui.
 
     def active_shifts(self) -> list:
-        """Les shifts que cette opération tient réellement, dans l'ordre."""
+        """The shifts this operation actually runs, in order."""
         order = ["morning", "afternoon", "night"]
         return [s for s in order
                 if self.shift_split.get(s, 0.0) >= MIN_SHIFT_SHARE]
@@ -156,8 +156,8 @@ class OperationProfile:
 PROFILES = {
     "ecom_hub": OperationProfile(
         key="ecom_hub",
-        label="Hub e-commerce",
-        demand_unit="colis",
+        label="E-commerce hub",
+        demand_unit="parcels",
         primary_role="sorter",
         base_daily_volume=9_500,
         shift_split={"morning": 0.42, "afternoon": 0.40, "night": 0.18},
@@ -173,7 +173,7 @@ PROFILES = {
         holiday_mult=0.35,
         weather_sensitivity=1.0,
         growth_per_year=0.18,
-        weather_impact="dernier kilomètre ralenti",
+        weather_impact="last mile slows",
         description=(
             "A parcel sorting and dispatch hub serving cash-on-delivery "
             "e-commerce. The beachhead vertical: private operators, many "
@@ -183,8 +183,8 @@ PROFILES = {
     ),
     "airport_ground": OperationProfile(
         key="airport_ground",
-        label="Assistance aéroportuaire",
-        demand_unit="passagers",
+        label="Airport ground handling",
+        demand_unit="passengers",
         primary_role="checkin_agent",
         base_daily_volume=14_000,
         shift_split={"morning": 0.40, "afternoon": 0.38, "night": 0.22},
@@ -200,7 +200,7 @@ PROFILES = {
         holiday_mult=0.80,
         weather_sensitivity=0.6,
         growth_per_year=0.07,
-        weather_impact="rotations et piste ralenties",
+        weather_impact="turnarounds and ramp slow",
         description=(
             "Check-in, boarding and ramp handling at a major Algerian "
             "gateway. Dominated by the summer diaspora return - a demand "
@@ -210,7 +210,7 @@ PROFILES = {
     ),
     "retail_dc": OperationProfile(
         key="retail_dc",
-        label="Centre de distribution retail",
+        label="Retail distribution centre",
         demand_unit="cartons",
         primary_role="warehouse_op",
         base_daily_volume=6_800,
@@ -227,7 +227,7 @@ PROFILES = {
         holiday_mult=0.40,
         weather_sensitivity=0.8,
         growth_per_year=0.09,
-        weather_impact="quais et manutention ralentis",
+        weather_impact="docks and handling slow",
         description=(
             "Grocery and FMCG distribution. The most Ramadan-exposed of the "
             "three: food volume front-loads hard into the first days of the "
@@ -236,8 +236,8 @@ PROFILES = {
     ),
     "hotel": OperationProfile(
         key="hotel",
-        label="Hôtellerie",
-        demand_unit="chambres occupées",
+        label="Hospitality",
+        demand_unit="occupied rooms",
         primary_role="housekeeper",
         base_daily_volume=520,
         shift_split={"morning": 0.46, "afternoon": 0.34, "night": 0.20},
@@ -253,7 +253,7 @@ PROFILES = {
         holiday_mult=1.15,
         weather_sensitivity=0.7,    # heat and rain move coastal vs city demand
         growth_per_year=0.10,
-        weather_impact="affluence et services décalés",
+        weather_impact="footfall and services shift",
         description=(
             "Housekeeping, front desk and F&B in a hotel. Occupancy is "
             "seasonal, event-driven and diaspora-driven; Ramadan does not "
@@ -262,8 +262,8 @@ PROFILES = {
     ),
     "transport": OperationProfile(
         key="transport",
-        label="Transport de personnes & flotte",
-        demand_unit="trajets passagers",
+        label="Passenger transport and fleet",
+        demand_unit="passenger trips",
         primary_role="driver",
         base_daily_volume=4_200,
         shift_split={"morning": 0.42, "afternoon": 0.36, "night": 0.22},
@@ -279,7 +279,7 @@ PROFILES = {
         holiday_mult=1.30,
         weather_sensitivity=0.9,    # storms and heat disrupt road schedules
         growth_per_year=0.08,
-        weather_impact="circulation et tournées ralenties",
+        weather_impact="traffic and rounds slow",
         description=(
             "Intercity coach, airport-transfer and fleet operations. Demand is "
             "dominated by the pre-Aid travel surge and the diaspora summer, "
@@ -288,12 +288,12 @@ PROFILES = {
     ),
     "school": OperationProfile(
         key="school",
-        label="Établissement scolaire",
-        demand_unit="élèves présents",
+        label="School",
+        demand_unit="students present",
         primary_role="teacher",
         base_daily_volume=820,
         shift_split={"morning": 0.57, "afternoon": 0.43, "night": 0.0},
-        weather_impact="absences en hausse",
+        weather_impact="absences rise",
         ramadan_lift=0.82,          # journées scolaires écourtées en Ramadan
         ramadan_evening_shift=0.0,  # pas de shift de nuit à l'école
         pre_eid_peak=0.70,          # activité retombe avant l'Aïd
@@ -584,7 +584,7 @@ def expected_forward(
     response to the forward window. It is a planning heuristic for the sector
     signature features, not a calibrated forecast: it has no prediction interval
     and makes no accuracy claim. Cheap enough to recompute instantly when the
-    user switches "Type d'activité". Returns one row per day: date, shift, forecast.
+    user switches the activity type. Returns one row per day: date, shift, forecast.
     """
     p = PROFILES[profile_key]
     start = pd.to_datetime(start)

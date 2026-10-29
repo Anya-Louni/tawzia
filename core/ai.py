@@ -3,8 +3,8 @@ core/ai.py
 ----------
 One brain socket, one brain.
 
-The AI features (copilote décisionnel, réponses en langage clair, explications de
-risque légal) call `chat()` here and never care about the wiring. The natural-
+The AI features (decision copilot, plain-language answers, legal-risk
+explanations) call `chat()` here and never care about the wiring. The natural-
 language layer runs on **Groq (Llama)** with a single free API key, read from the
 environment or from Streamlit secrets. It is deliberately the *thin* part of the
 product: the real intelligence is the owned models (forecast, roster optimiser,
@@ -83,7 +83,7 @@ def _secret(name: str):
 
 
 def _setting(name: str, default: bool) -> bool:
-    """A switch from the Réglages screen (session) or the environment."""
+    """A switch from the Settings screen (session) or the environment."""
     try:
         import streamlit as st
         if name in st.session_state:
@@ -109,7 +109,7 @@ def providers_available() -> dict:
 
 def choose_provider(prefer: Optional[str] = None) -> Optional[str]:
     av = providers_available()
-    # Mode souverain : rien ne sort de la machine si le modèle local est choisi.
+    # Sovereign mode: nothing leaves the machine when the local model is chosen.
     if av["local"] and _setting("llm_local", False):
         return "local"
     return "groq" if av["groq"] else ("local" if av["local"] else None)
@@ -118,13 +118,13 @@ def choose_provider(prefer: Optional[str] = None) -> Optional[str]:
 def status_line() -> str:
     """Human-readable summary for the UI."""
     if choose_provider() == "local":
-        return f"Modèle local ({local_model()}) : rien ne quitte la machine."
+        return f"Local model ({local_model()}): nothing leaves the machine."
     if providers_available()["groq"]:
         model = _secret("GROQ_MODEL") or GROQ_MODEL
-        return f"Groq ({model}) actif. Le langage naturel tourne ; les modèles maison tournent sans clé."
-    return ("Aucune clé IA configurée. Ajoutez GROQ_API_KEY (clé gratuite sur "
-            "console.groq.com) pour le langage naturel. Tous les modèles maison "
-            "fonctionnent sans clé.")
+        return f"Groq ({model}) active. Natural language is on; the in-house models run without a key."
+    return ("No AI key configured. Add GROQ_API_KEY (free key at "
+            "console.groq.com) for natural language. Every in-house model works "
+            "without a key.")
 
 
 # ---------------------------------------------------------------------------
@@ -189,11 +189,11 @@ def chat(
     if provider is None:
         return AIResult(
             text="", provider="none", model="", ok=False,
-            error="Aucune clé IA configurée. Ajoutez GROQ_API_KEY (clé gratuite "
-                  "sur console.groq.com). Le reste de l'app fonctionne sans elle.",
+            error="No AI key configured. Add GROQ_API_KEY (free key at "
+                  "console.groq.com). The rest of the app works without it.",
         )
-    # Loi 25-11 : avant tout appel à un service extérieur, les données
-    # personnelles sont remplacées par des jetons, remis en place à la réponse.
+    # Law 25-11: before any external call, personal data is replaced by tokens,
+    # restored in the answer.
     table = {}
     if provider != "local" and _setting("pii_redaction", True):
         from . import pii
@@ -214,13 +214,13 @@ def chat(
 
 
 def _log_call(provider: str, masked: int) -> None:
-    """Chaque appel au modèle entre au journal : qui, quoi, combien de masques."""
+    """Every model call goes to the log: who, what, how many masks."""
     try:
         from . import db
         con = db.connect()
         db.log(con, "agent", "system", f"appel_ia:{provider}", "-",
-               f"{masked} donnée(s) personnelle(s) masquée(s)")
-    except Exception:  # noqa: BLE001 , le journal ne doit jamais bloquer une réponse
+               f"{masked} personal item(s) masked")
+    except Exception:  # noqa: BLE001 - logging must never block an answer
         pass
 
 

@@ -1,14 +1,13 @@
 """
 core/pii.py
 -----------
-Le masquage des données personnelles avant tout appel à un modèle extérieur
-(loi 25-11, brief §8.4).
+Personal-data masking before any call to an outside model (law 25-11, brief
+§8.4).
 
-Noms, téléphones, NIN, RIB, courriels et numéros de pièce sont remplacés par
-des jetons ([PERSONNE_1], [TEL_1]...) avant l'envoi, puis remis en place dans
-la réponse. Le modèle ne voit jamais qui est qui. Les noms viennent du fichier
-du personnel : un nom absent du fichier n'est pas reconnu, d'où les motifs pour
-tout ce qui a un format.
+Names, phones, NIN, RIB, emails and ID numbers are replaced by tokens
+([PERSON_1], [PHONE_1]...) before sending, then put back in the answer. The model
+never sees who is who. Names come from the staff file: a name absent from the
+file is not recognised, hence the patterns for everything that has a format.
 """
 
 from __future__ import annotations
@@ -18,13 +17,13 @@ import re
 PATTERNS = [
     ("RIB", re.compile(r"\b\d{20}\b")),
     ("NIN", re.compile(r"\b\d{18}\b")),
-    ("TEL", re.compile(r"(?:\+213|\b0)[\s.-]?[5-7](?:[\s.-]?\d){8}\b")),
+    ("PHONE", re.compile(r"(?:\+213|\b0)[\s.-]?[5-7](?:[\s.-]?\d){8}\b")),
     ("EMAIL", re.compile(r"\b[\w.+-]+@[\w-]+\.[\w.]+\b")),
 ]
 
 
 def redact(text: str, names: list | tuple = ()) -> tuple[str, dict]:
-    """(texte masqué, table jeton -> valeur d'origine)."""
+    """(masked text, token -> original value table)."""
     table, seen = {}, {}
 
     def token(kind: str, value: str) -> str:
@@ -36,10 +35,10 @@ def redact(text: str, names: list | tuple = ()) -> tuple[str, dict]:
     out = text
     for kind, rx in PATTERNS:
         out = rx.sub(lambda m: token(kind, m.group(0)), out)
-    # Les noms complets d'abord, les plus longs avant les plus courts.
+    # Full names first, longest before shortest.
     for n in sorted({n for n in names if n}, key=len, reverse=True):
         rx = re.compile(re.escape(n), re.IGNORECASE)
-        out = rx.sub(lambda m: token("PERSONNE", n), out)
+        out = rx.sub(lambda m: token("PERSON", n), out)
     return out, table
 
 
@@ -51,10 +50,10 @@ def restore(text: str, table: dict) -> str:
 
 if __name__ == "__main__":
     src = ("Amina Belkacem (0551 23 45 67, amina@exemple.dz, NIN 109876543210987654, "
-           "RIB 00799999000123456789) demande une attestation. Amina Belkacem est en CDI.")
+           "RIB 00799999000123456789) asks for a certificate. Amina Belkacem is on a CDI.")
     red, t = redact(src, ["Amina Belkacem", "Yacine Haddad"])
     for leak in ("Amina", "0551", "@", "109876543210987654", "00799999000123456789"):
         assert leak not in red, (leak, red)
-    assert red.count("[PERSONNE_1]") == 2
+    assert red.count("[PERSON_1]") == 2
     assert restore(red, t) == src
-    print("  masquage des données personnelles : ok")
+    print("  personal-data masking: ok")

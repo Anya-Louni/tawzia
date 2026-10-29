@@ -1,16 +1,18 @@
 """
 core/nav.py
 -----------
-La navigation : cinq écrans et les réglages, un clic, les sous-écrans dessous.
+Navigation: five screens plus Settings, one click, sub-screens below.
 
-Le problème que ça règle
-========================
-L'ancienne barre ouvrait une fenêtre modale à chaque section : deux clics et une
-liste à lire avant d'arriver où que ce soit. Moins de choix, c'est moins
-d'hésitation. Un clic sur un espace ouvre donc directement son premier écran, et
-les autres écrans de l'espace s'alignent en pastilles sous la barre. Le premier
-espace, l'autopilote, rend la plupart des autres facultatifs : on y va pour
-signer, pas pour chercher.
+The problem it solves
+=====================
+The old bar opened a modal for every section: two clicks and a list to read
+before getting anywhere. Fewer choices mean less hesitation. One click on a
+space opens its first screen directly, and the other screens of that space line
+up as tabs under the bar. The first space, the decision inbox, makes most of the
+others optional: people go there to sign, not to search.
+
+Page titles (French) are the internal ids of the navigation; core/i18n.py
+displays them in the chosen language.
 """
 
 from __future__ import annotations
@@ -26,126 +28,125 @@ SECTION_ICONS = {
     "Réglages": ":material/settings:",
 }
 
-# Ce que chaque espace promet, en une ligne, écrit pour un responsable RH.
+# What each space promises, in one line, written for an HR manager.
 SECTION_NOTES = {
-    "Décisions": "Le travail est fait. Il reste à signer.",
-    "Personnel": "Dossiers, présence, compétences, rétention.",
-    "Planning": "Combien de personnes, quel jour, à quel coût.",
-    "Recrutement": "L'offre, l'ANEM, les candidats classés.",
-    "Paie & déclarations": "Payer juste, déclarer à temps, tenir devant un contrôle.",
-    "Réglages": "Vos données, la confidentialité, l'assistant et les preuves.",
+    "Décisions": "The work is done. What is left is to sign.",
+    "Personnel": "Files, attendance, skills, retention.",
+    "Planning": "How many people, which day, at what cost.",
+    "Recrutement": "The job post, ANEM, ranked candidates, onboarding.",
+    "Paie & déclarations": "Pay right, file on time, pass an inspection.",
+    "Réglages": "Your data, privacy, the assistant, tools and evidence.",
 }
 
-# Une phrase par écran : à quoi il sert, jamais comment il est fabriqué. Elle
-# apparaît au survol de la pastille. Clé = titre de la page (unique).
+# One sentence per screen: what it is for, never how it is built. Shown when
+# hovering the tab. Key = page id.
 PAGE_NOTES = {
-    "Boîte de décisions": "Les agents ont traité les dossiers du jour : il reste vos décisions.",
-    "Guichet salarié": "Attestations, soldes, bulletins et congés, répondus sans vous.",
-    "Tableau de bord": "Qui est là, qui manque, et la charge des jours qui viennent.",
-    "Rédiger une offre": "Une phrase suffit : l'annonce est écrite, salaire et loi compris.",
-    "Canaux de sourcing": "Où publier, ce que chaque canal coûte et en combien de temps il remplit.",
-    "Candidats": "Toutes les candidatures classées, chaque rang expliqué.",
-    "Intégration": "Le nouvel embauché remplit son dossier, l'agent vérifie, vous signez une carte.",
-    "Employés": "Le dossier de chaque salarié et ses jours de congé restants.",
-    "Demandes & présence": "Congés, absences et retards, jugés sur la loi et la charge.",
-    "Compétences & mobilité": "Qui en interne peut déjà tenir le poste, et le coût de le former.",
-    "Rétention": "Qui risque de partir, et l'action la moins chère pour le garder.",
-    "Planning de la semaine": "Un bouton : le planning légal le plus stable et le moins cher.",
-    "Prévision de la demande": "La charge attendue jour par jour, Ramadan, fêtes et météo compris.",
-    "Planning & coût": "Le planning le moins cher qui respecte le droit du travail algérien.",
-    "Analyse sectorielle": "Les indicateurs propres à votre métier.",
-    "Aéroport": "Flux de passagers heure par heure, et l'effet d'un vol en retard.",
-    "Paie": "Bulletins, CNAS et IRG calculés sur le barème en vigueur.",
-    "Échéances & déclarations": "Ce qu'il faut déposer à la CNAS et aux impôts, et avant quand.",
-    "Détection d'anomalies": "Les erreurs de paie et de présence qu'un contrôle relèverait.",
-    "Simulateur d'inspection": "Ce que verrait un inspecteur du travail aujourd'hui.",
-    "Veille Journal Officiel": "Les textes qui changent vos obligations, et ce qu'ils coûtent.",
-    "Demander à Tawzia": "Posez une question sur votre entreprise : il répond avec vos chiffres.",
-    "Simulateur de scénarios": "« Et si » : l'effet chiffré d'une décision avant de la prendre.",
-    "Données de l'entreprise": "Importez votre fichier : toute la plateforme passe sur vos chiffres.",
-    "Preuves": "La démonstration que la méthode fonctionne, ratés compris.",
-    "Calendrier algérien": "Ramadan, les deux Aïd et les jours fériés, calculés et vérifiés.",
-    "Analyse économique": "Ce que la plateforme rapporte, poste par poste.",
-    "Sources & hypothèses": "Chaque chiffre : d'où il vient, ou pourquoi c'est une hypothèse.",
-    "Confidentialité": "Ce que la plateforme fait de vos données, et combien de temps.",
+    "Boîte de décisions": "The agents processed today's files: your decisions are left.",
+    "Guichet salarié": "Certificates, balances, payslips and leave, answered without you.",
+    "Tableau de bord": "Who is in, who is missing, and the load of the days ahead.",
+    "Rédiger une offre": "One sentence is enough: the post is written, pay and law included.",
+    "Canaux de sourcing": "Where to publish, what each channel costs and how fast it fills.",
+    "Candidats": "Every application ranked, every rank explained.",
+    "Intégration": "The new hire fills their file, the agent checks it, you sign one card.",
+    "Employés": "Each employee's file and remaining leave days.",
+    "Demandes & présence": "Leave, absences and lateness, judged on the law and the load.",
+    "Compétences & mobilité": "Who inside can already do the job, and what training would cost.",
+    "Rétention": "Who may leave, and the cheapest action to keep them.",
+    "Planning de la semaine": "One button: the most stable, cheapest lawful schedule.",
+    "Prévision de la demande": "The expected load day by day, Ramadan, holidays and weather included.",
+    "Planning & coût": "The cheapest schedule that respects Algerian labour law.",
+    "Analyse sectorielle": "The indicators specific to your trade.",
+    "Aéroport": "Passenger flow hour by hour, and the effect of one late flight.",
+    "Paie": "Payslips, CNAS and IRG computed on the current scale.",
+    "Échéances & déclarations": "What to file with CNAS and the tax office, and by when.",
+    "Détection d'anomalies": "The payroll and attendance errors an inspection would find.",
+    "Simulateur d'inspection": "What a labour inspector would see today.",
+    "Veille Journal Officiel": "The texts that change your obligations, and what they cost.",
+    "Demander à Tawzia": "Ask anything about your company: it answers with your figures.",
+    "Simulateur de scénarios": "What if: the costed effect of a decision before you make it.",
+    "PDF vers texte IA": "Any PDF turned into clean text and chunks an AI can read.",
+    "Données de l'entreprise": "Import your file: the whole platform switches to your figures.",
+    "Preuves": "Proof that the method works, misses included.",
+    "Calendrier algérien": "Ramadan, the two Eids and public holidays, computed and checked.",
+    "Analyse économique": "What the platform earns, line by line.",
+    "Sources & hypothèses": "Every figure: where it comes from, or why it is an assumption.",
+    "Confidentialité": "What the platform does with your data, and for how long.",
 }
+
 
 def _context_controls() -> None:
     """
-    Les réglages qui valaient autrefois un rail latéral entier, en trois menus.
+    The settings that used to fill a whole side rail, in three menus.
 
-    Ils vivent dans le bandeau parce qu'ils s'appliquent à toutes les pages :
-    le secteur et la wilaya changent les rôles, les chiffres et la météo réelle
-    utilisée par le modèle.
+    They live in the band because they apply to every page: the sector and the
+    wilaya change the roles, the figures and the real weather the model uses.
     """
     from . import demand as demand_mod, i18n, weather_dz
 
     profile_labels = {k: p.label for k, p in demand_mod.PROFILES.items()}
-    c1, c2, c3, c4 = st.columns([1, 1, 1, 1.2])
+    c1, c2, c3, c4 = st.columns([1, 1, 1, 1.35])
 
-    with c1.popover("Activité", icon=":material/storefront:", width="stretch",
+    with c1.popover("Activity", icon=":material/storefront:", width="stretch",
                     help=f"{profile_labels[st.session_state['profile_key']]} "
                          f"· {st.session_state['wilaya']}"):
         st.selectbox(
-            "Type d'activité", options=list(profile_labels),
+            "Type of activity", options=list(profile_labels),
             format_func=lambda k: profile_labels[k], key="profile_key",
         )
         st.selectbox(
             "Wilaya", options=list(weather_dz.WILAYAS), key="wilaya",
-            help="Détermine la série météo réelle utilisée par le modèle.",
+            help="Sets the real weather series the model uses.",
         )
 
-    with c2.popover("Prévision", icon=":material/tune:", width="stretch"):
-        st.slider("Horizon de prévision (jours)", 7, 21, key="horizon")
+    with c2.popover("Forecast", icon=":material/tune:", width="stretch"):
+        st.slider("Forecast horizon (days)", 7, 21, key="horizon")
         st.select_slider(
-            "Niveau de service", options=[0.50, 0.75, 0.80, 0.90],
+            "Service level", options=[0.50, 0.75, 0.80, 0.90],
             key="service_level", format_func=lambda v: f"p{v * 100:.0f}",
-            help="Dimensionner à ce quantile de demande. Plus élevé = moins de "
-                 "ruptures de service, mais plus de temps payé inactif.",
+            help="Staff to this demand quantile. Higher means fewer service "
+                 "failures, but more paid idle time.",
         )
-        st.number_input("Effectif permanent", 20, 400, key="regular_pool")
-        st.number_input("Plafond d'intérimaires par shift", 0, 200,
-                        key="temp_ceiling")
+        st.number_input("Permanent headcount", 20, 400, key="regular_pool")
+        st.number_input("Temp ceiling per shift", 0, 200, key="temp_ceiling")
 
     with c4:
-        st.segmented_control("Langue", options=list(i18n.LANGS), key="lang",
+        st.segmented_control("Language", options=list(i18n.LANGS), key="lang",
                              format_func=i18n.LANGS.get, required=True,
                              label_visibility="collapsed")
 
-    with c3.popover("Données", icon=":material/cloud:", width="stretch"):
+    with c3.popover("Data", icon=":material/cloud:", width="stretch"):
         st.toggle(
-            "Autoriser les appels API en direct", key="allow_network",
-            help="Désactiver pour fonctionner entièrement depuis le cache "
-                 "local , utile si le wifi du lieu est instable.",
+            "Allow live API calls", key="allow_network",
+            help="Turn off to run entirely from the local cache, useful when the "
+                 "venue wifi is unreliable.",
         )
-        st.caption("Les réponses d'Open-Meteo et de la Banque mondiale sont "
-                   "mises en cache au premier appel : l'app fonctionne ensuite "
-                   "hors-ligne.")
+        st.caption("Open-Meteo and World Bank answers are cached on the first call: "
+                   "the app then works offline.")
         st.divider()
-        if st.button("Revoir la visite guidée", icon=":material/tour:",
-                     width="stretch"):
+        if st.button("Replay the guided tour", icon=":material/tour:", width="stretch"):
             st.session_state["_tour_replay"] = True
             st.rerun()
-        # N'apparaît que si un mot de passe protège l'accès.
+        # Only shows when a password protects access.
         from . import gate
         gate.sign_out_button()
 
 
 def _ask(titles: list) -> None:
     """
-    « Demander à Tawzia » : une phrase, et la plateforme agit.
+    "Ask Tawzia": one sentence, and the platform acts.
 
-    Trois issues, dans cet ordre :
-      1. la phrase nomme un écran : on l'ouvre ;
-      2. elle nomme un salarié et une demande connue (attestation, solde,
-         bulletin, congé) : le guichet la traite pour lui, la carte part dans
-         la boîte de décisions ;
-      3. sinon c'est une question : elle part à l'assistant, déjà posée.
+    Three outcomes, in this order:
+      1. it asks to redo the schedule (Ramadan, "redo the schedule"): done;
+      2. it names an employee and a known request (certificate, balance,
+         payslip, leave): the employee desk handles it, the card goes to the
+         inbox;
+      3. it names a screen: that screen opens;
+      4. otherwise it is a question: it goes to the assistant, already asked.
 
-    Rappel de widget : il s'exécute avant le script, seul moment où vider le
-    champ est permis.
+    A widget callback runs before the script, the only moment clearing the field
+    is allowed.
     """
-    from . import company_data as cd, self_service as svc
+    from . import company_data as cd, i18n, self_service as svc
 
     ss = st.session_state
     q = (ss.get("wf_ask") or "").strip()
@@ -154,34 +155,35 @@ def _ask(titles: list) -> None:
         return
     plain = svc._plain(q)
 
-    # « Ramadan commence jeudi, refais le planning » : le planning se régénère.
-    if "ramadan" in plain or ("planning" in plain and any(
-            w in plain for w in ("refai", "refais", "genere", "redo", "regenere", "nouveau"))):
+    # "Ramadan starts Thursday, redo the schedule": the schedule regenerates.
+    if "ramadan" in plain or (any(w in plain for w in ("planning", "schedule", "roster")) and any(
+            w in plain for w in ("refai", "refais", "genere", "redo", "regenerate",
+                                 "regenere", "nouveau", "new", "rebuild"))):
         ss["sched_ramadan"] = "ramadan" in plain
         ss["sched_autorun"] = True
         ss["_nav_goto"] = "Planning de la semaine"
         return
 
-    # Le salarié nommé passe avant l'écran : « fiche de paie pour Amina » est
-    # une demande, pas l'écran « Paie ».
+    # A named employee wins over a screen name: "payslip for Amina" is a
+    # request, not the Payroll screen.
     intent = svc.classify(q)
     if intent != "autre":
         for e in cd.people():
             if svc._plain(e.name) in plain:
                 n = len(ss.setdefault("guichet_tickets", [])) + 100
-                r = svc.answer(q, e, company=ss.get("guichet_company", "Votre entreprise"),
-                               signatory=ss.get("guichet_signatory", "Le responsable RH"),
+                r = svc.answer(q, e, company=ss.get("guichet_company", "Your company"),
+                               signatory=ss.get("guichet_signatory", "The HR manager"),
                                ticket_id=f"ask{n}")
                 if r["ticket"]:
                     ss["guichet_tickets"].append(r["ticket"])
                 if r["request"]:
                     ss.setdefault("guichet_requests", []).append(r["request"])
-                ss["_ask_toast"] = f"{e.name} : {r['reply']}"
+                ss["_ask_toast"] = f"{e.name}: {r['reply']}"
                 ss["_nav_goto"] = "Boîte de décisions"
                 return
 
     for t in titles:
-        if svc._plain(t) in plain:
+        if svc._plain(t) in plain or svc._plain(i18n.t(t)) in plain:
             ss["_nav_goto"] = t
             return
 
@@ -192,14 +194,14 @@ def _ask(titles: list) -> None:
 
 def render(pages: dict, current) -> None:
     """
-    Le bandeau : le logo, une recherche, les réglages, les sept espaces, puis
-    les écrans de l'espace ouvert.
+    The band: logo, the Ask Tawzia bar, settings, the six spaces, then the
+    screens of the open space.
 
-    Rendu une fois par `dashboard.py`, avant l'exécution de la page, donc il
-    apparaît en haut de l'espace de travail.
+    Rendered once by `dashboard.py`, before the page runs, so it shows at the
+    top of the workspace.
     """
     from . import brand as brand_mod, i18n, industry
-    st.session_state.setdefault("lang", "fr")
+    st.session_state.setdefault("lang", i18n.DEFAULT)
 
     path = getattr(current, "url_path", None)
     active = next(
@@ -209,12 +211,12 @@ def render(pages: dict, current) -> None:
     )
     current_title = getattr(current, "title", "")
 
-    # Titre -> objet page, pour que la recherche puisse ouvrir la cible.
+    # Title -> page object, so the command bar can open the target.
     by_title = {getattr(p, "title", ""): p
                 for pgs in pages.values() for p in pgs}
 
-    # La recherche a pu être validée au rerun précédent : on ouvre la page ici,
-    # pendant l'exécution du script, seul endroit où `switch_page` est permis.
+    # The command bar may have fired on the previous rerun: open the page here,
+    # while the script runs, the only place `switch_page` is allowed.
     target = st.session_state.pop("_nav_goto", None)
     if target and target in by_title:
         st.switch_page(by_title[target])
@@ -226,45 +228,37 @@ def render(pages: dict, current) -> None:
         st.toast(toast, icon=":material/smart_toy:")
 
     with st.container(key="wf_topbar"):
-        # Les trois réglages tiennent sur une ligne chacun : en dessous de
-        # ~150 px, « Réglages » se coupe en trois lignes et le bandeau devient
-        # illisible. D'où la part large donnée à la colonne de droite.
-        logo, search, controls = st.columns([1.6, 3.4, 5.0],
-                                            vertical_alignment="center")
+        logo, search, controls = st.columns([1.6, 3.4, 5.0], vertical_alignment="center")
         with logo:
-            # Le logo seul. Une édition sectorielle (?industry=hotel) reste
-            # annoncée, mais sous forme de mention courte : le reste du temps il
-            # n'y a rien à ajouter sous la marque.
+            # A sector edition (?industry=hotel) is announced in a short line
+            # under the logo; otherwise nothing sits under the brand.
             edition = (f'<span class="tz-topsub">{industry.label()}</span>'
                        if industry.is_tailored() else "")
             st.markdown(
-                f'<div class="tz-topbrand">{brand_mod.lockup(23)}{edition}</div>',
+                f'<div class="tz-topbrand">{brand_mod.lockup(24, ink="#FFFFFF", fill=brand_mod.SKY, text_only=True)}{edition}</div>',
                 unsafe_allow_html=True,
             )
         with search:
-            # Pas de conteneur nommé autour : un widget porte déjà sa propre
-            # classe `st-key-wf_search`, et réutiliser la clé sur un conteneur
-            # ferait deux éléments de même clé.
             st.text_input(
-                "Demander à Tawzia", key="wf_ask", on_change=_ask,
+                "Ask Tawzia", key="wf_ask", on_change=_ask,
                 args=(list(by_title),), icon=":material/auto_awesome:",
                 placeholder=i18n.t("ask_placeholder"),
                 label_visibility="collapsed",
             )
         with controls:
-            # Conteneur nommé : la visite guidée vise ce sélecteur.
+            # Named container: the guided tour points at it.
             with st.container(key="wf_controls"):
                 _context_controls()
 
-        # Les cinq écrans et les réglages : un clic ouvre le premier sous-écran.
+        # The five screens and Settings: one click opens the first sub-screen.
         with st.container(key="wf_sections"):
             cols = st.columns(len(pages), gap="small")
             for i, (col, (sec, pgs)) in enumerate(zip(cols, pages.items())):
                 if not pgs:
                     continue
                 with col:
-                    # Clé stable (l'index, pas un hash) : l'espace ouvert porte
-                    # `wf_sec_active`, que la visite guidée vise aussi.
+                    # Stable key (the index, not a hash): the open space carries
+                    # `wf_sec_active`, which the guided tour points at too.
                     wrapper = "wf_sec_active" if sec == active else f"wf_sec_{i}"
                     with st.container(key=wrapper):
                         if st.button(i18n.t(sec), key=f"nav_{sec}", width="stretch",
@@ -273,8 +267,8 @@ def render(pages: dict, current) -> None:
                             st.session_state["_nav_goto"] = getattr(pgs[0], "title", "")
                             st.rerun()
 
-        # Les écrans de l'espace ouvert, en pastilles. L'écran courant n'est
-        # pas un lien : il n'y a nulle part où aller.
+        # The open space's screens, as tabs. The current screen is not a link:
+        # there is nowhere to go.
         sub = pages.get(active, [])
         if len(sub) > 1:
             with st.container(key="wf_subnav", horizontal=True, gap="small"):

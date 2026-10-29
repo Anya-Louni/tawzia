@@ -66,15 +66,15 @@ class SiteConstraints:
 
     def describe(self) -> list:
         return [
-            f"Effectif permanent : {self.regular_pool} salariés.",
-            f"Repos hebdomadaire garanti , au maximum {self.max_shifts_per_week} "
-            f"shifts par salarié et par semaine.",
-            f"Heures supplémentaires plafonnées à {self.max_overtime_fraction:.0%} "
-            f"du temps de travail légal (Loi 90-11). Imposé comme contrainte stricte.",
-            f"Intérimaires d'agence disponibles jusqu'à {self.temp_available_per_shift} "
-            f"par shift, avec une majoration de {labour_dz.TEMP_AGENCY_MARKUP:.0%}.",
-            f"Planning construit sur le quantile de demande p{self.service_level * 100:.0f}, "
-            f"pas sur la moyenne.",
+            f"Permanent staff: {self.regular_pool} employees.",
+            f"Guaranteed weekly rest: at most {self.max_shifts_per_week} shifts "
+            f"per employee per week.",
+            f"Overtime capped at {self.max_overtime_fraction:.0%} of legal working "
+            f"time (Law 90-11). Enforced as a hard constraint.",
+            f"Agency temps available up to {self.temp_available_per_shift} per "
+            f"shift, with a {labour_dz.TEMP_AGENCY_MARKUP:.0%} markup.",
+            f"Schedule built on the p{self.service_level * 100:.0f} demand "
+            f"quantile, not the mean.",
         ]
 
 
@@ -370,8 +370,8 @@ def compare(
     fix_eval = evaluate_against_actual(fix, actual, constraints)
 
     table = pd.DataFrame([
-        summarise(fix_eval, "Planning fixe (pratique actuelle)"),
-        summarise(opt_eval, "Optimisé Tawzia"),
+        summarise(fix_eval, "Fixed schedule (current practice)"),
+        summarise(opt_eval, "Tawzia optimised"),
     ])
 
     fixed_total = table.loc[0, "Total cost (DZD)"]

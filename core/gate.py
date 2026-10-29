@@ -1,35 +1,20 @@
 """
 core/gate.py
 ------------
-L'accès à l'application : un mot de passe, seulement s'il en existe un.
+App access: a password, only when one is configured.
 
-Pourquoi c'est fait comme ça
-============================
-La plateforme manipule un registre du personnel et des salaires. Déployée sur
-une URL publique, elle ne doit pas être ouverte à tout le monde. Mais une
-démonstration commerciale ne doit pas non plus se heurter à un écran de
-connexion quand personne n'a configuré de mot de passe.
+The platform handles a staff and salary register, so on a public URL it must
+not be open to everyone. A sales demo must not hit a sign-in screen when nobody
+set a password either. Rule: if a password is configured it is required;
+otherwise access stays open and the app says so. No accounts, no user database,
+so nothing to leak.
 
-D'où la règle : **si un mot de passe est configuré, il est exigé ; sinon l'accès
-reste libre et l'application le dit.** Aucun compte à créer, aucune base
-d'utilisateurs à gérer, donc rien à fuiter.
+Set it in `.streamlit/secrets.toml` or the environment: APP_PASSWORD = "...".
+Comparison uses `hmac.compare_digest` (no timing leak). The password is never
+stored in session state, only an "authenticated" flag.
 
-Configurer le mot de passe
-==========================
-Dans `.streamlit/secrets.toml` (ou une variable d'environnement) :
-
-    APP_PASSWORD = "votre-mot-de-passe"
-
-La comparaison passe par `hmac.compare_digest`, donc elle ne fuit pas la
-longueur du secret par le temps de réponse. Le mot de passe n'est jamais écrit
-dans l'état de session : seul un drapeau « authentifié » y est stocké.
-
-Ce que ce n'est pas
-===================
-Ce n'est pas de la gestion d'identité : pas de comptes nominatifs, pas de rôles,
-pas de journal d'accès. Pour un déploiement multi-clients il faudra un vrai
-fournisseur d'identité (`st.login` avec OIDC). C'est écrit ici pour que personne
-ne prenne ce portillon pour davantage qu'un portillon.
+This is not identity management: multi-tenant deployments need a real identity
+provider (`st.login` with OIDC).
 """
 
 from __future__ import annotations
@@ -63,10 +48,10 @@ def is_protected() -> bool:
 
 def require_access() -> bool:
     """
-    True si l'accès est autorisé. À appeler avant de rendre quoi que ce soit.
+    True when access is allowed. Call before rendering anything.
 
-    Renvoie False après avoir affiché l'écran de connexion : l'appelant doit
-    alors arrêter le script.
+    Returns False after showing the sign-in screen: the caller must then stop
+    the script.
     """
     expected = _configured_password()
     if expected is None:
@@ -81,23 +66,23 @@ def require_access() -> bool:
         f'<div style="display:flex;justify-content:center;margin-bottom:18px">'
         f'{brand.lockup(30)}</div>'
         f'<div style="font-size:15px;color:{brand.MUTED};line-height:1.5">'
-        f'Cet espace contient un registre du personnel et des salaires. '
-        f'Entrez le mot de passe pour continuer.</div></div>',
+        f'This space holds a staff and salary register. '
+        f'Enter the password to continue.</div></div>',
         unsafe_allow_html=True,
     )
 
     left, mid, right = st.columns([1, 2, 1])
     with mid:
         with st.form("gate"):
-            pwd = st.text_input("Mot de passe", type="password",
+            pwd = st.text_input("Password", type="password",
                                 label_visibility="collapsed",
-                                placeholder="Mot de passe")
-            ok = st.form_submit_button("Entrer", type="primary",
+                                placeholder="Password")
+            ok = st.form_submit_button("Sign in", type="primary",
                                        width="stretch",
                                        icon=":material/login:")
         tries = int(st.session_state.get(_ATTEMPTS, 0))
         if tries >= MAX_ATTEMPTS:
-            st.error("Trop de tentatives. Rechargez la page pour réessayer.",
+            st.error("Too many attempts. Reload the page to try again.",
                      icon=":material/block:")
             return False
         if ok:
@@ -106,19 +91,19 @@ def require_access() -> bool:
                 st.session_state.pop(_ATTEMPTS, None)
                 st.rerun()
             st.session_state[_ATTEMPTS] = tries + 1
-            st.error(f"Mot de passe incorrect. "
-                     f"{MAX_ATTEMPTS - tries - 1} tentative(s) restante(s).",
+            st.error(f"Wrong password. "
+                     f"{MAX_ATTEMPTS - tries - 1} attempt(s) left.",
                      icon=":material/error:")
-        st.caption("Le mot de passe n'est jamais conservé : seule la session "
-                   "retient que vous êtes entré.")
+        st.caption("The password is never stored: the session only remembers "
+                   "that you signed in.")
     return False
 
 
 def sign_out_button() -> None:
-    """Bouton de sortie, affiché seulement si un mot de passe protège l'accès."""
+    """Sign-out button, shown only when a password protects access."""
     if not is_protected() or not st.session_state.get(_FLAG):
         return
-    if st.button("Quitter la session", icon=":material/logout:"):
+    if st.button("Sign out", icon=":material/logout:"):
         st.session_state.pop(_FLAG, None)
         st.rerun()
 

@@ -1,9 +1,9 @@
-# WorkForce.dz and Odoo
+# Tawzia and Odoo
 
 Short version: **do not fight Odoo, plug into it.** Odoo is a full ERP that many
 Algerian SMEs already run, and it already has community payroll modules for
 Algeria. We are not an ERP. We are the **AI intelligence layer** that makes an
-Algerian workforce cheaper, legal and better staffed, and we can run standalone
+Algerian tawzia cheaper, legal and better staffed, and we can run standalone
 or on top of the customer's Odoo data.
 
 ## What we found (research)
@@ -23,7 +23,7 @@ That gap is our product.
 
 ## Positioning: the AI layer, not another ERP
 
-| Capability | Odoo + a DZ payroll module | WorkForce.dz |
+| Capability | Odoo + a DZ payroll module | Tawzia |
 |---|---|---|
 | Employee records, contracts, payslips | Yes | Reads from Odoo or runs its own |
 | CNAS / IRG / DAS payroll math | Yes (community modules) | Yes, and audits Odoo's output |
@@ -35,7 +35,7 @@ That gap is our product.
 | Attrition + model-based retention negotiator | No | Yes |
 | Darija / French AI assistant | No | Yes |
 
-One line for a pitch: **"Odoo keeps your HR records. WorkForce.dz makes them
+One line for a pitch: **"Odoo keeps your HR records. Tawzia makes them
 smart, legal and cheaper - and it reads straight from your Odoo."**
 
 ## How the integration works (already built)
@@ -56,7 +56,7 @@ approved rosters or flags back into Odoo with `create`/`write`.
 
 ## Two go-to-market options
 
-1. **Standalone, Odoo-friendly (now).** Sell WorkForce.dz on its own. For Odoo
+1. **Standalone, Odoo-friendly (now).** Sell Tawzia on its own. For Odoo
    shops, "one-click import your employees from Odoo" removes onboarding friction
    and is a strong reason to say yes. This is what `odoo_bridge` enables today.
 2. **Odoo Marketplace app (next).** Package a thin Odoo module that embeds our

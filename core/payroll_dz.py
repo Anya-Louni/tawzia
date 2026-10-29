@@ -179,9 +179,9 @@ def pay_breakdown(items: dict, worker_status: str = "standard") -> dict:
         "employee_by_branch": employee_by_branch,
         "employer_cost": gross + employer,
         "config_version": CONFIG_VERSION,
-        "sources": ["IRG barème : CIDTA art. 104 (barème mensuel = annuel / 12)",
-                    "Abattement 40 % borné 1 000 à 1 500 DA, lissage LF 2022",
-                    "CNAS : barème par branche (config) [à vérifier]",
+        "sources": ["IRG scale: CIDTA art. 104 (monthly scale = annual / 12)",
+                    "40% abatement bounded 1,000 to 1,500 DA, 2022 Finance Law smoothing",
+                    "CNAS: per-branch scale (config) [verify]",
                     CONFIG_VERSION],
     }
 
@@ -206,14 +206,14 @@ class Payslip:
 
     def as_dict(self) -> dict:
         return {
-            "Poste": self.role_label,
-            "Brut (DZD)": round(self.gross),
+            "Role": self.role_label,
+            "Gross (DZD)": round(self.gross),
             "CNAS 9% (DZD)": round(self.cnas_employee),
-            "Base imposable (DZD)": round(self.taxable),
+            "Taxable base (DZD)": round(self.taxable),
             "IRG (DZD)": round(self.irg),
-            "Net à payer (DZD)": round(self.net),
-            f"CNAS {CNAS_EMPLOYER:.1%} employeur (DZD)": round(self.cnas_employer),
-            "Coût total employeur (DZD)": round(self.employer_cost),
+            "Net pay (DZD)": round(self.net),
+            f"CNAS {CNAS_EMPLOYER:.1%} employer (DZD)": round(self.cnas_employer),
+            "Total employer cost (DZD)": round(self.employer_cost),
         }
 
 
@@ -293,12 +293,12 @@ def payroll_register(
             "employer_cost": total_gross + total_cnas_er,
         },
         "declarations": {
-            # Ce qui est effectivement déclaré et versé chaque mois.
-            "CNAS (salaires de base)": total_gross,
-            "CNAS salarié 9%": total_cnas_emp,
-            f"CNAS employeur {CNAS_EMPLOYER:.1%}": total_cnas_er,
-            f"CNAS total versé ({CNAS_EMPLOYER + CNAS_EMPLOYEE:.1%})": total_cnas_emp + total_cnas_er,
-            "IRG retenu (G50)": total_irg,
+            # What is actually declared and paid each month.
+            "CNAS (base salaries)": total_gross,
+            "CNAS employee 9%": total_cnas_emp,
+            f"CNAS employer {CNAS_EMPLOYER:.1%}": total_cnas_er,
+            f"CNAS total paid ({CNAS_EMPLOYER + CNAS_EMPLOYEE:.1%})": total_cnas_emp + total_cnas_er,
+            "IRG withheld (G50)": total_irg,
         },
         "dgi_check_flags": flagged,
     }
@@ -308,7 +308,7 @@ def declaration_lines(register: dict) -> pd.DataFrame:
     """The filing summary, as a tidy table for the UI / export."""
     d = register["declarations"]
     return pd.DataFrame(
-        [{"Ligne de déclaration": k, "Montant (DZD)": round(v)} for k, v in d.items()]
+        [{"Filing line": k, "Amount (DZD)": round(v)} for k, v in d.items()]
     )
 
 

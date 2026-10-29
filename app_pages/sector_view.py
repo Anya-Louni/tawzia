@@ -1,4 +1,4 @@
-"""Analyse sectorielle , la fonctionnalité propre au « Type d'activité » choisi."""
+"""Sector analysis: the feature specific to the chosen activity type."""
 
 import streamlit as st
 
@@ -11,13 +11,13 @@ profile_key = st.session_state["profile_key"]
 profile = demand_mod.PROFILES[profile_key]
 sig = sf.SIGNATURES.get(profile_key, {})
 
-st.title(f"{sig.get('icon', ':material/insights:')} {sig.get('title', 'Analyse sectorielle')}")
-st.caption(f"**{profile.label}** · l'outil propre à ce secteur. Changez le "
-           f"**Type d'activité** dans la barre latérale pour une autre analyse.")
+st.title(f"{sig.get('icon', ':material/insights:')} {sig.get('title', 'Sector analysis')}")
+st.caption(f"**{profile.label}** · the tool specific to this sector. Change the "
+           f"**activity type** in Settings for another analysis.")
 
 # Sector features need expected forward demand, not a calibrated forecast with
 # intervals. We use the fast expected-demand path (no walk-forward backtest), so
-# switching "Type d'activité" recomputes this page instantly.
+# switching the activity type recomputes this page instantly.
 plan = None
 try:
     fc = appdata.expected_demand(
@@ -32,13 +32,12 @@ people = cd.people()
 feat = sf.compute(profile_key, plan, people)
 
 if feat is None:
-    st.info("Aucune analyse sectorielle définie pour cette activité.")
+    st.info("No sector analysis is defined for this activity.")
     st.stop()
 
-st.caption(f":material/database: Effectif : **{cd.source_label()}** · "
-           f"demande attendue en {profile.demand_unit} "
-           f"(heuristique sectorielle, non calibrée , voir Prévision pour le "
-           f"modèle complet)")
+st.caption(f":material/database: Workforce: **{cd.source_label()}** · "
+           f"expected demand in {profile.demand_unit} "
+           f"(sector heuristic, not calibrated; see Forecast for the full model)")
 st.write(feat.intro)
 
 # --- headline metrics ------------------------------------------------------
@@ -58,7 +57,7 @@ has_table = feat.table is not None and not feat.table.empty
 
 def _render_chart():
     with st.container(border=True):
-        st.subheader("Sur l'horizon")
+        st.subheader("Over the horizon")
         if feat.chart_kind == "area":
             st.area_chart(feat.chart, height=280)
         elif feat.chart_kind == "line":
@@ -69,7 +68,7 @@ def _render_chart():
 
 def _render_table():
     with st.container(border=True):
-        st.subheader("Détail")
+        st.subheader("Detail")
         st.dataframe(feat.table, hide_index=True, width="stretch")
         if feat.table_caption:
             st.caption(feat.table_caption)
@@ -88,7 +87,7 @@ elif has_table:
 
 # --- provenance ------------------------------------------------------------
 if feat.notes:
-    with st.expander("Sources & hypothèses de cette analyse", icon=":material/menu_book:"):
+    with st.expander("Sources and assumptions for this analysis", icon=":material/menu_book:"):
         for n in feat.notes:
             st.markdown(f"- {n}")
 

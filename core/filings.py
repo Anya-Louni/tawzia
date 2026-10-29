@@ -1,13 +1,13 @@
 """
 core/filings.py
 ---------------
-Les brouillons de déclaration que l'agent prépare et que le RH dépose lui-même :
-G50 (IRG retenu à la source), cotisations CNAS par branche, DAS annuelle, et le
-fichier de virement des salaires.
+The filing drafts the agent prepares and HR files itself: G50 (IRG withheld
+at source), CNAS contributions by branch, the annual DAS, and the salary bank
+transfer file.
 
-Rien ici ne dépose quoi que ce soit : chaque fonction rend des chiffres, une
-date limite et le lien du portail officiel. Le dépôt se fait sur le portail,
-par un humain. Les délais et taux viennent de config/dz_payroll_<année>.toml.
+Nothing here files anything: each function returns figures, a deadline and the
+official portal link. Filing happens on the portal, by a human. Delays and rates
+come from config/dz_payroll_<year>.toml.
 """
 
 from __future__ import annotations
@@ -29,8 +29,8 @@ def _fixed_holidays(year: int) -> set:
 
 
 def next_working_day(d: _dt.date) -> _dt.date:
-    """Une échéance tombant un vendredi, un samedi ou un jour férié fixe est
-    reportée au jour ouvré suivant, si la configuration le prévoit [à vérifier]."""
+    """A deadline falling on a Friday, a Saturday or a fixed public holiday moves
+    to the next working day, when the configuration says so [verify]."""
     if not _F["roll_to_next_working_day"]:
         return d
     hol = _fixed_holidays(d.year)
@@ -40,7 +40,7 @@ def next_working_day(d: _dt.date) -> _dt.date:
 
 
 def working_days_until(today: _dt.date, due: _dt.date) -> int:
-    """Jours ouvrés restants, aujourd'hui exclu, échéance incluse."""
+    """Working days left, today excluded, deadline included."""
     n, d = 0, today
     hol = _fixed_holidays(today.year) | _fixed_holidays(due.year)
     while d < due:
@@ -63,7 +63,7 @@ def _slips(people: list) -> list:
 
 
 def g50_draft(people: list, year: int, month: int) -> dict:
-    """La ligne IRG salaires de la G50 du mois, avec sa date limite."""
+    """The month's G50 salary IRG line, with its deadline."""
     slips = _slips(people)
     y, m = _month_after(year, month)
     due = next_working_day(_dt.date(y, m, _F["g50_day"]))
@@ -73,17 +73,17 @@ def g50_draft(people: list, year: int, month: int) -> dict:
         "employees": len(slips),
         "taxable_total": round(sum(b["taxable"] for _, b in slips)),
         "irg_total": irg, "due": due, "portal": PORTAL_G50,
-        "late_penalty": (f"{_F['g50_late_base']:.0%} puis {_F['g50_late_per_month']:.0%} "
-                         f"par mois, plafonné à {_F['g50_late_cap']:.0%} [à vérifier]"),
+        "late_penalty": (f"{_F['g50_late_base']:.0%} then {_F['g50_late_per_month']:.0%} "
+                         f"a month, capped at {_F['g50_late_cap']:.0%} [verify]"),
         "lines": [{"emp_id": e.emp_id, "name": e.name, "taxable": round(b["taxable"]),
                    "irg": b["irg"]} for e, b in slips],
-        "sources": ["DGI, déclaration série G n°50, Jibaya'tic", payroll_dz.CONFIG_VERSION],
-        "status": "brouillon, à déposer par vos soins",
+        "sources": ["DGI, G series no. 50 return, Jibaya'tic", payroll_dz.CONFIG_VERSION],
+        "status": "draft, for you to file",
     }
 
 
 def cnas_draft(people: list, year: int, month: int) -> dict:
-    """Les cotisations du mois, réparties par branche, part salariale et patronale."""
+    """The month's contributions, split by branch, employee and employer shares."""
     slips = _slips(people)
     end = _dt.date(year, month, calendar.monthrange(year, month)[1])
     due = next_working_day(end + _dt.timedelta(days=_F["cnas_days_after_period"]))
@@ -104,13 +104,13 @@ def cnas_draft(people: list, year: int, month: int) -> dict:
         "by_branch": {k: {"employer": v[0], "employee": v[1]} for k, v in branches.items()},
         "monthly": len(slips) >= _F["cnas_monthly_from_headcount"],
         "due": due, "portal": PORTAL_CNAS,
-        "sources": ["CNAS, barème par branche [à vérifier]", payroll_dz.CONFIG_VERSION],
-        "status": "brouillon, à déposer par vos soins",
+        "sources": ["CNAS, branch table [verify]", payroll_dz.CONFIG_VERSION],
+        "status": "draft, for you to file",
     }
 
 
 def das_draft(people: list, year: int) -> dict:
-    """La déclaration annuelle des salaires : un salarié, une ligne."""
+    """The annual salary declaration: one employee, one line."""
     slips = _slips(people)
     due = next_working_day(_dt.date(year + 1, _F["das_month"], _F["das_day"]))
     rows = []
@@ -124,10 +124,10 @@ def das_draft(people: list, year: int) -> dict:
     return {"type": "das", "period": str(year), "employees": len(rows),
             "base_total": sum(r["cnas_base_year"] for r in rows), "due": due,
             "portal": PORTAL_CNAS, "lines": rows,
-            "note": "Estimation sur le salaire courant : la paie réelle de chaque "
-                    "mois remplace cette ligne dès qu'elle est clôturée.",
-            "sources": ["CNAS, DAS avant le 31 janvier", payroll_dz.CONFIG_VERSION],
-            "status": "brouillon, à déposer par vos soins"}
+            "note": "Estimated from the current salary: each month's actual payroll "
+                    "replaces this line once it is closed.",
+            "sources": ["CNAS, DAS before 31 January", payroll_dz.CONFIG_VERSION],
+            "status": "draft, for you to file"}
 
 
 def to_csv(rows: list) -> str:
@@ -141,10 +141,10 @@ def to_csv(rows: list) -> str:
 
 
 def bank_transfer_csv(people: list) -> str:
-    """Le fichier de virement : nom, net. Le RIB vient du dossier sécurisé."""
-    rows = [{"matricule": e.emp_id, "nom": e.name,
+    """The bank transfer file: name, net. The RIB comes from the secure file."""
+    rows = [{"staff_number": e.emp_id, "name": e.name,
              "net_dzd": payroll_dz.pay_breakdown({"base": round(e.monthly_gross())})["net"],
-             "rib": "à compléter depuis le dossier"} for e in people]
+             "rib": "fill in from the secure file"} for e in people]
     return to_csv(rows)
 
 
@@ -160,6 +160,6 @@ if __name__ == "__main__":
     assert d["due"].year == 2027 and len(d["lines"]) == 20
     assert next_working_day(_dt.date(2026, 11, 20)) == _dt.date(2026, 11, 22)  # ven. -> dim.
     assert working_days_until(_dt.date(2026, 11, 14), _dt.date(2026, 11, 22)) == 6
-    print(f"  G50 {g['irg_total']} DZD le {g['due']}, CNAS {c['total_due']} DZD "
-          f"le {c['due']}, DAS le {d['due']}")
-    print("  brouillons de déclaration : ok")
+    print(f"  G50 {g['irg_total']} DZD on {g['due']}, CNAS {c['total_due']} DZD "
+          f"on {c['due']}, DAS on {d['due']}")
+    print("  filing drafts: ok")

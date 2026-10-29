@@ -1,10 +1,10 @@
 # tawzia_mcp
 
-Tawzia's public Algerian payroll and labour-law tools, for the AI model or any MCP client.
+Tawzia's public Algerian payroll and labour-law tools, for any MCP-compatible AI assistant.
 The tools import the same engine as the app (`core/`), so a rule changed in
 `config/dz_payroll_<year>.toml` changes everywhere at once.
 
-All nine tools are read-only. None approves, files, sends, pays, deletes or rejects.
+All ten tools are read-only. None approves, files, sends, pays, deletes or rejects.
 
 | Tool | What it answers |
 |---|---|
@@ -17,6 +17,7 @@ All nine tools are read-only. None approves, files, sends, pays, deletes or reje
 | `tawzia_get_public_holidays` | Fixed and estimated Hijri holidays |
 | `tawzia_search_labour_law` | Summaries of the articles the platform applies |
 | `tawzia_explain_payslip_line` | A payslip line in French, Arabic and English |
+| `tawzia_pdf_to_text` | Any PDF as clean Markdown and AI-ready chunks |
 
 ## Run
 
@@ -25,7 +26,7 @@ venv/Scripts/python.exe -m tawzia_mcp.server          # stdio
 venv/Scripts/python.exe -m tawzia_mcp.server --http   # Streamable HTTP on :8765
 ```
 
-the AI model Desktop (`model_desktop_config.json`):
+MCP client configuration (stdio):
 
 ```json
 { "mcpServers": { "tawzia": {

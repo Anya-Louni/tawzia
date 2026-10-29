@@ -1,6 +1,6 @@
 # How the AI works (in plain words)
 
-This is the honest, simple explanation of every "AI" piece in WorkForce.dz, so
+This is the honest, simple explanation of every "AI" piece in Tawzia, so
 anyone on the team can answer a jury or a customer without hand-waving.
 
 There is no single magic model. "AI" here is **five different things**, and it
@@ -212,7 +212,7 @@ narrative is AI. Fine bands are labelled indicative, not legal advice.
 **Journal Officiel watch (`core/regwatch.py`).** Keeps a register of the labour
 and payroll rules we enforce, checks whether the live configuration still matches
 the current legal value, and lets you simulate a rule change (for example a new
-SNMG) to see exactly who is affected and what it costs across the real workforce,
+SNMG) to see exactly who is affected and what it costs across the real tawzia,
 with an AI-drafted compliance notice. In the demo the register is a curated
 summary; in production it is fed by automatic ingestion of the Journal Officiel.
 

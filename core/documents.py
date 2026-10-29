@@ -1,14 +1,14 @@
 """
 core/documents.py
 -----------------
-Les documents que la plateforme délivre : bulletin de paie bilingue FR/AR, en
-HTML imprimable (le navigateur l'enregistre en PDF et gère la mise en page de
-droite à gauche de l'arabe, ce qu'un générateur PDF sans moteur de mise en forme
-arabe fait mal).
+The documents the platform issues: a bilingual French/Arabic payslip, as
+printable HTML (the browser saves it as PDF and handles Arabic right-to-left
+layout, which a PDF generator without an Arabic shaping engine does badly). The
+payslip stays French and Arabic: those are the languages of Algerian payroll.
 
-Chaque document porte un code de vérification : une empreinte courte de son
-contenu. Le même contenu redonne le même code ; un chiffre modifié en donne un
-autre. La page publique de vérification lira ce code.
+Every document carries a verification code: a short fingerprint of its
+content. The same content gives the same code; one changed figure gives another.
+The public verification page will read this code.
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ _MONTHS_AR = ("جانفي", "فيفري", "مارس", "أفريل", "ماي", "�
 
 
 def verification_code(text: str) -> str:
-    """TZ-XXXX-XXXX : empreinte SHA-256 tronquée du contenu du document."""
+    """TZ-XXXX-XXXX: truncated SHA-256 fingerprint of the document content."""
     h = hashlib.sha256(text.encode("utf-8")).hexdigest().upper()
     return f"TZ-{h[:4]}-{h[4:8]}"
 
@@ -33,7 +33,7 @@ def _n(v: float) -> str:
 
 
 def payslip_html(emp, b: dict, year: int, month: int, company: str) -> str:
-    """Le bulletin d'un mois, à partir de payroll_dz.pay_breakdown()."""
+    """One month's payslip, from payroll_dz.pay_breakdown()."""
     e = html.escape
     rows = "".join(
         f"<tr><td>{e(l['label'])}</td><td class=n>{_n(l['amount'])}</td>"
@@ -76,7 +76,7 @@ if __name__ == "__main__":
     from . import hr, payroll_dz
     emp = hr.Employee("E1", "Amina Belkacem", "sorter", "Alger", dt.date(2023, 3, 1))
     b = payroll_dz.pay_breakdown({"base": 60_000, "panier": 3_000})
-    doc = payslip_html(emp, b, 2026, 10, "SARL Démonstration")
+    doc = payslip_html(emp, b, 2026, 10, "Démo Handling & Logistique")
     assert _n(b["net"]) in doc and "كشف الراتب" in doc and "TZ-" in doc
     assert verification_code("a") == verification_code("a") != verification_code("b")
-    print("  bulletin bilingue : ok")
+    print("  bilingual payslip: ok")

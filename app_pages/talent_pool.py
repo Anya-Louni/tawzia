@@ -1,9 +1,9 @@
 """
-Vivier de candidats , toutes les candidatures classées du plus au moins adapté.
+Candidates: every application ranked from best to worst fit.
 
-L'écran sert à une seule chose : arriver à une liste courte défendable. On voit
-le classement, on restreint sur ce qui compte vraiment pour le poste, et on ouvre
-un profil pour comprendre pourquoi il est là.
+The screen does one thing: get to a defensible shortlist. You see the ranking,
+narrow it on what really matters for the job, and open a profile to understand
+why it is there.
 """
 
 import pandas as pd
@@ -18,36 +18,36 @@ st.session_state.setdefault(_POOL_KEY, [])
 
 st.markdown(
     '<div class="tz-hero"><div>'
-    '<h1 class="tz-hero-h">Vivier de candidats</h1>'
-    '<div class="tz-hero-s">Les candidatures classées du plus au moins adapté '
-    'au poste. Chaque classement est explicable : on voit ce qui joue pour et '
-    'contre chaque profil.</div></div></div>',
+    '<h1 class="tz-hero-h">Candidates</h1>'
+    '<div class="tz-hero-s">Applications ranked from best to worst fit for the job. '
+    'Every ranking is explainable: you see what counts for and against each '
+    'profile, and a fairness audit checks the outcome.</div></div></div>',
     unsafe_allow_html=True,
 )
 
 # ---------------------------------------------------------------------------
-# Le poste visé, puis le classement
+# The target job, then the ranking
 # ---------------------------------------------------------------------------
-# Une offre rédigée dans « Rédiger une offre » arrive ici sous forme de critères
-# de tri. Elle devient une option du sélecteur, choisie d'office : c'est ce que
-# le responsable vient de demander.
+# A post written in "Write a job post" arrives here as sorting criteria. It
+# becomes an option of the selector, picked by default: it is what the manager
+# just asked for.
 drafted = st.session_state.get("talent_job_override")
 options = list(cv_screen.JOBS)
 labels = {k: cv_screen.JOBS[k].title for k in options}
 if drafted is not None:
     options = ["__offre__"] + options
-    labels["__offre__"] = f"Votre offre : {drafted.title}"
+    labels["__offre__"] = f"Your post: {drafted.title}"
 
 job_key = st.selectbox(
-    "Poste à pourvoir", options=options,
+    "Job to fill", options=options,
     format_func=lambda k: labels[k], key="talent_job",
 )
 if job_key == "__offre__":
     job = drafted
     job_key = drafted.role_key
-    st.caption(f":material/edit_note: Classement sur l'offre que vous venez de "
-               f"rédiger. Les seuils sont ceux du poste type "
-               f"« {cv_screen.JOBS[job_key].title} ».")
+    st.caption(f":material/edit_note: Ranked on the post you just wrote. The "
+               f"thresholds are those of the standard job "
+               f"\"{cv_screen.JOBS[job_key].title}\".")
 else:
     job = cv_screen.JOBS[job_key]
 
@@ -56,10 +56,10 @@ ranked = talent.rank_pool(pool, job)
 df = talent.pool_frame(ranked)
 
 st.caption(
-    f"Ce poste demande : {job.min_education} minimum, "
-    f"{job.min_experience_years:.0f} an(s) d'expérience, "
-    f"{', '.join(job.required_languages)}"
-    + (", permis de conduire" if job.needs_driving_licence else "")
+    f"This job needs: {job.min_education} minimum, "
+    f"{job.min_experience_years:.0f} year(s) of experience, "
+    f"{', '.join(cv_screen.LANG_LABEL.get(x, x) for x in job.required_languages)}"
+    + (", a driving licence" if job.needs_driving_licence else "")
     + f". {talent.shortlist_note(ranked, job)}"
 )
 
@@ -68,137 +68,137 @@ strong = int((df["Verdict"] == talent.BANDS_FR["strong"]).sum())
 possible = int((df["Verdict"] == talent.BANDS_FR["possible"]).sum())
 weak = len(df) - strong - possible
 with k1, st.container(border=True, height="stretch"):
-    appdata.stat_card("Candidatures", f"{len(df)}", None, "flat",
-                      f"pour {job.title.lower()}")
+    appdata.stat_card("Applications", f"{len(df)}", None, "flat",
+                      f"for {job.title.lower()}")
 with k2, st.container(border=True, height="stretch"):
-    appdata.stat_card("Dossiers solides", f"{strong}",
+    appdata.stat_card("Strong", f"{strong}",
                       f"{strong / max(len(df), 1) * 100:.0f}%", "up",
-                      "cochent l'essentiel du poste")
+                      "tick what the job needs")
 with k3, st.container(border=True, height="stretch"):
-    appdata.stat_card("À voir", f"{possible}", None, "flat",
-                      "il manque un ou deux critères")
+    appdata.stat_card("Worth a look", f"{possible}", None, "flat",
+                      "one or two criteria missing")
 with k4, st.container(border=True, height="stretch"):
-    appdata.stat_card("Hors cible", f"{weak}", None, "flat",
-                      "trop loin du poste demandé")
+    appdata.stat_card("Off target", f"{weak}", None, "flat",
+                      "too far from the job")
 
 audit = bias.four_fifths(ranked)
-with st.expander(("Audit d'équité : aucun écart" if audit["ok"] else
-                  "Audit d'équité : un écart à examiner"),
+with st.expander(("Fairness audit: no gap" if audit["ok"] else
+                  "Fairness audit: a gap to examine"),
                  icon=":material/balance:" if audit["ok"] else ":material/warning:"):
-    st.dataframe([{"Groupe": r["label"], "Candidatures": r["candidates"],
-                   "Retenues": r["selected"], "Taux": f"{r['rate']:.0%}",
-                   "Rapport au plus haut": f"{r['ratio_to_top']:.0%}",
-                   "Signal": ("sous 80 %" if r["flag"] else
-                              "échantillon trop petit" if r["small_sample"] else "ok")}
+    st.dataframe([{"Group": r["label"], "Applications": r["candidates"],
+                   "Shortlisted": r["selected"], "Rate": f"{r['rate']:.0%}",
+                   "Ratio to highest": f"{r['ratio_to_top']:.0%}",
+                   "Signal": ("below 80%" if r["flag"] else
+                              "sample too small" if r["small_sample"] else "ok")}
                   for r in audit["rows"]], hide_index=True, width="stretch")
-    st.caption(audit["rule"] + " Le score ne lit ni le nom ni le genre ; l'audit "
-               "regarde le résultat. Référence : EEOC, loi locale 144 de New York.")
+    st.caption(audit["rule"] + " The score reads neither name nor gender; the audit "
+               "looks at the outcome. Benchmark: EEOC, New York Local Law 144.")
 
 # ---------------------------------------------------------------------------
-# Les filtres : tout ce sur quoi un recruteur veut restreindre
+# The filters: everything a recruiter wants to narrow on
 # ---------------------------------------------------------------------------
 with st.container(border=True):
-    appdata.card_head("Filtrer le vivier", "pour arriver à une liste courte")
+    appdata.card_head("Filter the pool", "to reach a shortlist")
 
     r1 = st.columns(4)
-    min_score = r1[0].slider("Score minimum", 0, 100, 0, step=5,
+    min_score = r1[0].slider("Minimum score", 0, 100, 0, step=5,
                              key="talent_minscore")
     all_verdicts = list(talent.BANDS_FR.values())
     verdicts = r1[1].multiselect("Verdict", all_verdicts, default=all_verdicts,
                                  key="talent_verdicts")
-    # Vide = toutes. Pré-cocher les douze wilayas remplissait le filtre de
-    # pastilles sur quatre lignes, et la molette restait prise dedans.
+    # Empty = all. Pre-ticking the twelve wilayas filled the filter with four
+    # lines of chips.
     wilayas = sorted(df["Wilaya"].unique())
     keep_wilayas = r1[2].multiselect("Wilaya", wilayas, default=[],
                                      key="talent_wilayas",
-                                     placeholder="Toutes les wilayas")
-    min_years = r1[3].slider("Expérience minimum (années)", 0.0,
-                             float(max(df["Expérience"].max(), 1)), 0.0,
+                                     placeholder="All wilayas")
+    min_years = r1[3].slider("Minimum experience (years)", 0.0,
+                             float(max(df["Experience"].max(), 1)), 0.0,
                              step=0.5, key="talent_minyears")
 
     r2 = st.columns(4)
     levels = [k for k, _ in talent._EDUCATIONS]
     min_level = r2[0].selectbox(
-        "Formation au moins", options=["indifférent"] + levels,
-        format_func=lambda k: dict(talent._EDUCATIONS).get(k, "Indifférent"),
+        "Education at least", options=["indifférent"] + levels,
+        format_func=lambda k: dict(talent._EDUCATIONS).get(k, "Any"),
         key="talent_minlevel",
     )
-    need_langs = r2[1].multiselect("Doit parler", cv_screen.LANGUAGES,
+    need_langs = r2[1].multiselect("Must speak", cv_screen.LANGUAGES, format_func=lambda x: cv_screen.LANG_LABEL.get(x, x),
                                    key="talent_langs")
-    licence_only = r2[2].toggle("Permis de conduire", key="talent_licence")
-    sn_ok_only = r2[3].toggle("Service national réglé", key="talent_sn")
+    licence_only = r2[2].toggle("Driving licence", key="talent_licence")
+    sn_ok_only = r2[3].toggle("National service settled", key="talent_sn")
 
-    search = st.text_input("Rechercher un nom", key="talent_search",
-                           placeholder="ex. Ferhat")
+    search = st.text_input("Search a name", key="talent_search",
+                           placeholder="e.g. Ferhat")
 
 view = df[(df["Score"] >= min_score)
           & df["Verdict"].isin(verdicts)
           & (df["Wilaya"].isin(keep_wilayas) if keep_wilayas else True)
-          & (df["Expérience"] >= min_years)]
+          & (df["Experience"] >= min_years)]
 
 if min_level != "indifférent":
     need_rank = cv_screen.EDUCATION_RANK.get(min_level, 0)
-    view = view[view["Niveau"].map(
+    view = view[view["Level"].map(
         lambda k: cv_screen.EDUCATION_RANK.get(k, 0) >= need_rank)]
 if need_langs:
-    view = view[view["Langues"].map(
+    view = view[view["Languages"].map(
         lambda s: all(lang in s for lang in need_langs))]
 if licence_only:
-    view = view[view["Permis"]]
+    view = view[view["Licence"]]
 if sn_ok_only:
-    view = view[view["Service national"].isin(["degage", "exempte", "n/a"])]
+    view = view[view["National service"].isin(["degage", "exempte", "n/a"])]
 if search.strip():
-    view = view[view["Nom"].str.contains(search.strip(), case=False, na=False)]
+    view = view[view["Name"].str.contains(search.strip(), case=False, na=False)]
 
 # ---------------------------------------------------------------------------
-# Le classement, puis le profil du candidat choisi
+# The ranking, then the chosen candidate's profile
 # ---------------------------------------------------------------------------
 list_col, detail_col = st.columns([3, 2])
 
 with list_col:
     with st.container(border=True):
-        appdata.card_head("Classement",
-                          f"{len(view)} sur {len(df)} candidatures")
+        appdata.card_head("Ranking",
+                          f"{len(view)} of {len(df)} applications")
         if view.empty:
-            st.markdown('<div class="tz-empty">Aucun candidat ne passe ces '
-                        'filtres. Élargissez un critère.</div>',
+            st.markdown('<div class="tz-empty">No candidate passes these '
+                        'filters. Widen one criterion.</div>',
                         unsafe_allow_html=True)
         else:
             event = st.dataframe(
-                view[["Rang", "Nom", "Score", "Verdict", "Wilaya",
-                      "Formation", "Expérience", "Permis"]],
+                view[["Rank", "Name", "Score", "Verdict", "Wilaya",
+                      "Education", "Experience", "Licence"]],
                 hide_index=True, width="stretch", height=430,
                 on_select="rerun", selection_mode="single-row",
                 key="talent_table",
                 column_config={
                     "Score": st.column_config.ProgressColumn(
-                        "Adéquation", min_value=0, max_value=100, format="%d%%"),
-                    "Expérience": st.column_config.NumberColumn(format="%.1f ans"),
-                    "Permis": st.column_config.CheckboxColumn(),
+                        "Fit", min_value=0, max_value=100, format="%d%%"),
+                    "Experience": st.column_config.NumberColumn(format="%.1f yrs"),
+                    "Licence": st.column_config.CheckboxColumn(),
                 },
             )
             st.download_button(
-                "Exporter cette liste (CSV)",
+                "Export this list (CSV)",
                 view.to_csv(index=False).encode("utf-8-sig"),
-                file_name=f"tawzia-vivier-{job_key}.csv", mime="text/csv",
+                file_name=f"tawzia-candidates-{job_key}.csv", mime="text/csv",
                 icon=":material/download:",
             )
 
 with detail_col:
     with st.container(border=True):
         if view.empty:
-            appdata.card_head("Profil", "aucun candidat")
-            st.markdown('<div class="tz-empty">Sélectionnez un candidat dans '
-                        'le classement.</div>', unsafe_allow_html=True)
+            appdata.card_head("Profile", "no candidate")
+            st.markdown('<div class="tz-empty">Select a candidate in the '
+                        'ranking.</div>', unsafe_allow_html=True)
         else:
-            # Sans sélection, on montre le mieux placé : l'écran n'est jamais vide.
+            # With no selection, show the best placed: the screen is never empty.
             rows = getattr(getattr(event, "selection", None), "rows", []) or []
             pos = rows[0] if rows else 0
-            chosen_name = view.iloc[pos]["Nom"]
+            chosen_name = view.iloc[pos]["Name"]
             sc = next(s for s in ranked if s.candidate.name == chosen_name)
             c = sc.candidate
 
-            appdata.card_head(c.name, f"{sc.score}% d'adéquation")
+            appdata.card_head(c.name, f"{sc.score}% fit")
             st.markdown(
                 f'<div class="tz-meter"><span style="width:{sc.score}%"></span></div>'
                 f'<div class="tz-meter-l"><span>{c.wilaya} · {c.mobility}</span>'
@@ -209,85 +209,83 @@ with detail_col:
 
             appdata.list_rows([
                 {"name": c.education_raw or c.education, "sub": c.establishment,
-                 "meta": "formation"},
-                {"name": f"{c.experience_years:.1f} ans d'expérience",
-                 "sub": ", ".join(c.positions) or "poste non précisé",
-                 "meta": "parcours"},
-                {"name": ", ".join(c.languages) or "non précisé",
-                 "sub": "langues déclarées", "meta": "langues"},
-                {"name": "Permis de conduire" if c.driving_licence
-                         else "Pas de permis",
-                 "sub": f"Service national : {c.service_national}",
-                 "meta": "administratif",
+                 "meta": "education"},
+                {"name": f"{c.experience_years:.1f} years of experience",
+                 "sub": ", ".join(c.positions) or "role not stated",
+                 "meta": "career"},
+                {"name": ", ".join(cv_screen.LANG_LABEL.get(x, x) for x in c.languages) or "not stated",
+                 "sub": "declared languages", "meta": "languages"},
+                {"name": "Driving licence" if c.driving_licence
+                         else "No licence",
+                 "sub": f"National service: {c.service_national}",
+                 "meta": "admin",
                  "hot": job.needs_driving_licence and not c.driving_licence},
             ], avatars=False)
 
             if c.skills:
-                st.markdown("**Compétences repérées**")
+                st.markdown("**Skills found**")
                 st.markdown(" · ".join(f"`{s}`" for s in c.skills))
 
             if sc.pluses:
-                st.markdown("**Ce qui joue pour**")
+                st.markdown("**What counts for**")
                 for p in sc.pluses:
                     st.markdown(f":material/check: {p}")
             if sc.flags:
-                st.markdown("**Ce qui joue contre**")
+                st.markdown("**What counts against**")
                 for f in sc.flags:
                     st.markdown(f":material/priority_high: {f}")
 
-            with st.expander("D'où vient le score", icon=":material/calculate:"):
+            with st.expander("Where the score comes from", icon=":material/calculate:"):
                 st.dataframe(
                     talent.score_breakdown(sc), hide_index=True, width="stretch",
                     column_config={
-                        "Atteint": st.column_config.NumberColumn(format="%d%%"),
-                        "Poids": st.column_config.NumberColumn(format="%d%%"),
-                        "Apport": st.column_config.NumberColumn(format="%.1f pt"),
+                        "Achieved": st.column_config.NumberColumn(format="%d%%"),
+                        "Weight": st.column_config.NumberColumn(format="%d%%"),
+                        "Contribution": st.column_config.NumberColumn(format="%.1f pt"),
                     },
                 )
-                st.caption("« Atteint » est la note du candidat sur le critère, "
-                           "« Poids » l'importance du critère pour ce poste, et "
-                           "« Apport » ce que cela donne dans le score final.")
+                st.caption("\"Achieved\" is the candidate's mark on the criterion, "
+                           "\"Weight\" the criterion's importance for this job, and "
+                           "\"Contribution\" what it adds to the final score.")
 
 # ---------------------------------------------------------------------------
-# Ajouter de vraies candidatures au vivier
+# Add real applications to the pool
 # ---------------------------------------------------------------------------
 with st.container(border=True):
-    appdata.card_head("Ajouter une candidature", "collez le CV")
+    appdata.card_head("Add an application", "paste the CV")
     st.caption(
-        "Collez le texte d'un CV : il est lu, ajouté au vivier et classé avec "
-        "les autres. Les profils de démonstration sont simulés ; ceux que vous "
-        "ajoutez sont les vrais."
+        "Paste a CV's text: it is read, added to the pool and ranked with the "
+        "others. The demo profiles are simulated; the ones you add are real."
     )
-    cv_text = st.text_area("Texte du CV", height=150, key="talent_cv",
-                           placeholder="Nom, formation, expérience, langues…")
+    cv_text = st.text_area("CV text", height=150, key="talent_cv",
+                           placeholder="Name, education, experience, languages…")
     add_col = st.columns([1, 3])
-    if add_col[0].button("Ajouter au vivier", type="primary",
+    if add_col[0].button("Add to the pool", type="primary",
                          icon=":material/person_add:"):
         if len(cv_text.strip()) < 40:
-            st.warning("Collez un CV un peu plus complet.")
+            st.warning("Paste a slightly fuller CV.")
         else:
             hits = cv_screen.detect_injection(cv_text)
             cand, method = cv_screen.extract(cv_text, use_ai=True)
             st.session_state[_POOL_KEY].append(cand)
             if hits:
                 st.warning(
-                    "Ce CV contient du texte qui s'adresse à l'outil de tri "
-                    "plutôt qu'au recruteur. Il a été ignoré, mais lisez ce "
-                    "dossier vous-même.", icon=":material/report:")
-            st.success(f"{cand.name or 'Candidat'} ajouté au vivier.")
+                    "This CV contains text addressed to the screening tool "
+                    "rather than the recruiter. It was ignored, but read this "
+                    "file yourself.", icon=":material/report:")
+            st.success(f"{cand.name or 'Candidate'} added to the pool.")
             st.rerun()
     if st.session_state[_POOL_KEY]:
         add_col[1].caption(
-            f"{len(st.session_state[_POOL_KEY])} candidature(s) ajoutée(s) à "
-            f"cette session.")
-        if add_col[1].button("Retirer mes ajouts", icon=":material/delete:"):
+            f"{len(st.session_state[_POOL_KEY])} application(s) added in "
+            f"this session.")
+        if add_col[1].button("Remove my additions", icon=":material/delete:"):
             st.session_state[_POOL_KEY] = []
             st.rerun()
 
 st.caption(
-    ":material/info: Les 28 profils du vivier de démonstration sont simulés : "
-    "aucun vivier de CV algériens n'est public. Le barème de classement, lui, "
-    "est le même que celui de l'évaluation de CV, donc un candidat obtient le "
-    "même score partout dans la plateforme."
+    ":material/info: The 28 demo profiles are simulated: no pool of Algerian CVs "
+    "is public. The ranking scale is the same everywhere in the platform, so a "
+    "candidate gets the same score on every screen."
 )
 appdata.data_badge()

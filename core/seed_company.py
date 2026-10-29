@@ -1,17 +1,15 @@
 """
 core/seed_company.py
 --------------------
-La société de démonstration : **fictive**. Une entreprise d'assistance en escale
-et de logistique, 140 salariés sur deux sites, l'un à Alger, l'autre dans une
-wilaya du Sud (Ouargla), pour que les règles qui dépendent du site (congé du
-Sud, dérogation au travail de nuit) se voient.
+The demo company: **fictional**. A ground-handling and logistics firm, 140
+employees on two sites, one in Algiers, the other in a southern wilaya
+(Ouargla), so the site-dependent rules (southern leave, night-work waiver) show.
 
-Aucun nom, logo ou chiffre d'une vraie entreprise. Les noms des salariés sont
-des combinaisons de prénoms et de noms courants, sans lien avec une personne
-réelle. Quelques écarts sont posés exprès (deux dépassements d'heures sup., une
-saisie sous le SNMG, deux embauches de la semaine, trois salariés de moins de 19
-ans) pour que les agents aient quelque chose de vrai à trouver : ce sont des
-données de démonstration, et l'interface le dit.
+No real company's name, logo or figures. Employee names are combinations of
+common first and last names, with no link to a real person. A few gaps are
+planted on purpose (two overtime breaches, one salary entered below the SNMG,
+two hires this week, three employees under 19) so the agents have something
+real to find: this is demo data, and the interface says so.
 """
 
 from __future__ import annotations
@@ -26,18 +24,18 @@ from . import hr
 
 COMPANY = {
     "name": "Démo Handling & Logistique",
-    "legal_note": "Société fictive, données de démonstration",
-    "sector": "Assistance en escale et logistique",
+    "legal_note": "Fictional company, demo data",
+    "sector": "Ground handling and logistics",
 }
 
 SITES = {
-    "ALG": {"name": "Alger, hub aéroport et entrepôt", "wilaya": "Alger",
+    "ALG": {"name": "Algiers, airport hub and warehouse", "wilaya": "Alger",
             "women_night_derogation": True},
-    "OGX": {"name": "Ouargla, base sud", "wilaya": "Ouargla",
+    "OGX": {"name": "Ouargla, southern base", "wilaya": "Ouargla",
             "women_night_derogation": False},
 }
 
-# Effectif par site et par poste : 110 à Alger, 30 à Ouargla.
+# Headcount per site and role: 110 in Algiers, 30 in Ouargla.
 STAFFING = {
     "ALG": {"ramp_agent": 30, "checkin_agent": 20, "sorter": 18, "loader": 12,
             "driver": 10, "warehouse_op": 8, "supervisor": 7, "dispatcher": 5},
@@ -45,7 +43,7 @@ STAFFING = {
             "warehouse_op": 3, "supervisor": 2},
 }
 
-# Les postes qui demandent plus de vérifications à l'embauche (brief §6.6).
+# Roles that need more vetting at hiring (brief §6.6).
 SENSITIVE_ROLES = {"ramp_agent", "supervisor", "dispatcher"}
 
 _MEN = ["Amine", "Yacine", "Sofiane", "Karim", "Bilal", "Riad", "Nadir", "Walid",
@@ -60,7 +58,7 @@ _LAST = ["Benali", "Haddad", "Cherif", "Boumediene", "Zerrouki", "Belkacem",
 
 @lru_cache(maxsize=2)
 def people(as_of: _dt.date | None = None) -> tuple:
-    """Les 140 salariés, toujours les mêmes (graine fixe)."""
+    """The 140 employees, always the same (fixed seed)."""
     as_of = as_of or _dt.date.today()
     rng = np.random.default_rng(2026)
     men = [f"{f} {l}" for f, l in itertools.product(_MEN, _LAST)]
@@ -71,12 +69,12 @@ def people(as_of: _dt.date | None = None) -> tuple:
     for site, roles in STAFFING.items():
         for role, n in roles.items():
             for _ in range(n):
-                # Les femmes sont plus nombreuses à l'accueil, présentes partout.
+                # Women are more numerous at check-in, present everywhere.
                 female = rng.random() < (0.55 if role == "checkin_agent" else 0.22)
                 name = (women if female else men).pop()
                 age = int(rng.integers(20, 58))
                 hire = as_of - _dt.timedelta(days=int(rng.integers(90, 9 * 365)))
-                # Un CDD dure rarement plus de deux ans : au-delà, presque tous en CDI.
+                # A CDD rarely lasts more than two years: beyond that, almost all are CDI.
                 long = (as_of - hire).days > 730
                 contract = "CDD" if rng.random() < (0.02 if long else 0.45) else "CDI"
                 out.append(hr.Employee(
@@ -93,15 +91,15 @@ def people(as_of: _dt.date | None = None) -> tuple:
                 ))
                 i += 1
 
-    # Les écarts posés exprès, pour que les agents aient de quoi travailler.
+    # The gaps planted on purpose, so the agents have work to do.
     by_role = lambda r: [e for e in out if e.role_key == r]  # noqa: E731
-    by_role("ramp_agent")[0].overtime_hours_month = 46     # au-delà de 20 % (art. 31)
+    by_role("ramp_agent")[0].overtime_hours_month = 46     # above 20% (art. 31)
     by_role("loader")[1].overtime_hours_month = 41
-    by_role("sorter")[2].gross_override = 22_000.0          # saisie sous le SNMG
+    by_role("sorter")[2].gross_override = 22_000.0          # entered below the SNMG
     for e, days in zip(by_role("checkin_agent")[:2], (3, 7)):
-        e.hire_date = as_of - _dt.timedelta(days=days)       # embauches de la semaine
+        e.hire_date = as_of - _dt.timedelta(days=days)       # hires this week
         e.contract = "CDD"
-    for e in by_role("sorter")[5:8]:                          # moins de 19 ans (art. 28)
+    for e in by_role("sorter")[5:8]:                          # under 19 (art. 28)
         e.birth_date = as_of.replace(year=as_of.year - 18) - _dt.timedelta(days=40)
     return tuple(out)
 
@@ -121,9 +119,9 @@ def age(emp, as_of: _dt.date | None = None) -> int | None:
 if __name__ == "__main__":
     ppl = people()
     assert len(ppl) == 140, len(ppl)
-    assert len({e.name for e in ppl}) == 140, "noms en double"
+    assert len({e.name for e in ppl}) == 140, "duplicate names"
     assert sum(1 for e in ppl if e.site == "OGX") == 30
     assert sum(1 for e in ppl if age(e) is not None and age(e) < 19) == 3
     women = sum(1 for e in ppl if e.gender == "F")
-    print(f"  {len(ppl)} salariés, {women} femmes, "
-          f"{sum(1 for e in ppl if e.contract == 'CDD')} CDD, 2 sites : ok")
+    print(f"  {len(ppl)} employees, {women} women, "
+          f"{sum(1 for e in ppl if e.contract == 'CDD')} CDD, 2 sites: ok")

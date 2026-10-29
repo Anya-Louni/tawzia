@@ -172,22 +172,22 @@ def can_take_leave(
     if days > balance:
         allowed = False
         reasons.append(
-            f"Solde insuffisant : {days} jours ouvrés demandés, "
-            f"{balance:.1f} disponibles."
+            f"Not enough leave: {days} working days requested, "
+            f"{balance:.1f} available."
         )
     else:
-        reasons.append(f"{days} jours ouvrés, dans le solde de {balance:.1f} jours.")
+        reasons.append(f"{days} working days, within the {balance:.1f}-day balance.")
 
     # 2. Notice period.
     notice = (start - as_of).days
     if notice < LEAVE_NOTICE_DAYS:
         warnings.append(
-            f"Préavis court : {notice} jours (usage : {LEAVE_NOTICE_DAYS} minimum)."
+            f"Short notice: {notice} days (custom: {LEAVE_NOTICE_DAYS} minimum)."
         )
 
     # 3. Start not on the weekly rest day (wasted leave).
     if start.weekday() in labour_dz_weekend():
-        warnings.append("Commence un vendredi ou un samedi : un jour de congé perdu.")
+        warnings.append("Starts on a Friday or Saturday: one leave day wasted.")
 
     # 4. Operational load from the forecast.
     demand_load = None
@@ -202,12 +202,12 @@ def can_take_leave(
             if win_mean >= p70:
                 demand_load = "peak"
                 warnings.append(
-                    "Tombe dans un pic de charge prévu : approuver oblige à remplacer "
-                    "au tarif intérim. Proposer une période plus calme."
+                    "Falls in a forecast peak: approving means backfilling at "
+                    "temp-agency rates. Suggest a quieter window."
                 )
             elif win_mean <= p40:
                 demand_load = "low"
-                reasons.append("Tombe dans un creux de charge : le moment le moins cher pour une absence.")
+                reasons.append("Falls in a forecast trough: the cheapest time to be one person short.")
             else:
                 demand_load = "normal"
 
@@ -298,13 +298,13 @@ def workforce_frame(people: list, as_of: Optional[_dt.date] = None) -> pd.DataFr
     rows = []
     for e in people:
         rows.append({
-            "ID": e.emp_id, "Nom": e.name, "Poste": labour_dz.ROLES[e.role_key].label,
-            "Wilaya": e.wilaya, "Contrat": e.contract,
-            "Ancienneté (ans)": e.seniority_years(as_of),
-            "Droit (j)": e.annual_entitlement(),
-            "Solde acquis (j)": e.accrued_leave(as_of),
-            "Personnes à charge": e.dependants,
-            "Brut mensuel (DZD)": round(e.monthly_gross()),
+            "ID": e.emp_id, "Name": e.name, "Role": labour_dz.ROLES[e.role_key].label,
+            "Wilaya": e.wilaya, "Contract": e.contract,
+            "Seniority (years)": e.seniority_years(as_of),
+            "Entitlement (days)": e.annual_entitlement(),
+            "Leave balance (days)": e.accrued_leave(as_of),
+            "Dependants": e.dependants,
+            "Monthly gross (DZD)": round(e.monthly_gross()),
         })
     return pd.DataFrame(rows)
 

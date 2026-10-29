@@ -37,11 +37,11 @@ LATE_GRACE_MIN = 5
 ABSENT_AFTER_MIN = 120
 
 REQUEST_TYPES = {
-    "sortie": "Demande de sortie",
-    "annual": "Congé annuel",
-    "sick": "Arrêt maladie",
-    "unpaid": "Congé sans solde",
-    "family": "Événement familial",
+    "sortie": "Short absence",
+    "annual": "Annual leave",
+    "sick": "Sick leave",
+    "unpaid": "Unpaid leave",
+    "family": "Family event",
 }
 
 
@@ -87,9 +87,9 @@ def decide_request(
     as_of = as_of or _dt.date.today()
 
     if req.is_sortie:
-        reasons = [f"Absence courte de {req.hours or 0:.0f}h le {req.start:%d %b}."]
+        reasons = [f"Short absence of {req.hours or 0:.0f} h on {req.start:%d %b}."]
         warnings = []
-        # Une sortie pendant un shift de pic nécessite quand même un remplacement.
+        # A short absence during a peak shift still needs cover.
         load = None
         if forecast is not None and not forecast.empty and "forecast" in forecast.columns:
             fc = forecast.copy(); fc["date"] = pd.to_datetime(fc["date"])
@@ -98,7 +98,7 @@ def decide_request(
                 daily = fc.groupby("date")["forecast"].sum()
                 if day["forecast"].sum() >= daily.quantile(0.70):
                     load = "peak"
-                    warnings.append("Ce shift est un pic prévu , prévoyez un remplacement avant d'approuver.")
+                    warnings.append("This shift is a forecast peak: arrange cover before approving.")
         return {
             "recommend": "approve" if not warnings else "approve_with_cover",
             "reasons": reasons, "warnings": warnings, "load": load,
@@ -118,8 +118,8 @@ def decide_request(
         # Sick leave is a right, not a discretionary grant; it is recorded, and
         # the pay rule (50% first 15 days, then 100%) is flagged.
         span = (req.end - req.start).days + 1
-        note = (f"{span} jour(s). Payé à 50% les {hr.SICK_SPLIT_DAY} premiers jours, "
-                f"puis 100% (pris en charge par la CNAS). Certificat médical requis.")
+        note = (f"{span} day(s). Paid at 50% for the first {hr.SICK_SPLIT_DAY} days, "
+                f"then 100% (covered by CNAS). Medical certificate required.")
         return {"recommend": "record", "reasons": [note], "warnings": [], "load": None,
                 "balance_after": employee.accrued_leave(as_of)}
 
@@ -249,20 +249,20 @@ def lateness_summary(records: list) -> pd.DataFrame:
 
 def todays_flags(records: list, on: Optional[_dt.date] = None) -> pd.DataFrame:
     """Late/absent flags for one day, for the live 'who is late right now' board."""
-    _FLAG_FR = {"late": "En retard", "absent": "Absent(e)"}
+    _FLAG_FR = {"late": "Late", "absent": "Absent"}
     if not records:
-        return pd.DataFrame(columns=["ID", "Nom", "Prévu", "Réel", "Retard (min)", "Statut"])
+        return pd.DataFrame(columns=["ID", "Name", "Scheduled", "Actual", "Late (min)", "Status"])
     on = on or max(r.date for r in records)
     rows = []
     for r in records:
         if r.date != on or r.flag == "on_time":
             continue
         rows.append({
-            "ID": r.emp_id, "Nom": r.emp_name,
-            "Prévu": r.scheduled.strftime("%H:%M"),
-            "Réel": r.actual.strftime("%H:%M") if r.actual else "absence",
-            "Retard (min)": r.minutes_late if r.minutes_late is not None else "",
-            "Statut": _FLAG_FR.get(r.flag, r.flag),
+            "ID": r.emp_id, "Name": r.emp_name,
+            "Scheduled": r.scheduled.strftime("%H:%M"),
+            "Actual": r.actual.strftime("%H:%M") if r.actual else "absent",
+            "Late (min)": r.minutes_late if r.minutes_late is not None else "",
+            "Status": _FLAG_FR.get(r.flag, r.flag),
         })
     return pd.DataFrame(rows)
 

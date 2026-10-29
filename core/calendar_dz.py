@@ -187,11 +187,11 @@ HIJRI_MONTHS = {
 
 # Fixed-date civil holidays (month, day) -> name
 CIVIL_HOLIDAYS = {
-    (1, 1): "Nouvel An",
+    (1, 1): "New Year's Day",
     (1, 12): "Yennayer (Amazigh New Year)",
-    (5, 1): "Fete du Travail",
-    (7, 5): "Fete de l'Independance",
-    (11, 1): "Fete de la Revolution",
+    (5, 1): "Labour Day",
+    (7, 5): "Independence Day",
+    (11, 1): "Revolution Day",
 }
 
 # Hijri holidays: (hijri_month, hijri_day) -> name
@@ -210,8 +210,8 @@ HIJRI_HOLIDAYS = {
 WEEKEND_WEEKDAYS = (4, 5)  # Python weekday(): Monday=0 ... Friday=4, Saturday=5
 
 WEEKDAY_NAMES_FR = {
-    0: "Lundi", 1: "Mardi", 2: "Mercredi", 3: "Jeudi",
-    4: "Vendredi", 5: "Samedi", 6: "Dimanche",
+    0: "Monday", 1: "Tuesday", 2: "Wednesday", 3: "Thursday",
+    4: "Friday", 5: "Saturday", 6: "Sunday",
 }
 
 
@@ -516,9 +516,9 @@ def verify_key_dates(timeout: int = 10) -> pd.DataFrame:
         targets = []
         for hy in (hy_now, hy_now + 1):
             for (hm, hd, label) in (
-                (9, 1, "Début du Ramadan"),
-                (10, 1, "Aïd el-Fitr"),
-                (12, 10, "Aïd el-Adha"),
+                (9, 1, "Start of Ramadan"),
+                (10, 1, "Eid al-Fitr"),
+                (12, 10, "Eid al-Adha"),
             ):
                 try:
                     g = from_hijri(hy, hm, hd, offset_days=0)
@@ -541,7 +541,7 @@ def verify_key_dates(timeout: int = 10) -> pd.DataFrame:
                 "Event": f"{label} {hy} H",
                 "Our date": g.strftime("%d %b %Y"),
                 "Reference says": f"{remote[2]} {HIJRI_MONTHS.get(remote[1], remote[1])}",
-                "Agreement": "exact" if delta == 0 else f"{delta:+d} jour",
+                "Agreement": "exact" if delta == 0 else f"{delta:+d} day",
             })
     except Exception:
         return pd.DataFrame(columns=["Event", "Our date", "Reference says", "Agreement"])
@@ -559,33 +559,33 @@ def describe_upcoming(start=None, days: int = 120, hijri_offset_days: Optional[i
     if not ramadan.empty:
         events.append({
             "Date": ramadan["date"].min().date(),
-            "Event": "Début du Ramadan",
-            "Impact": "Volume en hausse, et la journée se réorganise , l'activité "
-                      "passe au soir après le f'tour. Les horaires raccourcissent.",
+            "Event": "Start of Ramadan",
+            "Impact": "Volume rises and the day reshapes: activity moves to the "
+                      "evening after iftar. Working hours shorten.",
         })
 
     for _, r in df[df["is_public_holiday"]].iterrows():
         events.append({
             "Date": r["date"].date(),
             "Event": r["holiday_name"],
-            "Impact": "Jour férié , activité réduite, taux de main-d'œuvre majorés.",
+            "Impact": "Public holiday: reduced activity, premium labour rates.",
         })
 
     diaspora = df[df["diaspora_intensity"] > 0.05]
     if not diaspora.empty:
         events.append({
             "Date": diaspora["date"].min().date(),
-            "Event": "Ouverture de la saison de retour de la diaspora",
-            "Impact": "Hausse de volume soutenue jusqu'à début septembre. "
-                      "Pic fin juillet.",
+            "Event": "Diaspora return season opens",
+            "Impact": "Sustained volume rise until early September. "
+                      "Peak in late July.",
         })
 
     rentree = df[df["is_rentree"]]
     if not rentree.empty:
         events.append({
             "Date": rentree["date"].min().date(),
-            "Event": "Ouverture de la fenêtre de rentrée scolaire",
-            "Impact": "Pic commercial et de livraison net et étroit.",
+            "Event": "Back-to-school window opens",
+            "Impact": "A sharp, narrow retail and delivery peak.",
         })
 
     if not events:

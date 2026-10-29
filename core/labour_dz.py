@@ -130,7 +130,7 @@ class Role:
 ROLES = {
     "sorter": Role(
         key="sorter",
-        label="Agent de tri (hub)",
+        label="Sorter (hub)",
         snmg_coefficient=1.15,
         productivity_per_hour=sources.value("productivity_parcels_per_hour"),
         note="Manual sort with handheld scanning. The volume role - most of "
@@ -138,7 +138,7 @@ ROLES = {
     ),
     "courier": Role(
         key="courier",
-        label="Livreur dernier kilomètre",
+        label="Last-mile courier",
         snmg_coefficient=1.35,
         productivity_per_hour=6.5,
         note="Urban drops per hour including collection of cash on delivery. "
@@ -146,7 +146,7 @@ ROLES = {
     ),
     "supervisor": Role(
         key="supervisor",
-        label="Superviseur de shift",
+        label="Shift supervisor",
         snmg_coefficient=2.10,
         productivity_per_hour=0.0,
         can_be_temp=False,
@@ -155,7 +155,7 @@ ROLES = {
     ),
     "ramp_agent": Role(
         key="ramp_agent",
-        label="Agent de piste / bagages",
+        label="Ramp and baggage agent",
         snmg_coefficient=1.45,
         productivity_per_hour=1.6,
         note="Aircraft turnarounds per hour per agent. Airport ground "
@@ -163,14 +163,14 @@ ROLES = {
     ),
     "checkin_agent": Role(
         key="checkin_agent",
-        label="Agent d'enregistrement / embarquement",
+        label="Check-in and boarding agent",
         snmg_coefficient=1.50,
         productivity_per_hour=28.0,
         note="Passengers processed per hour. Airport ground handling vertical.",
     ),
     "warehouse_op": Role(
         key="warehouse_op",
-        label="Agent d'entrepôt",
+        label="Warehouse operative",
         snmg_coefficient=1.20,
         productivity_per_hour=32.0,
         note="Picking and put-away for retail distribution.",
@@ -178,7 +178,7 @@ ROLES = {
     # --- Hospitality vertical ---
     "housekeeper": Role(
         key="housekeeper",
-        label="Femme/valet de chambre",
+        label="Housekeeper",
         snmg_coefficient=1.10,
         productivity_per_hour=2.6,
         note="Rooms turned per hour. The volume role in a hotel, and the one "
@@ -186,14 +186,14 @@ ROLES = {
     ),
     "front_desk": Role(
         key="front_desk",
-        label="Réceptionniste",
+        label="Receptionist",
         snmg_coefficient=1.45,
         productivity_per_hour=11.0,
         note="Guests checked in/out per hour. Peaks hard around arrival waves.",
     ),
     "fnb_staff": Role(
         key="fnb_staff",
-        label="Personnel restauration (F&B)",
+        label="Food and beverage staff",
         snmg_coefficient=1.20,
         productivity_per_hour=14.0,
         note="Covers served per hour. In Ramadan the whole load moves to the "
@@ -202,7 +202,7 @@ ROLES = {
     # --- Transport & fleet vertical ---
     "driver": Role(
         key="driver",
-        label="Chauffeur",
+        label="Driver",
         snmg_coefficient=1.55,
         productivity_per_hour=7.5,
         note="Passenger-trips (or shipments) handled per driver-hour. Cannot "
@@ -210,14 +210,14 @@ ROLES = {
     ),
     "loader": Role(
         key="loader",
-        label="Manutentionnaire / bagagiste",
+        label="Loader and baggage handler",
         snmg_coefficient=1.15,
         productivity_per_hour=26.0,
         note="Bags or parcels loaded per hour at the depot / station.",
     ),
     "dispatcher": Role(
         key="dispatcher",
-        label="Répartiteur",
+        label="Dispatcher",
         snmg_coefficient=1.70,
         productivity_per_hour=0.0,
         can_be_temp=False,
@@ -227,17 +227,17 @@ ROLES = {
     # --- Education vertical (écoles / établissements) ---
     "teacher": Role(
         key="teacher",
-        label="Enseignant",
+        label="Teacher",
         snmg_coefficient=1.60,
-        productivity_per_hour=25.0,   # élèves encadrés par heure-enseignant
+        productivity_per_hour=25.0,   # pupils taught per teacher-hour
         note="Students taught per teacher-hour (a class at a time). Substitutes "
              "(vacataires) can be brought in, so the role can be temped.",
     ),
     "school_life": Role(
         key="school_life",
-        label="Surveillant / vie scolaire",
+        label="School supervisor",
         snmg_coefficient=1.20,
-        productivity_per_hour=40.0,   # élèves surveillés par heure
+        productivity_per_hour=40.0,   # pupils supervised per hour
         note="Supervision and exam invigilation (BEM/BAC). Sized to student "
              "count, and to a tighter ratio during exam periods.",
     ),
@@ -267,10 +267,29 @@ class Shift:
         return False
 
 
+# French job titles, kept as matching aliases: imported staff files and the
+# manager's free-text requests are often written in French.
+LABEL_FR = {
+    "sorter": "Agent de tri (hub)", "courier": "Livreur dernier kilomètre",
+    "supervisor": "Superviseur de shift", "ramp_agent": "Agent de piste / bagages",
+    "checkin_agent": "Agent d'enregistrement / embarquement",
+    "warehouse_op": "Agent d'entrepôt", "housekeeper": "Femme/valet de chambre",
+    "front_desk": "Réceptionniste", "fnb_staff": "Personnel restauration (F&B)",
+    "driver": "Chauffeur", "loader": "Manutentionnaire / bagagiste",
+    "dispatcher": "Répartiteur", "teacher": "Enseignant",
+    "school_life": "Surveillant / vie scolaire",
+}
+
+
+def role_aliases(key: str) -> str:
+    """English label plus the French title, for text matching."""
+    return f"{ROLES[key].label} {LABEL_FR.get(key, '')}"
+
+
 SHIFTS = {
-    "morning":   Shift("morning",   "Matin (06:00-14:00)",       6,  8.0),
-    "afternoon": Shift("afternoon", "Après-midi (14:00-22:00)", 14, 8.0),
-    "night":     Shift("night",     "Nuit (22:00-06:00)",       22, 8.0),
+    "morning":   Shift("morning",   "Morning (06:00-14:00)",     6,  8.0),
+    "afternoon": Shift("afternoon", "Afternoon (14:00-22:00)", 14, 8.0),
+    "night":     Shift("night",     "Night (22:00-06:00)",      22, 8.0),
 }
 
 
@@ -360,16 +379,16 @@ def cost_table() -> pd.DataFrame:
     rows = []
     for role in ROLES.values():
         rows.append({
-            "Poste": role.label,
-            "Coeff. SNMG": role.snmg_coefficient,
-            "Brut mensuel (DZD)": round(role.gross_monthly),
-            "Brut horaire (DZD)": round(role.gross_hourly, 2),
-            "Charges patronales (DZD/h)": round(role.loaded_hourly - role.gross_hourly, 2),
-            "Coût horaire chargé (DZD)": round(role.loaded_hourly, 2),
-            "Heure sup. (DZD)": round(role.hour_cost(overtime=True), 2),
-            "Heure intérim (DZD)": round(role.hour_cost(temp=True), 2)
+            "Role": role.label,
+            "SNMG coeff.": role.snmg_coefficient,
+            "Monthly gross (DZD)": round(role.gross_monthly),
+            "Hourly gross (DZD)": round(role.gross_hourly, 2),
+            "Employer charges (DZD/h)": round(role.loaded_hourly - role.gross_hourly, 2),
+            "Loaded hourly cost (DZD)": round(role.loaded_hourly, 2),
+            "Overtime hour (DZD)": round(role.hour_cost(overtime=True), 2),
+            "Temp hour (DZD)": round(role.hour_cost(temp=True), 2)
             if role.can_be_temp else None,
-            "Heure jour férié (DZD)": round(role.hour_cost(holiday=True), 2),
+            "Holiday hour (DZD)": round(role.hour_cost(holiday=True), 2),
         })
     return pd.DataFrame(rows)
 
@@ -377,23 +396,22 @@ def cost_table() -> pd.DataFrame:
 def derivation_notes() -> list:
     """Plain-language derivation of the cost stack, for the evidence tab."""
     return [
-        f"Le SNMG est de {SNMG_MONTHLY:,.0f} DZD/mois, en vigueur depuis janvier "
-        f"2026 (une hausse de 20% par rapport à 20 000 DZD).",
-        f"La semaine légale de travail est de 40 heures, soit {LEGAL_MONTHLY_HOURS} "
-        f"heures payées par mois.",
-        f"Cela fixe le taux horaire plancher légal à {BASE_HOURLY_DZD:.2f} DZD.",
-        f"Les cotisations patronales CNAS ajoutent {CNAS_EMPLOYER:.0%} au-dessus "
-        f"du brut. C'est la ligne que la plupart des plannings oublient.",
-        f"Les heures supplémentaires portent une majoration d'au moins "
-        f"{OVERTIME_PREMIUM:.0%} et sont plafonnées à {MAX_OVERTIME_FRACTION:.0%} "
-        f"du temps de travail légal , l'optimiseur traite donc les heures sup. "
-        f"excédentaires comme infaisables, pas seulement comme coûteuses.",
-        f"Le travail de nuit (21:00-05:00) ajoute {NIGHT_PREMIUM:.0%} ; le jour de "
-        f"repos du vendredi ajoute {RESTDAY_PREMIUM:.0%} ; les jours fériés "
-        f"officiels sont payés au double.",
-        f"Les intérimaires d'agence coûtent {TEMP_AGENCY_MARKUP:.0%} de plus sur "
-        f"le taux chargé , la prime que l'on paie pour ne pas avoir anticipé la "
-        f"journée.",
+        f"The SNMG is {SNMG_MONTHLY:,.0f} DZD a month, in force since January "
+        f"2026 (a 20% rise from 20,000 DZD).",
+        f"The legal working week is 40 hours, or {LEGAL_MONTHLY_HOURS} "
+        f"paid hours a month.",
+        f"That sets the legal hourly floor at {BASE_HOURLY_DZD:.2f} DZD.",
+        f"Employer CNAS contributions add {CNAS_EMPLOYER:.1%} on top of "
+        f"gross. It is the line most schedules forget.",
+        f"Overtime carries a premium of at least "
+        f"{OVERTIME_PREMIUM:.0%} and is capped at {MAX_OVERTIME_FRACTION:.0%} "
+        f"of legal working time, so the optimiser treats excess overtime "
+        f"as infeasible, not just expensive.",
+        f"Night work (21:00-05:00) adds {NIGHT_PREMIUM:.0%}; the Friday rest "
+        f"day adds {RESTDAY_PREMIUM:.0%}; official public holidays "
+        f"are paid double.",
+        f"Agency temps cost {TEMP_AGENCY_MARKUP:.0%} more than the "
+        f"loaded rate: the premium paid for not planning the day ahead.",
     ]
 
 

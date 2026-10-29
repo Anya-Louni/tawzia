@@ -1,9 +1,9 @@
 """
-Intégration , le nouvel embauché remplit son dossier, l'agent vérifie, le RH signe.
+Onboarding: the new hire fills their file, the agent checks it, HR signs.
 
-À gauche, le téléphone du nouvel embauché (le lien à usage unique). À droite, ce
-que voit le RH : la vérification, puis la carte d'approbation qui part dans la
-boîte de décisions. La lecture des pièces est simulée en démonstration.
+On the left, the new hire's phone (the one-time link). On the right, what HR
+sees: the verification, then the approval card that goes to the decision inbox.
+Document reading is simulated in the demo.
 """
 
 import datetime as dt
@@ -17,37 +17,37 @@ ss = st.session_state
 con = db.seed(db.connect())
 
 st.markdown(
-    '<div class="tz-hero"><div><h1 class="tz-hero-h">Intégration</h1>'
-    '<div class="tz-hero-s">Le nouvel embauché remplit son dossier depuis son '
-    'téléphone. L\'agent vérifie chaque pièce et renvoie ce qui ne va pas. '
-    '<b>Le RH approuve une seule carte</b>, et tout part en même temps.</div></div></div>',
+    '<div class="tz-hero"><div><h1 class="tz-hero-h">Onboarding</h1>'
+    '<div class="tz-hero-s">The new hire fills their file from their phone. The '
+    'agent checks every document and sends back what is wrong. '
+    '<b>HR approves one card</b>, and everything launches at once.</div></div></div>',
     unsafe_allow_html=True,
 )
 
-with st.expander("Nouvelle embauche", expanded="ob_reg" not in ss, icon=":material/person_add:"):
+with st.expander("New hire", expanded="ob_reg" not in ss, icon=":material/person_add:"):
     c1, c2, c3 = st.columns(3)
-    name = c1.text_input("Nom", "Amina Belkacem")
-    role = c2.selectbox("Poste", list(sc.STAFFING["ALG"]),
+    name = c1.text_input("Name", "Amina Belkacem")
+    role = c2.selectbox("Role", list(sc.STAFFING["ALG"]),
                         format_func=lambda k: labour_dz.ROLES[k].label
-                        + (" · sensible" if k in sc.SENSITIVE_ROLES else ""))
+                        + (" · sensitive" if k in sc.SENSITIVE_ROLES else ""))
     site = c3.selectbox("Site", list(sc.SITES), format_func=lambda k: sc.SITES[k]["name"])
     c4, c5, c6 = st.columns(3)
-    gender = c4.selectbox("Genre", ["F", "M"])
-    start = c5.date_input("Prise de poste", dt.date.today() + dt.timedelta(days=12))
-    contract = c6.selectbox("Contrat", ["CDI", "CDD"])
-    if st.button("Envoyer le lien d'inscription", type="primary", icon=":material/send:"):
+    gender = c4.selectbox("Gender", ["F", "M"])
+    start = c5.date_input("Start date", dt.date.today() + dt.timedelta(days=12))
+    contract = c6.selectbox("Contract", ["CDI", "CDD"])
+    if st.button("Send the registration link", type="primary", icon=":material/send:"):
         reg = ob.Registration(name, role, site, start, contract=contract,
                               cdd_reason="surcroit_temporaire" if contract == "CDD" else "",
                               gender=gender)
         ss["ob_reg"] = reg
         ss["ob_sent"] = False
         ss.pop("ob_template", None)
-        db.log(con, "hr", "hr", "lien_inscription", name, "lien unique, 7 jours, code SMS")
+        db.log(con, "hr", "hr", "registration_link", name, "one-time link, 7 days, SMS code")
         st.rerun()
 
 reg = ss.get("ob_reg")
 if reg is None:
-    st.caption("L'agent attend une offre acceptée pour envoyer le lien d'inscription.")
+    st.caption("The agent is waiting for an accepted offer to send the registration link.")
     appdata.data_badge()
     st.stop()
 
@@ -55,18 +55,18 @@ phone, hr_side = st.columns([1, 1.5], gap="large")
 
 with phone:
     with st.container(key="tz_phone", border=True):
-        st.caption(f":material/smartphone: Lien sécurisé · valable {ob._C['link_valid_days']} jours")
-        st.markdown(f"**Bienvenue {reg.candidate.split()[0]}**  \nVotre dossier, pièce par pièce.")
+        st.caption(f":material/smartphone: Secure link · valid {ob._C['link_valid_days']} days")
+        st.markdown(f"**Welcome {reg.candidate.split()[0]}**  \nYour file, one document at a time.")
         for code in ob.checklist(reg.role_key, reg.gender):
             if code in ob._C["sensitive_extra"]:
                 continue
             doc = reg.docs.get(code)
             label = ob.DOC_LABELS[code]
             if doc is None:
-                if st.button(f"Photographier : {label}", key=f"up_{code}",
+                if st.button(f"Take a photo: {label}", key=f"up_{code}",
                              icon=":material/photo_camera:", width="stretch"):
-                    # Démo : ce que l'OCR lirait sur cette pièce. La première photo
-                    # du diplôme arrive floue, pour montrer le renvoi automatique.
+                    # Demo: what OCR would read on this document. The first photo
+                    # of the diploma arrives blurry, to show the automatic bounce.
                     if "ob_template" not in ss:
                         tpl = ob.Registration(reg.candidate, reg.role_key, reg.site,
                                               reg.start, gender=reg.gender)
@@ -76,39 +76,39 @@ with phone:
                     reg.docs[code] = dict(ss["ob_template"][code])
                     st.rerun()
             elif doc["status"] == "blurry":
-                st.warning(f"{label} : la photo est floue.", icon=":material/blur_on:")
-                if st.button("Reprendre la photo", key=f"re_{code}", width="stretch"):
+                st.warning(f"{label}: the photo is blurry.", icon=":material/blur_on:")
+                if st.button("Retake the photo", key=f"re_{code}", width="stretch"):
                     doc["status"] = "ok"
                     st.rerun()
             else:
                 st.caption(f":material/check_circle: {label}")
-        st.caption("Démonstration : la lecture des pièces est simulée.")
+        st.caption("Demo: document reading is simulated.")
 
 with hr_side:
     v = ob.verify(reg)
     with st.container(border=True):
-        appdata.card_head("Vérification par l'agent",
-                          f"{v['documents_ok']}/{v['documents_needed']} pièces")
+        appdata.card_head("Agent verification",
+                          f"{v['documents_ok']}/{v['documents_needed']} documents")
         for b in v["bounce"]:
-            st.caption(f":material/reply: Renvoyé au salarié : {b}")
+            st.caption(f":material/reply: Sent back to the new hire: {b}")
         for n in v["notes"]:
             st.caption(f":material/info: {n}")
         if v["complete"] and not ss.get("ob_sent"):
             card = ob.approval_card(reg, v)
-            if st.button("Envoyer la carte au RH", type="primary", icon=":material/inbox:"):
+            if st.button("Send the card to HR", type="primary", icon=":material/inbox:"):
                 db.add_card(con, source="onboarding", payload={"kind": "hire"}, **card)
                 ss["ob_sent"] = True
                 st.rerun()
         elif ss.get("ob_sent"):
-            st.success("Carte envoyée dans la boîte de décisions.", icon=":material/inbox:")
-            st.page_link("app_pages/autopilot.py", label="Ouvrir la boîte de décisions",
+            st.success("Card sent to the decision inbox.", icon=":material/inbox:")
+            st.page_link("app_pages/autopilot.py", label="Open the decision inbox",
                          icon=":material/arrow_forward:")
         else:
-            st.caption("L'agent attend les pièces manquantes. Le RH n'a rien à relancer.")
+            st.caption("The agent is waiting for the missing documents. HR has nothing to chase.")
 
     with st.container(border=True):
-        appdata.card_head("Ce qui part à l'approbation", f"{len(ob.plan(reg))} tâches")
+        appdata.card_head("What launches on approval", f"{len(ob.plan(reg))} tasks")
         st.dataframe(ob.plan(reg), hide_index=True, width="stretch",
-                     column_config={"task": "Tâche", "owner": "Responsable", "due": "Échéance"})
+                     column_config={"task": "Task", "owner": "Owner", "due": "Due"})
 
 appdata.data_badge()

@@ -1,10 +1,10 @@
 """
-Guichet salarié , le salarié demande, la plateforme répond, le RH n'est plus dérangé.
+Employee desk: the employee asks, the platform answers, HR is not interrupted.
 
-À gauche, la conversation telle que la voit le salarié. À droite, ce que le
-guichet a traité seul et ce qu'il a transmis à l'autopilote. Le moteur est
-core/self_service.py : classification par règles, réponses tirées du dossier,
-demandes de congé passées au même contrôle légal que le reste de la plateforme.
+On the left, the conversation as the employee sees it. On the right, what the
+desk handled alone and what it sent to the decision inbox. The engine is
+core/self_service.py: rule-based classification, answers from the file, leave
+requests through the same legal check as the rest of the platform.
 """
 
 import streamlit as st
@@ -17,7 +17,7 @@ ss = st.session_state
 ss.setdefault("guichet_msgs", [])
 ss.setdefault("guichet_tickets", [])
 ss.setdefault("guichet_requests", [])
-ss.setdefault("guichet_company", "SARL Démonstration")
+ss.setdefault("guichet_company", "Démo Handling & Logistique")
 ss.setdefault("guichet_signatory", "Le responsable des ressources humaines")
 
 people = cd.people()
@@ -40,14 +40,13 @@ with chat:
 
     examples = [
         "nheb attestation de travail lel bank",
-        "chhal bqali men youm congé ?",
-        "Je veux prendre un congé du 14 au 20 décembre",
+        "How many leave days do I have left?",
+        "I'd like time off from 14 to 20 December",
         "أريد كشف الراتب",
     ]
     def _take_pick() -> None:
-        # Une suggestion ne sert qu'une fois : vidée dans le rappel (seul
-        # endroit où modifier un widget est permis), sinon elle se renverrait
-        # à chaque rerun.
+        # A suggestion is used once: cleared in the callback (the only place a
+        # widget may be changed), otherwise it would resend on every rerun.
         ss["_guichet_pending"] = ss.get("guichet_pick")
         ss["guichet_pick"] = None
 
@@ -77,15 +76,14 @@ with chat:
         if r["request"]:
             ss["guichet_requests"].append(r["request"])
         if not r["ticket"] and not r["request"]:
-            # Réponse donnée seule : elle compte dans le journal du guichet.
+            # Answered on its own: it counts in the desk log.
             ss["guichet_tickets"].append({"id": tid, "label": svc.LABELS[r["intent"]],
                                           "emp_name": emp.name, "text": message,
                                           "needs_signature": False})
 
     with box:
         if not ss["guichet_msgs"]:
-            st.caption("Aucune demande pour l'instant. Choisissez un exemple ou "
-                       "écrivez la vôtre.")
+            st.caption("No request yet. Pick an example or write your own.")
         for i, m in enumerate(ss["guichet_msgs"]):
             with st.chat_message(m["role"], avatar=":material/person:" if m["role"] == "user"
                                  else ":material/support_agent:"):
@@ -93,7 +91,7 @@ with chat:
                 if m.get("doc"):
                     with st.expander("Voir l'attestation", icon=":material/description:"):
                         st.text(m["doc"])
-                    st.download_button("Télécharger", m["doc"], key=f"dl_{i}",
+                    st.download_button("Download", m["doc"], key=f"dl_{i}",
                                        file_name="attestation_de_travail.txt",
                                        icon=":material/download:")
 
@@ -103,31 +101,30 @@ with side:
     signed = len(tickets) - alone
     c1, c2 = st.columns(2)
     with c1:
-        appdata.stat_card("Réglé seul", f"{alone}", caption="réponse immédiate")
+        appdata.stat_card("Answered alone", f"{alone}", caption="instant reply")
     with c2:
-        appdata.stat_card("Vers vos décisions", f"{signed + len(ss['guichet_requests'])}",
-                          caption="signature ou décision")
+        appdata.stat_card("Sent to your inbox", f"{signed + len(ss['guichet_requests'])}",
+                          caption="signature or decision")
 
     with st.container(border=True):
-        appdata.card_head("Demandes reçues", f"{len(tickets) + len(ss['guichet_requests'])}")
+        appdata.card_head("Requests received", f"{len(tickets) + len(ss['guichet_requests'])}")
         signed_keys = {k for k, v in ss.get("ap_decided", {}).items() if v == "approved"}
         rows = [{"name": t["label"], "sub": t["emp_name"],
-                 "meta": ("signée" if f"tk:{t['id']}" in signed_keys else "à signer")
-                 if t.get("needs_signature") else "répondu"}
+                 "meta": ("signed" if f"tk:{t['id']}" in signed_keys else "to sign")
+                 if t.get("needs_signature") else "answered"}
                 for t in tickets[::-1]]
-        rows += [{"name": r.kind_label, "sub": r.emp_name, "meta": "à décider"}
+        rows += [{"name": r.kind_label, "sub": r.emp_name, "meta": "to decide"}
                  for r in ss["guichet_requests"][::-1]]
         appdata.list_rows(rows[:10], empty="Rien encore.", avatars=False)
-        st.page_link("app_pages/autopilot.py", label="Ouvrir la boîte de décisions",
+        st.page_link("app_pages/autopilot.py", label="Open the decision inbox",
                      icon=":material/arrow_forward:")
 
-    with st.expander("Réglages du guichet", icon=":material/tune:"):
-        st.text_input("Raison sociale", key="guichet_company")
-        st.text_input("Signataire des attestations", key="guichet_signatory")
+    with st.expander("Desk settings", icon=":material/tune:"):
+        st.text_input("Company name", key="guichet_company")
+        st.text_input("Certificate signatory (as printed)", key="guichet_signatory")
 
-    st.caption(":material/info: Le guichet s'ouvre sur un lien, depuis n'importe "
-               "quel téléphone. Un canal WhatsApp Business est prévu, il n'est pas "
-               "encore branché. La reconnaissance des messages est faite par "
-               "règles, sans envoi à un service extérieur.")
+    st.caption(":material/info: The desk opens from a link on any phone. A WhatsApp "
+               "Business channel is planned, not yet connected. Messages are "
+               "recognised by rules, with nothing sent to an outside service.")
 
 appdata.data_badge()

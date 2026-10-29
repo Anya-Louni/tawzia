@@ -1,29 +1,20 @@
 """
 core/brand.py
 -------------
-La marque Tawzia, en un seul endroit.
+The Tawzia brand, in one place.
 
-Pourquoi ce module existe
-=========================
-Le logo apparaît sur cinq surfaces : le bandeau de l'app, le favicon de l'app,
-la page d'accueil EN, la page d'accueil FR, et les exports. Recopier le SVG
-cinq fois, c'est garantir qu'un jour quatre d'entre eux seront périmés. Ici il
-est écrit une fois, et chaque surface le demande.
+The logo appears on several surfaces (app header, favicon, landing pages,
+exports). Copying the SVG everywhere guarantees most copies go stale, so it is
+written once here and every surface asks for it.
 
-Le nom
-======
-Tawzia, de l'arabe **توزيع** (tawzî'), « répartition, affectation ». C'est
-exactement ce que fait le moteur : répartir des personnes sur des postes. Le
-mot se lit sans effort en français comme en arabe.
+The name: Tawzia, from the Arabic توزيع (tawzi'), "distribution, assignment".
+Exactly what the engine does: assign people to shifts and roles.
 
-La marque graphique
-===================
-Trois têtes, un corps : le W de Tawzia lu comme trois personnes côte à côte.
-Les deux vides sont **découpés** du corps (`fill-rule="evenodd"`) et non peints
-en blanc, pour que la marque se pose sur n'importe quel fond sans traîner un
-halo blanc derrière elle. Le fichier de référence est
-`assets/brand/tawzia-mark.svg` ; le chemin ci-dessous en est la copie servie à
-l'app, et les deux doivent rester identiques (test dans `__main__`).
+The mark: three heads, one body, the W of Tawzia read as three people side by
+side. The two gaps are cut out of the body (`fill-rule="evenodd"`), not painted
+white, so the mark sits on any background. The reference file is
+`assets/brand/tawzia-mark.svg`; the path below is the copy served to the app,
+and both must stay identical (tested in `__main__`).
 """
 
 from __future__ import annotations
@@ -35,28 +26,28 @@ from urllib.parse import quote
 
 # --- Palette ---------------------------------------------------------------
 # Les deux bleus du logo, puis ce qu'il faut pour en faire une interface.
-SKY = "#6CBEF5"        # le bleu clair du logo : accent, séries claires
-BLUE = "#0B57A8"       # le bleu profond du logo : action, titres, mot-repère
-BLUE_DARK = "#084684"  # état actif/survol de l'action
-BLUE_MID = "#4E98E0"   # ton intermédiaire des graphiques
-BLUE_WASH = "#E7F1FC"  # fond de pastille, surface sélectionnée
-INK = "#0F1B2D"        # encre des chiffres et des titres
-MUTED = "#475870"      # texte secondaire
-GROUND = "#E6ECF5"     # fond de page
-SURFACE = "#EEF3F9"    # carte
-LINE = "#D5DEEA"       # filet, presque invisible : la profondeur vient de l'ombre
+SKY = "#6CBEF5"        # the logo light blue: accent, light series
+BLUE = "#0B57A8"       # the logo deep blue: action, titles, wordmark
+BLUE_DARK = "#084684"  # active/hover state of actions
+BLUE_MID = "#4E98E0"   # mid tone for charts
+BLUE_WASH = "#E7F1FC"  # chip background, selected surface
+INK = "#0A1628"        # encre des chiffres et des titres
+MUTED = "#3E4C60"      # texte secondaire
+GROUND = "#EDF1F6"     # fond de page
+SURFACE = "#FFFFFF"    # carte
+LINE = "#C5D0DE"       # filet, presque invisible : la profondeur vient de l'ombre
 
-# Les trois bleus d'un histogramme empilé, du plus foncé au plus clair.
+# The three blues of a stacked chart, darkest to lightest.
 STACK = [BLUE, BLUE_MID, "#A5D4F7"]
 
 NAME = "Tawzia"
-TAGLINE_FR = "La plateforme RH par l'IA, conçue pour l'Algérie"
+TAGLINE_FR = "The AI HR platform built for Algeria"
 TAGLINE_EN = "The AI HR platform built for Algeria"
 
 _ASSETS = Path(__file__).resolve().parent.parent / "assets" / "brand"
 _MARK_PATH = _ASSETS / "tawzia-mark.svg"
 
-# Le corps de la marque, sans l'enveloppe <svg> : réutilisé à chaque taille.
+# The mark body without its <svg> wrapper: reused at every size.
 _BODY = (
     f'<circle cx="48" cy="24" r="22"/>'
     f'<circle cx="100" cy="24" r="22"/>'
@@ -88,7 +79,7 @@ def _png_data_uri(path: Path) -> str:
             + base64.b64encode(path.read_bytes()).decode("ascii"))
 
 
-def lockup(size: int = 20, ink: str = BLUE, fill: str = SKY) -> str:
+def lockup(size: int = 20, ink: str = BLUE, fill: str = SKY, text_only: bool = False) -> str:
     """
     Le logo complet : TA + la marque en guise de W + ZIA.
 
@@ -100,7 +91,7 @@ def lockup(size: int = 20, ink: str = BLUE, fill: str = SKY) -> str:
     la police de la page (Inter partout dans le produit), donc le logo reste net
     à toutes les tailles et se pose dans un bouton comme dans un titre.
     """
-    if LOGO_PNG.exists():
+    if LOGO_PNG.exists() and not text_only:
         # Le fichier fourni est recadré sur ses glyphes (rapport ~3,04:1), donc
         # la hauteur demandée est bien la hauteur des lettres et non celle d'une
         # marge. Le facteur 1,3 rattrape la différence de perception entre un
