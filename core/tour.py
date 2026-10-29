@@ -44,10 +44,8 @@ def _read(name: str) -> str:
         return ""
 
 
-# driver.js est distribué en IIFE : sa première instruction est
-# `this.driver = this.driver || {}`. Dans un module ES, `this` vaut `undefined`
-# au niveau racine, ce qui lèverait une TypeError. On l'exécute donc avec
-# `window` comme `this`.
+# driver.js ships as an IIFE that sets `this.driver`; in an ES module `this` is
+# undefined at top level, so it runs with `window` as `this`.
 _DRIVER_SRC = _read("driver.iife.js")
 _DRIVER_CSS = _read("driver.css")
 
@@ -96,9 +94,9 @@ export default function (component) {
     stagePadding: 6,
     stageRadius: 8,
     popoverClass: "wf-tour",
-    nextBtnText: "Next",
-    prevBtnText: "Back",
-    doneBtnText: "Get started",
+    nextBtnText: (data.labels || {}).next || "Next",
+    prevBtnText: (data.labels || {}).back || "Back",
+    doneBtnText: (data.labels || {}).done || "Get started",
     progressText: "{{current}} / {{total}}",
     steps: steps,
     onDestroyed: finish,
@@ -149,51 +147,31 @@ _CSS = _DRIVER_CSS + """
 .driver-popover.wf-tour .driver-popover-next-btn:hover {
   background:#0E42A0; border-color:#0E42A0; color:#FFFFFF;
 }
+.driver-popover.wf-tour .driver-popover-close-btn {
+  background:transparent; border:0; padding:0; width:28px; height:28px;
+  font-size:20px; color:#64748B; top:8px; right:8px;
+}
+.driver-popover.wf-tour .driver-popover-close-btn:hover { background:#EEF2F7; color:#0A2540; }
 .driver-popover.wf-tour .driver-popover-arrow { border-color:#FFFFFF; }
 """
 
 # The steps: what the tool does, where to click, what it earns.
-STEPS = [
-    {
-        "element": ".st-key-wf_topbar",
-        "title": "Welcome to Tawzia",
-        "text": "The HR platform that does the work for you, on the real "
-                "Algerian calendar and labour law.",
-        "side": "bottom",
-    },
-    {
-        "element": ".st-key-wf_sections",
-        "title": "Five screens, one you need every day",
-        "text": "The decision inbox is enough day to day. The others show the "
-                "detail: people, planning, hiring, payroll.",
-        "side": "bottom",
-    },
-    {
-        "element": ".st-key-wf_controls",
-        "title": "Your context",
-        "text": "Pick your activity and wilaya: roles, costs and the weather "
-                "the model uses adapt at once. A hotel in Oran is not planned "
-                "like a hub in Algiers. Switch the language here too.",
-        "side": "bottom",
-        "align": "end",
-    },
-    {
-        "element": "[data-testid='stMainBlockContainer']",
-        "title": "Figures, not promises",
-        "text": "Every screen shows its source. What is real is cited; what is "
-                "an assumption is marked as one. That is what holds up in front "
-                "of a finance director.",
-        "side": "top",
-    },
-    {
-        "element": ".st-key-wf_sec_active",
-        "title": "Your morning: sign",
-        "text": "The agents have already handled the requests, payroll and "
-                "deadlines. What is left waits here, the most urgent decision "
-                "first. Import your data in Settings to switch to your real figures.",
-        "side": "bottom",
-    },
+# (selector, title key, text key, side, align). Keys live in core/i18n.py so the
+# tour speaks the chosen language. Steps whose target is absent are skipped.
+_STEPS = [
+    (".st-key-wf_topbar", "tour_1_t", "tour_1_x", "bottom", "start"),
+    (".tz-today", "tour_2_t", "tour_2_x", "bottom", "start"),
+    ("[data-testid='stMain'] [data-testid='stVerticalBlock']:has(> [data-testid='stElementContainer'] .tz-card-top)", "tour_3_t", "tour_3_x", "bottom", "start"),
+    (".st-key-wf_ask", "tour_4_t", "tour_4_x", "bottom", "start"),
+    (".st-key-wf_sections", "tour_5_t", "tour_5_x", "bottom", "start"),
+    (".st-key-wf_controls", "tour_6_t", "tour_6_x", "bottom", "end"),
 ]
+
+
+def steps() -> list:
+    from .i18n import t
+    return [{"element": el, "title": t(tk), "text": t(xk), "side": side, "align": align}
+            for el, tk, xk, side, align in _STEPS]
 
 
 _COMPONENT = st.components.v2.component(
@@ -201,8 +179,8 @@ _COMPONENT = st.components.v2.component(
     html="<div hidden></div>",
     css=_CSS,
     js=_JS,
-    # driver.js dessine son voile sur document.body, hors du shadow root :
-    # sa feuille de style doit donc être globale.
+    # driver.js draws its overlay on document.body, outside the shadow root,
+    # so its stylesheet must be global.
     isolate_styles=False,
 )
 
@@ -213,6 +191,7 @@ def available() -> bool:
 
 
 def maybe_run(current) -> None:
+    from .i18n import t
     """
     Run the tour on the session's first display, or on request.
 
@@ -225,8 +204,7 @@ def maybe_run(current) -> None:
     replay = st.session_state.pop(_REPLAY_KEY, False)
     first_time = not st.session_state.get(_SEEN_KEY, False)
 
-    # Au premier lancement, la visite ne se déclenche que sur l'accueil : sur
-    # une page interne elle commenterait un écran que l'utilisateur a choisi.
+    # On first launch the tour runs on the home page only.
     on_home = getattr(current, "url_path", "") in ("", "autopilot")
     run = replay or (first_time and on_home)
 
@@ -235,6 +213,7 @@ def maybe_run(current) -> None:
 
     _COMPONENT(
         key="wf_tour",
-        data={"run": bool(run), "steps": STEPS},
+        data={"run": bool(run), "steps": steps(),
+              "labels": {k: t(f"tour_{k}") for k in ("next", "back", "done")}},
         on_finished_change=lambda: None,
     )
