@@ -2,27 +2,24 @@ pandas>=2.0
 numpy>=1.24
 scikit-learn>=1.3
 scipy>=1.11
-# Borne haute volontaire : l'interface repose sur des API récentes
-# (st.components.v2, st.container(key=...), st.dialog). Une montée de version
-# majeure doit être testée avant d'atteindre une démonstration client.
+# Upper bound on purpose: the UI uses recent APIs (st.components.v2,
+# st.container(key=...), st.dialog). Test a major upgrade before a client demo.
 streamlit>=1.59,<2
 altair>=5.0
 requests>=2.31
-pypdf>=4.0        # lecture des CV PDF déposés dans l'écran de recrutement
-groq              # couche langage naturel (clé gratuite : console.groq.com, GROQ_API_KEY)
+pypdf>=4.0        # PDF reading: CVs and the PDF to AI text tool
+groq              # language layer (free key at console.groq.com, GROQ_API_KEY)
 python-dotenv
 
-# Composant de conversation (assistant-ui + Custom Components v2). Installé
-# depuis le dépôt : les assets JS sont déjà construits dans
-# components/tawzia-chat/tawzia_chat/frontend/build/, car Streamlit Cloud
-# n'exécute pas npm.
+# Chat component (assistant-ui + Custom Components v2), installed from the repo:
+# the JS is prebuilt in components/tawzia-chat/tawzia_chat/frontend/build/
+# because Streamlit Cloud does not run npm.
 ./components/tawzia-chat
 
-# Serveur MCP (tawzia_mcp/) : outils publics de paie et de droit du travail.
-# SDK v2 : FastMCP y est devenu MCPServer.
+# MCP servers (tawzia_mcp/): payroll and labour-law tools. SDK v2 (MCPServer).
 mcp>=2.3,<3
 
-# Planning de la semaine (core/scheduler.py) : solveur CP-SAT.
+# Weekly schedule (core/scheduler.py): CP-SAT solver.
 ortools>=9.10,<10
-# Chiffrement par champ de la base du personnel (core/db.py, AES-256-GCM).
+# Field encryption of the staff database (core/db.py, AES-256-GCM).
 cryptography>=42

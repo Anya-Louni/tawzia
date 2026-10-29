@@ -2,14 +2,25 @@
 
 **An AI HR department for Algerian companies. The agents do the HR work; HR only approves.**
 
+**[Live demo](https://tawzia.streamlit.app)** · **[Demo video](VIDEO_LINK)** · [How it works](docs/ARCHITECTURE.md) · [What's next](ROADMAP.md)
+
 Tawzia prepares payroll, filings, leave decisions, schedules, hiring and onboarding
 against Algerian labour law, then puts every finished task in one inbox: what the
 agent did, why, which rule it applied, and three buttons. Nothing is sent, filed,
 paid or rejected without a human click.
 
+![The approval inbox: 24 decisions prepared overnight, with what each agent did](docs/images/inbox.png)
+
+The live demo runs on a fictional 140-person company, so every screen works without
+importing anything. Open it, read a card, click **Approve**.
+
+| The payroll agent catches a salary below the minimum wage | The onboarding agent sends back a blurry document |
+|---|---|
+| ![Payroll agent card](docs/images/payroll-agent.png) | ![Onboarding agent](docs/images/onboarding-agent.png) |
+
 > The business case is in [`PITCH.md`](PITCH.md), the provenance of every figure in
-> [`SOURCES.md`](SOURCES.md), and a demo walkthrough in [`DEMO_GUIDE.md`](DEMO_GUIDE.md).
-> The product brief is [`TAWZIA_REBUILD_BRIEF.md`](TAWZIA_REBUILD_BRIEF.md).
+> [`SOURCES.md`](SOURCES.md), a demo walkthrough in [`DEMO_GUIDE.md`](DEMO_GUIDE.md), and
+> the architecture in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ---
 
@@ -26,8 +37,8 @@ a summer that is a **diaspora peak**, not a lull.
 
 ## What is in the app
 
-Five screens plus Settings. English by default, French and Arabic (right to left) one
-click away.
+Nine agents across five areas plus Settings. English by default, French and Arabic
+(right to left) one click away. A six-step guided tour runs on first visit.
 
 | Screen | What it does |
 |---|---|
@@ -81,9 +92,13 @@ See [`tawzia_mcp/README.md`](tawzia_mcp/README.md); evaluations in
 
 ---
 
+## Built by
+
+**Anya Louni**, solo: research, product, design, engineering and the pitch.
+
 ## Install
 
-Python 3.10 or newer.
+Python 3.10 or newer (developed on 3.13).
 
 ```bash
 python -m venv venv
@@ -140,3 +155,9 @@ tests/                  test suites
 Every number is traceable to a source in `core/sources.py` or labelled as an assumption.
 Values marked **[verify]** in the rules file come from a single private source or
 conflicting sources and must be confirmed before a live payroll run.
+
+## What's next
+
+Five pilot companies running a real payroll month alongside their current method, a
+payroll accountant validating the rules engine, then individual logins, hosting in
+Algeria and the employee desk on WhatsApp. Details in [`ROADMAP.md`](ROADMAP.md).
