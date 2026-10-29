@@ -44,3 +44,4 @@ supply_chain_dataset1*.csv
 
 # Base locale du personnel (chiffrée, mais une donnée, pas une source)
 data/*.db
+assets/demo/*.mp4
