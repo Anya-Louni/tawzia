@@ -406,9 +406,13 @@ _ROOT_VARS = f"""
             /* Status, always paired with a word. */
             --tz-ok:#15803D; --tz-ok-wash:#DCFCE7; --tz-warn:#B45309; --tz-warn-wash:#FEF3C7;
             --tz-danger:#B91C1C; --tz-danger-wash:#FEE2E2;
-            /* Depth: a crisp edge plus one soft lift. Corners are sharp. */
-            --tz-shadow:0 1px 2px rgba(10,22,40,.08), 0 10px 26px -14px rgba(10,22,40,.28);
-            --tz-shadow-lift:0 2px 4px rgba(10,22,40,.10), 0 18px 36px -16px rgba(10,22,40,.34);
+            /* Depth: sharp corners, clay underneath. A lit top edge, a shaded
+               bottom edge inside, and a soft lift outside, so every surface
+               reads as a moulded slab rather than a flat box. */
+            --tz-shadow:inset 0 2px 0 rgba(255,255,255,.95), inset 0 -4px 0 rgba(10,37,64,.07),
+                        0 2px 3px rgba(10,22,40,.07), 0 16px 32px -14px rgba(10,37,64,.30);
+            --tz-shadow-lift:inset 0 2px 0 rgba(255,255,255,.95), inset 0 -4px 0 rgba(10,37,64,.09),
+                        0 3px 5px rgba(10,22,40,.09), 0 26px 44px -18px rgba(10,37,64,.38);
             --tz-press:inset 0 2px 5px rgba(4,20,45,.35);
             --tz-r-card:8px; --tz-r-ctrl:3px; --tz-r-chip:3px;
         }}
@@ -721,6 +725,7 @@ def inject_theme() -> None:
         [data-testid="stPopover"] > div > button,
         [data-testid="stPopover"] [data-testid="stTooltipHoverTarget"] > button {
             background:var(--tz-surface); border:1.5px solid var(--tz-ink); color:var(--tz-ink);
+            box-shadow:inset 0 -3px 0 rgba(10,37,64,.08), 0 2px 3px rgba(10,22,40,.06);
         }
         .stButton > button[kind="secondary"]:hover, .stDownloadButton > button:hover,
         [data-testid="stPopover"] > div > button:hover {
@@ -728,8 +733,9 @@ def inject_theme() -> None:
         }
         .stButton > button[kind="secondary"]:hover p, .stDownloadButton > button:hover p { color:#FFFFFF; }
         .stButton > button[kind="primary"], [data-testid="stFormSubmitButton"] > button {
-            background:var(--tz-blue); border:1.5px solid var(--tz-blue); color:#FFFFFF;
-            box-shadow:0 1px 2px rgba(10,22,40,.2), 0 8px 18px -10px rgba(11,87,168,.8);
+            background:linear-gradient(180deg, #1466BF 0%, var(--tz-blue) 100%); border:1.5px solid var(--tz-blue); color:#FFFFFF;
+            box-shadow:inset 0 1px 0 rgba(255,255,255,.28), inset 0 -3px 0 rgba(4,28,60,.30),
+                       0 2px 3px rgba(10,22,40,.2), 0 10px 20px -10px rgba(11,87,168,.85);
         }
         .stButton > button[kind="primary"] p, [data-testid="stFormSubmitButton"] > button p { color:#FFFFFF; }
         .stButton > button[kind="primary"]:hover, [data-testid="stFormSubmitButton"] > button:hover {
