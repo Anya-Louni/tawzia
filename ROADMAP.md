@@ -3,9 +3,9 @@
 Where the product stands, what it still lacks, and the order to fix that in.
 Written October 2026.
 
-## Where we are
+## Where it stands
 
-Tawzia is a working prototype, not an idea. It runs today on a fictional
+Tawzia is a working prototype, not an idea, built by one founder. It runs today on a fictional
 140-person company on two sites (Algiers and Ouargla).
 
 - **Nine agents work end to end.** Attendance, payroll, filings, compliance,
@@ -36,12 +36,12 @@ alongside their current method, and comparing the two.
    payslips, and to confirm the values still marked [verify]: the CNAS
    employer rate, the G50 late-filing surcharge, and the ANPDP breach
    deadline. A rules file stamped by a professional is the strongest trust
-   signal we can buy.
+   signal available.
 2. **Recruit pilots through accountants, not companies.** One accountant can
    bring several client firms. Offer them the multi-company console free
    during the pilot.
 3. **Make the "parallel run" offer.** "Run October payroll in Tawzia next to
-   your usual method. If the numbers differ, we find out why together." It
+   your usual method. If the numbers differ, I find out why with you." It
    costs the company nothing, and every mismatch improves the engine.
 4. **Rerun the HR interviews with sharper questions.** Earlier conversations
    gave little. Ask about events, not opinions: "Walk me through last month's
@@ -51,9 +51,13 @@ alongside their current method, and comparing the two.
    before and after, errors caught before filing, and days each filing went
    in early or late. These replace every assumption in the pitch.
 
+6. **Find a second pair of hands.** Tawzia is a solo project. The first
+   addition is a payroll or labour-law adviser, then a co-founder who can sell
+   to accountants.
+
 ## Phase 2: make it deployable (months 3 to 6)
 
-Phase 2 covers what a real company will ask for before it trusts us with its
+Phase 2 covers what a real company will ask for before it trusts Tawzia with its
 payroll.
 
 - **Real accounts and roles.** The company MCP server already checks tokens;
@@ -88,7 +92,7 @@ payroll.
   Startup Fund and the Startup Label (4 years of tax exemption), and to
   incubators.
 
-## What we will not do yet
+## What Tawzia will not do yet
 
 - File anything automatically with CNAS, DGI or ANEM.
 - Make claims about savings or market size before pilots measure them.
